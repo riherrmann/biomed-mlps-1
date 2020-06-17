@@ -1,21 +1,72 @@
+from keras.utils import np_utils
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 
 
 class TextMiningManager:
-    def __init__(self):
-        pass
+    def __init__(self, properties_manager):
+        self.properties_manager = properties_manager
+        self.batch_size = None
+        self.nb_classes = None
+        self.Y_train = None
+        self.Y_test = None
+        self.X_train = None
+        self.X_test = None
+        self.training_features = None
+        self.test_features = None
+        self.input_dim = None
+        self.training_data = None
+        self.test_data = None
 
-    def train_test_split(self, data):
+    def data_train_test_split(self, data):
         training_data, test_data = train_test_split(data, test_size=0.3)
         return training_data, test_data
 
-    def tfidf_transformation(self, training_data, test_data, max_features=200000):
-        vectorizer = TfidfVectorizer(min_df=2, max_df=0.95, max_features=max_features, ngram_range=(1, 4),
-                                     sublinear_tf=True)
+    def tfidf_transformation(self, training_data, test_data):
+        properties = self.properties_manager.tfidf_transformation_properties
+        vectorizer = TfidfVectorizer(min_df=properties['min_df'], max_df=properties['max_df'],
+                                     max_features=properties['max_features'], ngram_range=properties['ngram_range'],
+                                     sublinear_tf=properties['sublinear_tf'])
 
         vectorizer = vectorizer.fit(training_data['text'])
         training_features = vectorizer.transform(training_data['text'])
 
         test_features = vectorizer.transform(test_data['text'])
         return training_features, test_features
+
+    def prepare_input_data(self, data):
+        self.training_data, self.test_data = self.data_train_test_split(data)
+        print("test_data shape", self.test_data.shape)
+        self.training_features, self.test_features = self.tfidf_transformation(self.training_data, self.test_data)
+        self.X_train = self.training_features.toarray()
+        self.X_test = self.test_features.toarray()
+        print('X_train shape:', self.X_train.shape)
+        print('X_test shape:', self.X_test.shape)
+        return True
+
+    def prepare_target_data(self, test_data, training_data, target_dimension: str):
+        y_train = np.array(training_data[target_dimension])
+        y_test = np.array(test_data[target_dimension])
+        self.Y_train = np_utils.to_categorical(y_train, self.nb_classes)
+        self.Y_test = np_utils.to_categorical(y_test, self.nb_classes)
+
+    def normalize_input_data(self):
+        # pre-processing: divide by max and substract mean
+        scale = np.max(self.X_train)
+        self.X_train /= scale
+        self.X_test /= scale
+        mean = np.mean(self.X_train)
+        self.X_train -= mean
+        self.X_test -= mean
+
+    def setup_for_input_data(self, data):
+        self.prepare_input_data(data)
+        self.normalize_input_data()
+        self.input_dim = self.X_train.shape[1]
+        return True
+
+    def setup_for_target_dimension(self, target_dimension):
+        self.nb_classes = self.test_data[target_dimension].unique()
+        self.prepare_target_data(self.test_data, self.training_data, target_dimension)
+        return True
