@@ -4,11 +4,14 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pytest = "*"
+pytest-randomly = "*"
+pytest-mock = "*"
+pytest-datadir = "*"
 
 [packages]
 scikit-learn = '*'
 pandas = "*"
-pytest = "*"
 
 [requires]
 python_version = "3.7.3"

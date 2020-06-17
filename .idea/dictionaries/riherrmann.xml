@@ -3,6 +3,8 @@
     <words>
       <w>pmid</w>
       <w>pubmed</w>
+      <w>tfidf</w>
+      <w>vectorizer</w>
     </words>
   </dictionary>
 </component>
