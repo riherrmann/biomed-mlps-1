@@ -1,7 +1,10 @@
-from keras.utils import np_utils
+import tensorflow
 import numpy as np
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
+from tensorflow import keras
+
 from biomed.mlps_manager import MLPsManager
 
 
@@ -50,8 +53,11 @@ class TextMiningManager:
     def _prepare_target_data(self, test_data, training_data, target_dimension: str):
         y_train = np.array(training_data[target_dimension])
         y_test = np.array(test_data[target_dimension])
-        self.Y_train = np_utils.to_categorical(y_train, self.nb_classes)
-        self.Y_test = np_utils.to_categorical(y_test, self.nb_classes)
+        # onehot = pd.get_dummies(data.PriceRange)
+        # target_labels = onehot.columns
+        # target = onehot.as_matrix()
+        self.Y_train = tensorflow.keras.utils.to_categorical(y_train, self.nb_classes)
+        self.Y_test = tensorflow.keras.utils.to_categorical(y_test, self.nb_classes)
 
     def _normalize_input_data(self):
         scale = np.max(self.X_train)
@@ -66,8 +72,9 @@ class TextMiningManager:
         self._normalize_input_data()
         self.input_dim = self.X_train.shape[1]
 
-    def setup_for_target_dimension(self, target_dimension):
-        self.nb_classes = self.test_data[target_dimension].unique()
+    def setup_for_target_dimension(self, data, target_dimension):
+        self.nb_classes = len(data[target_dimension].unique())
+        print('nb_classes', self.nb_classes)
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
 
     def get_binary_mlp_predictions(self):

@@ -4,8 +4,7 @@ from biomed.text_mining_manager import TextMiningManager
 
 
 def test_train_test_split(datadir):
-    fm = FileHandler()
-    data = fm.read_tsv_pandas_data_structure(datadir / "test_train.tsv")
+    data = FileHandler().read_tsv_pandas_data_structure(datadir / "test_train.tsv")
     pm = PropertiesManager()
     sut = TextMiningManager(pm)
     training_data, test_data = sut._data_train_test_split(data)
@@ -15,8 +14,7 @@ def test_train_test_split(datadir):
 
 
 def test_tfidf_transformation(datadir):
-    fm = FileHandler()
-    data = fm.read_tsv_pandas_data_structure(datadir / "test_train.tsv")
+    data = FileHandler().read_tsv_pandas_data_structure(datadir / "test_train.tsv")
     pm = PropertiesManager()
     sut = TextMiningManager(pm)
     training_data, test_data = sut._data_train_test_split(data)
@@ -28,23 +26,31 @@ def test_tfidf_transformation(datadir):
 
 
 def test_setup_for_input_data(datadir):
-    fm = FileHandler()
-    data = fm.read_tsv_pandas_data_structure(datadir / "test_train.tsv")
+    data = FileHandler().read_tsv_pandas_data_structure(datadir / "test_train.tsv")
     pm = PropertiesManager()
     sut = TextMiningManager(pm)
     sut.setup_for_input_data(data)
-    assert sut.input_dim == sut.training_features.shape[1]
+    assert sut.input_dim == sut.training_features.shape[1] #in range(5000, 6000)
 
 
 def test_prepare_input_data(datadir):
-    fm = FileHandler()
-    data = fm.read_tsv_pandas_data_structure(datadir / "test_train.tsv")
+    data = FileHandler().read_tsv_pandas_data_structure(datadir / "test_train.tsv")
     pm = PropertiesManager()
     test_size = pm.test_size
     sut = TextMiningManager(pm)
     sut._prepare_input_data(data)
     max_features = pm.tfidf_transformation_properties['max_features']
     assert int(data.shape[0] * test_size) <= sut.X_test.shape[0] <= int(data.shape[0] * test_size) + 1 and \
-           sut.X_test.shape[1] <= max_features
+        sut.X_test.shape[1] <= max_features
     assert int(data.shape[0] * (1 - test_size)) <= sut.X_train.shape[0] <= int(
         data.shape[0] * (1 - test_size)) + 1 and sut.X_train.shape[1] <= max_features
+
+def test_setup_for_target_dimension(datadir):
+    data = FileHandler().read_tsv_pandas_data_structure(datadir / "test_train.tsv")
+    pm = PropertiesManager()
+    sut = TextMiningManager(pm)
+    sut.setup_for_input_data(data)
+    # sut.setup_for_target_dimension('is_cancer')
+    # assert sut.nb_classes == 2
+    sut.setup_for_target_dimension(data, 'doid')
+    assert sut.nb_classes == 2
