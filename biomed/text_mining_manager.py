@@ -2,6 +2,7 @@ from keras.utils import np_utils
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
+from biomed.mlps_manager import MLPsManager
 
 
 class TextMiningManager:
@@ -18,12 +19,13 @@ class TextMiningManager:
         self.input_dim = None
         self.training_data = None
         self.test_data = None
+        self.mlpsm = MLPsManager(self.properties_manager)
 
-    def data_train_test_split(self, data):
+    def _data_train_test_split(self, data):
         training_data, test_data = train_test_split(data, test_size=0.3)
         return training_data, test_data
 
-    def tfidf_transformation(self, training_data, test_data):
+    def _tfidf_transformation(self, training_data, test_data):
         properties = self.properties_manager.tfidf_transformation_properties
         vectorizer = TfidfVectorizer(min_df=properties['min_df'], max_df=properties['max_df'],
                                      max_features=properties['max_features'], ngram_range=properties['ngram_range'],
@@ -35,24 +37,23 @@ class TextMiningManager:
         test_features = vectorizer.transform(test_data['text'])
         return training_features, test_features
 
-    def prepare_input_data(self, data):
-        self.training_data, self.test_data = self.data_train_test_split(data)
+    def _prepare_input_data(self, data):
+        self.training_data, self.test_data = self._data_train_test_split(data)
         print("test_data shape", self.test_data.shape)
-        self.training_features, self.test_features = self.tfidf_transformation(self.training_data, self.test_data)
+        self.training_features, self.test_features = self._tfidf_transformation(self.training_data, self.test_data)
         self.X_train = self.training_features.toarray()
         self.X_test = self.test_features.toarray()
         print('X_train shape:', self.X_train.shape)
         print('X_test shape:', self.X_test.shape)
         return True
 
-    def prepare_target_data(self, test_data, training_data, target_dimension: str):
+    def _prepare_target_data(self, test_data, training_data, target_dimension: str):
         y_train = np.array(training_data[target_dimension])
         y_test = np.array(test_data[target_dimension])
         self.Y_train = np_utils.to_categorical(y_train, self.nb_classes)
         self.Y_test = np_utils.to_categorical(y_test, self.nb_classes)
 
-    def normalize_input_data(self):
-        # pre-processing: divide by max and substract mean
+    def _normalize_input_data(self):
         scale = np.max(self.X_train)
         self.X_train /= scale
         self.X_test /= scale
@@ -61,12 +62,17 @@ class TextMiningManager:
         self.X_test -= mean
 
     def setup_for_input_data(self, data):
-        self.prepare_input_data(data)
-        self.normalize_input_data()
+        self._prepare_input_data(data)
+        self._normalize_input_data()
         self.input_dim = self.X_train.shape[1]
         return True
 
     def setup_for_target_dimension(self, target_dimension):
         self.nb_classes = self.test_data[target_dimension].unique()
-        self.prepare_target_data(self.test_data, self.training_data, target_dimension)
+        self._prepare_target_data(self.test_data, self.training_data, target_dimension)
         return True
+
+    def get_binary_mlp_predictions(self):
+        self.mlpsm.build_binary_mlp(input_dim=self.input_dim, nb_classes=self.nb_classes)
+        predictions = self.mlpsm.train_and_run_binary_mlp(X_train=self.X_train, Y_train=self.Y_train, X_test=self.X_test)
+        return predictions
