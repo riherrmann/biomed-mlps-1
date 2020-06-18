@@ -9,3 +9,6 @@ deps/clean:
 
 deps:
 	@pipenv install
+
+deps/dev:
+	@pipenv install --dev

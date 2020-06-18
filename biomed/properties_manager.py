@@ -8,6 +8,7 @@ class PropertiesManager:
             sublinear_tf=True,
         )
         self.test_size = 0.3
+        self.test_split_size = 0.3
         self.binary_mlp_properties = dict(
             training_properties=dict(
                 nb_epoch=5,

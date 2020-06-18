@@ -22,7 +22,8 @@ class TextMiningManager:
         self.mlpsm = MLPsManager(self.properties_manager)
 
     def _data_train_test_split(self, data):
-        training_data, test_data = train_test_split(data, test_size=0.3)
+        test_size = self.properties_manager.test_split_size
+        training_data, test_data = train_test_split(data, test_size=test_size)
         return training_data, test_data
 
     def _tfidf_transformation(self, training_data, test_data):
@@ -45,7 +46,6 @@ class TextMiningManager:
         self.X_test = self.test_features.toarray()
         print('X_train shape:', self.X_train.shape)
         print('X_test shape:', self.X_test.shape)
-        return True
 
     def _prepare_target_data(self, test_data, training_data, target_dimension: str):
         y_train = np.array(training_data[target_dimension])
@@ -65,12 +65,10 @@ class TextMiningManager:
         self._prepare_input_data(data)
         self._normalize_input_data()
         self.input_dim = self.X_train.shape[1]
-        return True
 
     def setup_for_target_dimension(self, target_dimension):
         self.nb_classes = self.test_data[target_dimension].unique()
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
-        return True
 
     def get_binary_mlp_predictions(self):
         self.mlpsm.build_binary_mlp(input_dim=self.input_dim, nb_classes=self.nb_classes)
