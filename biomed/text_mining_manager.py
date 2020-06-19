@@ -53,8 +53,8 @@ class TextMiningManager:
     def _prepare_target_data(self, test_data, training_data, target_dimension: str):
         y_train = np.array(training_data[target_dimension])
         y_test = np.array(test_data[target_dimension])
-        self.Y_train = tensorflow.keras.utils.to_categorical(y_train, np.amax(self.nb_classes_unique) + 1)
-        self.Y_test = tensorflow.keras.utils.to_categorical(y_test, np.amax(self.nb_classes_unique) + 1)
+        self.Y_train = tensorflow.keras.utils.to_categorical(y_train, np.amax(self.nb_classes_unique) + 2)
+        self.Y_test = tensorflow.keras.utils.to_categorical(y_test, np.amax(self.nb_classes_unique) + 2)
 
     def _normalize_input_data(self):
         scale = np.max(self.X_train)
