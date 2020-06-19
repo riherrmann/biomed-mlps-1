@@ -50,7 +50,7 @@ def test_setup_for_target_dimension(datadir):
     pm = PropertiesManager()
     sut = TextMiningManager(pm)
     sut.setup_for_input_data(data)
-    # sut.setup_for_target_dimension('is_cancer')
-    # assert sut.nb_classes == 2
-    sut.setup_for_target_dimension(data, 'doid')
+    sut.setup_for_target_dimension(data, 'is_cancer')
     assert sut.nb_classes == 2
+    sut.setup_for_target_dimension(data, 'doid')
+    assert sut.nb_classes == 8

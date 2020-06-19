@@ -22,6 +22,7 @@ class TextMiningManager:
         self.input_dim = None
         self.training_data = None
         self.test_data = None
+        self.nb_classes_unique = None
         self.mlpsm = MLPsManager(self.properties_manager)
 
     def _data_train_test_split(self, data):
@@ -53,11 +54,9 @@ class TextMiningManager:
     def _prepare_target_data(self, test_data, training_data, target_dimension: str):
         y_train = np.array(training_data[target_dimension])
         y_test = np.array(test_data[target_dimension])
-        # onehot = pd.get_dummies(data.PriceRange)
-        # target_labels = onehot.columns
-        # target = onehot.as_matrix()
-        self.Y_train = tensorflow.keras.utils.to_categorical(y_train, self.nb_classes)
-        self.Y_test = tensorflow.keras.utils.to_categorical(y_test, self.nb_classes)
+        self.Y_train = tensorflow.keras.utils.to_categorical(y_train, np.amax(self.nb_classes_unique) + 1)
+        self.Y_test = tensorflow.keras.utils.to_categorical(y_test, np.amax(self.nb_classes_unique) + 1)
+        print(self.Y_train)
 
     def _normalize_input_data(self):
         scale = np.max(self.X_train)
@@ -73,7 +72,8 @@ class TextMiningManager:
         self.input_dim = self.X_train.shape[1]
 
     def setup_for_target_dimension(self, data, target_dimension):
-        self.nb_classes = len(data[target_dimension].unique())
+        self.nb_classes_unique = data[target_dimension].unique()
+        self.nb_classes = len(self.nb_classes_unique)
         print('nb_classes', self.nb_classes)
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
 
