@@ -1,6 +1,5 @@
 import tensorflow
 import numpy as np
-import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
@@ -56,7 +55,6 @@ class TextMiningManager:
         y_test = np.array(test_data[target_dimension])
         self.Y_train = tensorflow.keras.utils.to_categorical(y_train, np.amax(self.nb_classes_unique) + 1)
         self.Y_test = tensorflow.keras.utils.to_categorical(y_test, np.amax(self.nb_classes_unique) + 1)
-        print(self.Y_train)
 
     def _normalize_input_data(self):
         scale = np.max(self.X_train)
@@ -74,7 +72,6 @@ class TextMiningManager:
     def setup_for_target_dimension(self, data, target_dimension):
         self.nb_classes_unique = data[target_dimension].unique()
         self.nb_classes = len(self.nb_classes_unique)
-        print('nb_classes', self.nb_classes)
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
 
     def get_binary_mlp_predictions(self):
