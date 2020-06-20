@@ -21,7 +21,7 @@ class MLPsManager:
         model.compile(loss=props['loss'], optimizer=props['optimizer'])
         self.model = model
 
-    def train_and_run_binary_mlp(self, X_train, Y_train, X_test):
+    def train_and_run_binary_mlp(self, X_train, X_test, Y_train):
         print("Training...")
         train_props = self.properties_manager.binary_mlp_properties['training_properties']
         self.model.fit(X_train, Y_train, nb_epoch=train_props['nb_epoch'], batch_size=train_props['batch_size'],

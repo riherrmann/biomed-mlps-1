@@ -83,7 +83,8 @@ class TextMiningManager:
 
     def get_binary_mlp_predictions(self):
         self.mlpsm.build_binary_mlp(input_dim=self.input_dim, nb_classes=self.nb_classes)
-        predictions = self.mlpsm.train_and_run_binary_mlp(X_train=self.X_train, Y_train=self.Y_train, X_test=self.X_test)
+        predictions = self.mlpsm.train_and_run_binary_mlp(X_train=self.X_train, X_test=self.X_test,
+                                                          Y_train=self.Y_train)
         return predictions
 
     def map_doid_values_to_sequential(self, y_data):
