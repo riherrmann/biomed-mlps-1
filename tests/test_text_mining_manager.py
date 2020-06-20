@@ -10,7 +10,7 @@ def test_train_test_split(datadir):
     training_data, test_data = sut._data_train_test_split(data)
     assert training_data.shape == (int(data.shape[0] * (1 - pm.test_size)), 5)
     assert test_data.shape == (int(data.shape[0] * pm.test_size), 5) \
-           or test_data.shape == (int(data.shape[0] * pm.test_size) + 1, 5)
+        or test_data.shape == (int(data.shape[0] * pm.test_size) + 1, 5)
 
 
 def test_tfidf_transformation(datadir):
