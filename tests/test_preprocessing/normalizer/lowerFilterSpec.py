@@ -1,7 +1,7 @@
 import os as OS
 import sys as Sys
 
-AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor' ) )
+AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor', 'normalizer' ) )
 if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
