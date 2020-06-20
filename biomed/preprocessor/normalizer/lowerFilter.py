@@ -1,5 +1,5 @@
-from filter import Filter
-from filter import FilterFactory
+from normalizer.filter import Filter
+from normalizer.filter import FilterFactory
 
 class LowerFilter( Filter ):
     def apply( self, Text: str ) -> str:

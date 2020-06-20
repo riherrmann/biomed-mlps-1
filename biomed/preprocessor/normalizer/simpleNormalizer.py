@@ -1,9 +1,9 @@
-from normalizer import Normalizer
-from normalizer import NormalizerFactory
-from stemFilter import StemFilter
-from stopWordsFilter import StopWordsFilter
-from lowerFilter import LowerFilter
-from punctuationFilter import PunctuationFilter
+from normalizer.normalizer import Normalizer
+from normalizer.normalizer import NormalizerFactory
+from normalizer.stemFilter import StemFilter
+from normalizer.stopWordsFilter import StopWordsFilter
+from normalizer.lowerFilter import LowerFilter
+from normalizer.punctuationFilter import PunctuationFilter
 from nltk import word_tokenize
 
 class SimpleNormalizer( Normalizer ):

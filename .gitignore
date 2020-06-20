@@ -2,3 +2,4 @@
 /.idea/*.xml
 !.idea/dictionaries/riherrmann.xml
 *.pyc
+*.swp

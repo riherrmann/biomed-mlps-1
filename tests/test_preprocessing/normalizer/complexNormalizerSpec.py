@@ -1,13 +1,13 @@
 import os as OS
 import sys as Sys
 
-AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor', 'normalizer' ) )
+AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor' ) )
 if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
 import unittest
-from complexNormalizer import ComplexNormalizer
-from normalizer import Normalizer
+from normalizer.complexNormalizer import ComplexNormalizer
+from normalizer.normalizer import Normalizer
 
 class ComplexNormalizerSpec( unittest.TestCase ):
 
@@ -29,9 +29,16 @@ class ComplexNormalizerSpec( unittest.TestCase ):
             MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "v" )
         )
 
+    def it_filters_adjectives_out( self ):
+        MyNormal = ComplexNormalizer.Factory.getInstance()
+        self.assertEqual(
+            [ "little" ],
+            MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "a" )
+        )
+
     def it_filters_mixed_out( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
-            [ "poney", "write", "text", "Bulloc" ],
+            [ "little", "poney", "write", "text", "Bulloc" ],
             MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "nv" )
         )

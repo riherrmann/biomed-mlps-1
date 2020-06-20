@@ -1,13 +1,13 @@
 import os as OS
 import sys as Sys
 
-AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor', 'normalizer' ) )
+AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor' ) )
 if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
 import unittest
-from punctuationFilter import PunctuationFilter
-from filter import Filter
+from normalizer.punctuationFilter import PunctuationFilter
+from normalizer.filter import Filter
 
 class PunctuationFilterSpec( unittest.TestCase ):
 

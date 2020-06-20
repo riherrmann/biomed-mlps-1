@@ -1,13 +1,13 @@
 import os as OS
 import sys as Sys
 
-AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor', 'normalizer' ) )
+AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor' ) )
 if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
 import unittest
-from stemFilter import StemFilter
-from filter import Filter
+from normalizer.stemFilter import StemFilter
+from normalizer.filter import Filter
 
 class StemFilterSpec( unittest.TestCase ):
 
