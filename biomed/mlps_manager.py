@@ -1,3 +1,4 @@
+import tensorflow
 from keras import Sequential
 from keras.layers import Dense, Activation, Dropout
 
@@ -19,6 +20,8 @@ class MLPsManager:
         model.add(Dense(nb_classes))
         model.add(Activation('softmax'))
         model.compile(loss=props['loss'], optimizer=props['optimizer'])
+        dot_img_file = 'model.png'
+        tensorflow.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
         self.model = model
 
     def train_and_run_binary_mlp(self, X_train, X_test, Y_train):
