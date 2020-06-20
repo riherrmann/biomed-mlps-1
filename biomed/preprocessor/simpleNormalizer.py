@@ -3,6 +3,7 @@ from normalizer import NormalizerFactory
 from stemFilter import StemFilter
 from stopWordsFilter import StopWordsFilter
 from lowerFilter import LowerFilter
+from punctuationFilter import PunctuationFilter
 from nltk import word_tokenize
 
 class SimpleNormalizer( Normalizer ):
@@ -35,6 +36,8 @@ class SimpleNormalizer( Normalizer ):
         if "s" in Flags:
             FilteredToken = self.__Filter[ "s" ].apply( FilteredToken )
 
+        FilteredToken = self.__Filter[ "*" ].apply( FilteredToken )
+
         return FilteredToken
 
     def __removeEmptyItems( self, Tokens: list, Counter: int ):
@@ -47,7 +50,8 @@ class SimpleNormalizer( Normalizer ):
         __ApplicableFilter = {
             "s": StemFilter.Factory.getInstance(),
             "w": StopWordsFilter.Factory.getInstance(),
-            "l": LowerFilter.Factory.getInstance()
+            "l": LowerFilter.Factory.getInstance(),
+            "*": PunctuationFilter.Factory.getInstance()
         }
 
         def getInstance() -> Normalizer:
