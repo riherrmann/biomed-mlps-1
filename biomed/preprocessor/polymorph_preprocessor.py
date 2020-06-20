@@ -59,7 +59,7 @@ class PolymorphPreprocessor( PreProcessor ):
         __Simple = SimpleNormalizer.Factory.getInstance()
         __SimpleFlags = [ "s", "l", "w" ]
         __Complex = ComplexNormalizer.Factory.getInstance()
-        __ComplexFlags = [ "n", "v" ]
+        __ComplexFlags = [ "n", "v", "a" ]
 
         def getInstance() -> PreProcessor:
             return PolymorphPreprocessor(
