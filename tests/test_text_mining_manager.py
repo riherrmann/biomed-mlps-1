@@ -1,3 +1,5 @@
+import numpy
+
 from biomed.file_handler import FileHandler
 from biomed.properties_manager import PropertiesManager
 from biomed.text_mining_manager import TextMiningManager
@@ -55,6 +57,7 @@ def test_setup_for_target_dimension(datadir):
     assert sut.nb_classes == 2
     sut.setup_for_target_dimension('doid')
     assert sut.nb_classes == 8
+    assert sut.Y_train.shape[1] == 8
     # numpy.save('tests/test_mlps_manager/X_train.npy', sut.X_train)
     # numpy.save('tests/test_mlps_manager/X_test.npy', sut.X_test)
     # numpy.save('tests/test_mlps_manager/Y_train.npy', sut.Y_train)

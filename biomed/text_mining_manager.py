@@ -57,9 +57,8 @@ class TextMiningManager:
         y_test = np.array(test_data[target_dimension])
         if target_dimension == 'doid':
             y_train = self.map_doid_values_to_sequential(y_train)
-            y_test = self.map_doid_values_to_sequential(y_test)
-        self.Y_train = tensorflow.keras.utils.to_categorical(y_train, len(self.doid_unique) + 1)
-        self.Y_test = tensorflow.keras.utils.to_categorical(y_test, len(self.doid_unique) + 1)
+            self.Y_test = self.map_doid_values_to_sequential(y_test)
+        self.Y_train = tensorflow.keras.utils.to_categorical(y_train, len(self.doid_unique))
 
     def _normalize_input_data(self):
         scale = np.max(self.X_train)
