@@ -21,7 +21,7 @@ class TextMiningManager:
         self.input_dim = None
         self.training_data = None
         self.test_data = None
-        self.nb_classes_unique = None
+        self.doid_unique = None
         self.mlpsm = MLPsManager(self.properties_manager)
 
     def _data_train_test_split(self, data):
@@ -44,6 +44,8 @@ class TextMiningManager:
     def _prepare_input_data(self, data):
         self.training_data, self.test_data = self._data_train_test_split(data)
         print("test_data shape", self.test_data.shape)
+        self.doid_unique = data['doid'].unique()
+        self.doid_unique.sort()
         self.training_features, self.test_features = self._tfidf_transformation(self.training_data, self.test_data)
         self.X_train = self.training_features.toarray()
         self.X_test = self.test_features.toarray()
@@ -53,8 +55,11 @@ class TextMiningManager:
     def _prepare_target_data(self, test_data, training_data, target_dimension: str):
         y_train = np.array(training_data[target_dimension])
         y_test = np.array(test_data[target_dimension])
-        self.Y_train = tensorflow.keras.utils.to_categorical(y_train, np.amax(self.nb_classes_unique) + 2)
-        self.Y_test = tensorflow.keras.utils.to_categorical(y_test, np.amax(self.nb_classes_unique) + 2)
+        if target_dimension == 'doid':
+            y_train = self.map_doid_values_to_sequential(y_train)
+            y_test = self.map_doid_values_to_sequential(y_test)
+        self.Y_train = tensorflow.keras.utils.to_categorical(y_train, len(self.doid_unique) + 1)
+        self.Y_test = tensorflow.keras.utils.to_categorical(y_test, len(self.doid_unique) + 1)
 
     def _normalize_input_data(self):
         scale = np.max(self.X_train)
@@ -69,12 +74,28 @@ class TextMiningManager:
         self._normalize_input_data()
         self.input_dim = self.X_train.shape[1]
 
-    def setup_for_target_dimension(self, data, target_dimension):
-        self.nb_classes_unique = data[target_dimension].unique()
-        self.nb_classes = len(self.nb_classes_unique)
+    def setup_for_target_dimension(self, target_dimension):
+        if target_dimension == 'doid':
+            self.nb_classes = len(self.doid_unique)
+        else:
+            self.nb_classes = 2
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
 
     def get_binary_mlp_predictions(self):
         self.mlpsm.build_binary_mlp(input_dim=self.input_dim, nb_classes=self.nb_classes)
         predictions = self.mlpsm.train_and_run_binary_mlp(X_train=self.X_train, Y_train=self.Y_train, X_test=self.X_test)
         return predictions
+
+    def map_doid_values_to_sequential(self, y_data):
+        output = []
+        for input_doid in y_data:
+            for target_doid, input_doid_mapping in enumerate(self.doid_unique):
+                if input_doid == input_doid_mapping:
+                    output.append(target_doid)
+        return output
+
+    def map_doid_values_to_nonsequential(self, y_data):
+        output = []
+        for seq_doid in y_data:
+            output.append(self.doid_unique[seq_doid])
+        return output
