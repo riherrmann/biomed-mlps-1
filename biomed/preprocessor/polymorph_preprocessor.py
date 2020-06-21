@@ -25,7 +25,7 @@ class PolymorphPreprocessor( PreProcessor ):
 
     def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
         return self.__extractText(
-            frame[ "pmid" ],
+            list( frame[ "pmid" ] ),
             list( frame[ "text" ] ),
             flags
         )
