@@ -9,6 +9,8 @@ deps/clean:
 
 deps:
 	@pipenv install
+	pipenv run python -m setup
 
 deps/dev:
 	@pipenv install --dev
+	pipenv run python -m setup
