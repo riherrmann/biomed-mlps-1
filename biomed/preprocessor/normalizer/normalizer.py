@@ -9,8 +9,11 @@ class abstractstatic(staticmethod):
 
 class Normalizer( ABC ):
     @abstractmethod
-    def apply( self, Token: str, Flags: list ) -> list:
+    def apply( self, Token: str, Flags: list ) -> str:
         pass
+
+    def _reassemble( self, Text: list ) -> str:
+        return " ".join( Text )
 
 class NormalizerFactory( ABC ):
     @abstractstatic

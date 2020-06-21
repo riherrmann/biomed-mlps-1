@@ -10,8 +10,10 @@ class SimpleNormalizer( Normalizer ):
     def __init__( self, Filter ):
         self.__Filter = Filter
 
-    def apply( self, Text: str, Flags: str ) -> list:
-        return self.__applyFilters( word_tokenize( Text ), Flags )
+    def apply( self, Text: str, Flags: str ) -> str:
+        return self._reassemble(
+            self.__applyFilters( word_tokenize( Text ), Flags )
+        )
 
     def __applyFilters( self, Tokens: list, Flags: str ) -> list:
         Purge = 0
@@ -44,7 +46,6 @@ class SimpleNormalizer( Normalizer ):
         while Counter > 0:
             Tokens.remove( '' )
             Counter -= 1
-
 
     class Factory( NormalizerFactory ):
         __ApplicableFilter = {

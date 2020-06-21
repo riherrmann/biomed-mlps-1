@@ -18,27 +18,27 @@ class ComplexNormalizerSpec( unittest.TestCase ):
     def it_filters_nouns_out( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
-            [ "poney", "text", "Bulloc" ],
+            "poney text Bulloc",
             MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "n" )
         )
 
     def it_filters_verbs_out( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
-            [ "write" ],
+            "write",
             MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "v" )
         )
 
     def it_filters_adjectives_out( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
-            [ "little" ],
+            "little",
             MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "a" )
         )
 
     def it_filters_mixed_out( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
-            [ "little", "poney", "write", "text", "Bulloc" ],
+            "little poney write text Bulloc",
             MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "nv" )
         )

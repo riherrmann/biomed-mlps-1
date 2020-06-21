@@ -6,8 +6,10 @@ class ComplexNormalizer( Normalizer ):
     def __init__( self, Pipe ):
         self.__Pipe = Pipe
 
-    def apply( self, Text: str, Flags: str ) -> list:
-        return self.__filter( self.__Pipe( Text ).sentences[ 0 ].words, Flags )
+    def apply( self, Text: str, Flags: str ) -> str:
+        return self._reassemble(
+            self.__filter( self.__Pipe( Text ).sentences[ 0 ].words, Flags )
+        )
 
     def __filter( self, Words: list, Flags ) -> list:
         Result = list()
