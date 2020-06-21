@@ -14,7 +14,8 @@ if __name__ == '__main__':
     )
     print('Setup for input data')
     tmm.setup_for_input_data(training_data)
-    target_dimension = 'doid'
+    # target_dimension = 'doid'
+    target_dimension = 'is_cancer'
     print('Setup for target dimension', target_dimension)
     tmm.setup_for_target_dimension(target_dimension)
     print('Build MLP and get predictions')
