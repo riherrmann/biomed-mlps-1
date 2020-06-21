@@ -51,6 +51,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__FileCache = StubbedCache( self.__FakeCache2 )
 
         self.__Prepro = PolymorphPreprocessor(
+            1,
             self.__FileCache,
             self.__Shared,
             self.__Simple,
@@ -283,3 +284,40 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             TestData[ "text" ],
             self.__FakeCache2[ "a88cc70d078ce3d60e7b51757cda82c7" ]
         )
+
+    def it_runs_in_paralell( self ):
+        TestData = {
+            'pmid': [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ],
+            'text': [
+                "My little cute Poney is a Poney",
+                "My little farm is cute.",
+                "My little programm is a application and runs and runs and runs.",
+                "My little farm is cute.",
+                "My little cute Poney is a Poney",
+                "My little farm is cute.",
+                "My little programm is a application and runs and runs and runs.",
+                "My little cute Poney is a Poney",
+                "My little farm is cute.",
+                "My little programm is a application and runs and runs and runs.",
+                "My little farm is cute.",
+                "My little cute Poney is a Poney",
+            ]
+        }
+
+        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+
+        self.__Prepro = PolymorphPreprocessor(
+            3,
+            self.__FileCache,
+            self.__Shared,
+            self.__Simple,
+            self.__SimpleFlags,
+            self.__Complex,
+            self.__ComplexFlags
+        )
+
+        self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
+
+        self.assertTrue( self.__Complex.WasCalled )
+        self.assertTrue( self.__Simple.WasCalled )
+        # TODO

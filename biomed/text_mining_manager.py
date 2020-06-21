@@ -38,9 +38,9 @@ class TextMiningManager:
                                      sublinear_tf=properties['sublinear_tf'])
 
         preprocessed_training_data = self.__preprocess_text(training_data)
-        np.save('tmp/preprocessed_training_data.npy', preprocessed_training_data)
+        #np.save('tmp/preprocessed_training_data.npy', preprocessed_training_data)
         preprocessed_test_data = self.__preprocess_text(test_data)
-        np.save('tmp/preprocessed_test_data.npy', preprocessed_test_data)
+        #np.save('tmp/preprocessed_test_data.npy', preprocessed_test_data)
 
         # preprocessed_training_data = np.load('tmp/preprocessed_training_data.npy')
         # preprocessed_test_data = np.load('tmp/preprocessed_test_data.npy')

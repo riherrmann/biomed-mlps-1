@@ -10,10 +10,13 @@ from biomed.properties_manager import PropertiesManager
 from pandas import DataFrame
 from nltk import sent_tokenize
 from hashlib import md5
+from multiprocessing import Pool
+
 
 class PolymorphPreprocessor( PreProcessor ):
     def __init__(
         self,
+        Workers,
         AlreadyProcessed: Cache,
         Shared: Cache,
         Simple: Normalizer,
@@ -23,6 +26,10 @@ class PolymorphPreprocessor( PreProcessor ):
     ):
         self.__AlreadyProcessed = AlreadyProcessed
         self.__SharedMemory = Shared
+        Workers = max( Workers, 1 )
+        self.__ForkIt = False if Workers == 1 else True
+        self.__Workers = Workers
+        self.__Cache = Cache
         self.__SimpleFlags = SimpleFlags
         self.__Simple = Simple
         self.__ComplexFlags = ComplexFlags
@@ -48,7 +55,7 @@ class PolymorphPreprocessor( PreProcessor ):
         else:
             return self.__cacheAndReturn(
                 SetId,
-                self.__extractText( Pmid, Text, Flags )
+                self.__runInParalellOrSequence( Pmid, Text, Flags )
             )
 
     def __computeSetId( self, Pmid: list, Flags: str ) -> str:
@@ -76,13 +83,64 @@ class PolymorphPreprocessor( PreProcessor ):
 
         return Text
 
+    def __runInParalellOrSequence( self, Pmid: list, Text: list, Flags: str ) -> list:
+        if not self.__ForkIt:
+            return self.__extractText(
+                Pmid,
+                Text,
+                Flags
+            )
+        else:
+            return self.__runInParalell(
+                Pmid,
+                Text,
+                Flags
+            )
+
+    def __runInParalell( self, Pmid: list, Text: list, Flags: str ) -> list:
+        with Pool( self.__Workers ) as Runner:
+            Runner.map(
+                PolymorphPreprocessor._run,
+                self.__splitInputs( Pmid, Text, Flags )
+            )
+
+        return self.__extractText(
+            Pmid,
+            Text,
+            Flags
+        )
+
+    @staticmethod
+    def _run( Paired: tuple ):
+        This = Paired[ 3 ]
+        This.__multiExtractText( Paired )
+        return ""
+
+    def __multiExtractText( self, Paired: tuple ):
+        CacheKey = self.__createCacheKey( Paired[ 0 ], Paired[ 2 ] )
+        print( 'Preprocess {}'.format( Paired[ 0 ] ) )
+
+        if not self.__Cache.has( CacheKey ):
+            self.__applyTextNormalizerAndCache( CacheKey, Paired[ 1 ], Paired[ 2 ] )
+
+    def __splitInputs( self, Pmid: list, Text: list, Flags: str ) -> list:
+        PairedValues = list()
+
+        for Index in range( 0, len( Pmid ) ):
+            PairedValues.append( ( Pmid[ Index ], Text[ Index ], Flags, self ) )
+
+        return PairedValues
+
     def __useCacheOrNormalizer( self, Pmid: int, Text: str, Flags: str ) -> str:
-        Flags = self.__toSortedString( Flags )
-        CacheKey = "{}{}".format( Pmid, Flags )
+        CacheKey = self.__createCacheKey( Pmid, Flags )
         if self.__SharedMemory.has( CacheKey ):
             return self.__SharedMemory.get( CacheKey )
         else:
             return self.__applyTextNormalizerAndCache( CacheKey, Text, Flags )
+
+    def __createCacheKey( self, Pmid: int, Flags: str ) -> str:
+        Flags = self.__toSortedString( Flags )
+        return "{}{}".format( Pmid, Flags )
 
     def __toSortedString( self, Str: str ) -> str:
         Tmp = list( Str )
@@ -119,14 +177,14 @@ class PolymorphPreprocessor( PreProcessor ):
     def __isApplicable( self, Flags: str ) -> bool:
         return self.__useSimple( Flags ) or self.__useComplex( Flags )
 
-    def __useSimple( self, Flags: list ) -> bool:
+    def __useSimple( self, Flags: str ) -> bool:
         for Flag in Flags:
             if Flag in self.__SimpleFlags:
                 return True
         else:
             return False
 
-    def __useComplex( self, Flags: list ) -> bool:
+    def __useComplex( self, Flags: str ) -> bool:
         for Flag in Flags:
             if Flag in self.__ComplexFlags:
                 return True
@@ -146,6 +204,7 @@ class PolymorphPreprocessor( PreProcessor ):
         @staticmethod
         def getInstance( Properties: PropertiesManager ) -> PreProcessor:
             return PolymorphPreprocessor(
+                Properties.workers,
                 NumpyArrayFileCache.Factory.getInstance(
                     Properties.cache_dir
                 ),

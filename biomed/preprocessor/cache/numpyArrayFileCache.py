@@ -28,11 +28,12 @@ class NumpyArrayFileCache( Cache ):
 
     def set( self, Key: str, Value ):
         File = self.__keyToFileName( Key )
+        self.__Lock.acquire()
         numpy.save( File, Value )
+        self.__Lock.release()
 
     class Factory( FileCacheFactory ):
         __Manager = Manager()
-
 
         @staticmethod
         def __checkDir( Dir, Readable=True, Writeable=True ):
