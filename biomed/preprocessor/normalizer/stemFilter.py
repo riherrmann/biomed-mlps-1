@@ -11,6 +11,6 @@ class StemFilter( Filter ):
 
     class Factory( FilterFactory ):
         __Stemmer = PorterStemmer()
-
+        @staticmethod
         def getInstance() -> Filter:
             return StemFilter( StemFilter.Factory.__Stemmer )

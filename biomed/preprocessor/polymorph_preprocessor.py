@@ -4,6 +4,7 @@ from nltk import sent_tokenize
 from normalizer.normalizer import Normalizer
 from normalizer.simpleNormalizer import SimpleNormalizer
 from normalizer.complexNormalizer import ComplexNormalizer
+from pandas import DataFrame
 
 class PolymorphPreprocessor( PreProcessor ):
     def __init__(
@@ -18,8 +19,21 @@ class PolymorphPreprocessor( PreProcessor ):
         self.__ComplexFlags = ComplexFlags
         self.__Complex = Complex
 
-    def preprocess_text_corpus( self, text: str, flags: str ) -> str:
-        return self.__reassemble( self.__normalize( sent_tokenize( text ), flags ) )
+    def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
+        return self.__extractText( list( frame[ "text" ] ), flags )
+
+    def __extractText( self, Text: list, Flags: str ) -> list:
+        for Index in range( 0, len( Text ) ):
+            Text[ Index ] = self.__reassemble(
+                self.__normalize(
+                    sent_tokenize(
+                        Text[ Index ]
+                    ),
+                    Flags
+                )
+            )
+
+        return Text
 
     def __normalize( self, Sentences: list, Flags: str ) -> list:
         ParsedSentences = list()
@@ -37,6 +51,10 @@ class PolymorphPreprocessor( PreProcessor ):
             ParsedSentence = self.__reassemble( self.__Simple.apply( ParsedSentence, Flags ) )
 
         return ParsedSentence
+
+    def __isApplicable( self, Flags: str ) -> bool:
+        return self.__useSimple( Flags ) or self.__useComplex( Flags )
+
 
     def __useSimple( self, Flags: list ) -> bool:
         for Flag in Flags:
@@ -61,6 +79,7 @@ class PolymorphPreprocessor( PreProcessor ):
         __Complex = ComplexNormalizer.Factory.getInstance()
         __ComplexFlags = [ "n", "v", "a" ]
 
+        @staticmethod
         def getInstance() -> PreProcessor:
             return PolymorphPreprocessor(
                 PolymorphPreprocessor.Factory.__Simple,

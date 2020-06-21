@@ -11,7 +11,6 @@ class ComplexNormalizer( Normalizer ):
 
     def __filter( self, Words: list, Flags ) -> list:
         Result = list()
-        print( Words )
         for Word in Words:
             if "n" in Flags:
                 self.__appendNouns( Result, Word )
@@ -43,6 +42,6 @@ class ComplexNormalizer( Normalizer ):
             lang='en',
             processors='tokenize,mwt,pos,lemma,ner'
         )
-
+        @staticmethod
         def getInstance() -> Normalizer:
             return ComplexNormalizer( ComplexNormalizer.Factory.__Pipeline )

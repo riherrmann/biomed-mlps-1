@@ -53,6 +53,6 @@ class SimpleNormalizer( Normalizer ):
             "l": LowerFilter.Factory.getInstance(),
             "*": PunctuationFilter.Factory.getInstance()
         }
-
+        @staticmethod
         def getInstance() -> Normalizer:
             return SimpleNormalizer( SimpleNormalizer.Factory.__ApplicableFilter )

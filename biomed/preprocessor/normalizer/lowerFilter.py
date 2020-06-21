@@ -6,5 +6,6 @@ class LowerFilter( Filter ):
         return Text.lower()
 
     class Factory( FilterFactory ):
+        @staticmethod
         def getInstance() -> Filter:
             return LowerFilter()

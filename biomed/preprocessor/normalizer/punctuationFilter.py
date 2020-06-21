@@ -11,6 +11,6 @@ class PunctuationFilter( Filter ):
 
     class Factory( FilterFactory ):
         __Transition = str.maketrans( '', '', string.punctuation )
-
+        @staticmethod
         def getInstance() -> Filter:
             return PunctuationFilter( PunctuationFilter.Factory.__Transition )

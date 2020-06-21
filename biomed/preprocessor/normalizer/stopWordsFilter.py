@@ -12,6 +12,6 @@ class StopWordsFilter( Filter ):
     class Factory( FilterFactory ):
         #We can customize that
         __Words = stopwords.words( 'english' )
-
+        @staticmethod
         def getInstance() -> Filter:
             return StopWordsFilter( StopWordsFilter.Factory.__Words )
