@@ -32,6 +32,7 @@ class PolymorphPreprocessor( PreProcessor ):
 
     def __extractText( self, Pmid: list, Text: list, Flags: str ) -> list:
         for Index in range( 0, len( Text ) ):
+            print('Pmid[ Index ]', Pmid[ Index ])
             Text[ Index ] = self.__useCacheOrNormalizer(
                 Pmid[ Index ],
                 Text[ Index ],

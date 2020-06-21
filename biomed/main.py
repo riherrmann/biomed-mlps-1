@@ -12,8 +12,12 @@ if __name__ == '__main__':
         pm,
         PolymorphPreprocessor.Factory.getInstance()
     )
+    print('Setup for input data')
     tmm.setup_for_input_data(training_data)
-    tmm.setup_for_target_dimension('is_cancer')
+    target_dimension = 'doid'
+    print('Setup for target dimension', target_dimension)
+    tmm.setup_for_target_dimension(target_dimension)
+    print('Build MLP and get predictions')
     preds = tmm.get_binary_mlp_predictions()
     print(preds)
     # for row in training_data['pmid']:

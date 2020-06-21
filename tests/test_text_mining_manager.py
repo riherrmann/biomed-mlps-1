@@ -4,15 +4,17 @@ from biomed.text_mining_manager import TextMiningManager
 from biomed.preprocessor.pre_processor import PreProcessor
 from pandas import DataFrame
 
-class StubbedPreprocessor( PreProcessor ):
-    def __init__( self ):
+
+class StubbedPreprocessor(PreProcessor):
+    def __init__(self):
         self.WasCalled = False
         self.LastFlags = ""
 
-    def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
+    def preprocess_text_corpus(self, frame: DataFrame, flags: str) -> list:
         self.WasCalled = True
         self.LastFlags = flags
-        return frame[ "text" ]
+        return frame["text"]
+
 
 def test_train_test_split(datadir):
     data = FileHandler().read_tsv_pandas_data_structure(datadir / "test_train.tsv")
@@ -24,6 +26,7 @@ def test_train_test_split(datadir):
     assert test_data.shape == (int(data.shape[0] * pm.test_size), 5) \
         or test_data.shape == (int(data.shape[0] * pm.test_size) + 1, 5)
 
+
 def test_preprocessor(datadir):
     data = FileHandler().read_tsv_pandas_data_structure(datadir / "test_train.tsv")
     pm = PropertiesManager()
@@ -32,9 +35,9 @@ def test_preprocessor(datadir):
     sut = TextMiningManager(pm, pp)
     training_data, test_data = sut._data_train_test_split(data)
     training_features, test_features = sut._tfidf_transformation(training_data, test_data)
-
     assert pp.WasCalled == True
     assert pp.LastFlags == pm.preprocessor_variant
+
 
 def test_tfidf_transformation(datadir):
     data = FileHandler().read_tsv_pandas_data_structure(datadir / "test_train.tsv")
@@ -67,7 +70,7 @@ def test_prepare_input_data(datadir):
     sut._prepare_input_data(data)
     max_features = pm.tfidf_transformation_properties['max_features']
     assert int(data.shape[0] * test_size) <= sut.X_test.shape[0] <= int(data.shape[0] * test_size) + 1 and \
-        sut.X_test.shape[1] <= max_features
+           sut.X_test.shape[1] <= max_features
     assert int(data.shape[0] * (1 - test_size)) <= sut.X_train.shape[0] <= int(
         data.shape[0] * (1 - test_size)) + 1 and sut.X_train.shape[1] <= max_features
 

@@ -27,8 +27,13 @@ class MLPsManager:
     def train_and_run_binary_mlp(self, X_train, X_test, Y_train):
         print("Training...")
         train_props = self.properties_manager.binary_mlp_properties['training_properties']
-        self.model.fit(X_train, Y_train, epochs=train_props['nb_epoch'], batch_size=train_props['batch_size'],
-                       validation_split=train_props['validation_split'] )
+        self.model.fit(x=X_train, y=Y_train,
+                       epochs=train_props['epochs'],
+                       batch_size=train_props['batch_size'],
+                       validation_split=train_props['validation_split'],
+                       worker=self.properties_manager.workers,
+                       use_multiprocessing=True if self.properties_manager.workers > 1 else False
+                       )
 
         print("Generating test predictions...")
         pred_props = self.properties_manager.binary_mlp_properties['prediction_properties']

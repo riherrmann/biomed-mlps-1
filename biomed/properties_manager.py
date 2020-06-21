@@ -11,10 +11,9 @@ class PropertiesManager:
         self.test_split_size = 0.3
         self.binary_mlp_properties = dict(
             training_properties=dict(
-                nb_epoch=5,
+                epochs=5,
                 batch_size=16,
                 validation_split=0.1,
-                show_accuracy=True,
             ),
             building_properties=dict(
                 loss='categorical_crossentropy',
@@ -24,4 +23,5 @@ class PropertiesManager:
                 verbose=0,
             )
         )
-        self.preprocessor_variant = "avn"
+        self.workers = 3
+        self.preprocessor_variant = "swl"
