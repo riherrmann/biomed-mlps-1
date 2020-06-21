@@ -1,38 +1,73 @@
 from biomed.preprocessor.pre_processor import PreProcessor
 from biomed.preprocessor.pre_processor import PreProcessorFactory
-from nltk import sent_tokenize
 from biomed.preprocessor.normalizer.normalizer import Normalizer
 from biomed.preprocessor.normalizer.simpleNormalizer import SimpleNormalizer
 from biomed.preprocessor.normalizer.complexNormalizer import ComplexNormalizer
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.cache.sharedMemoryCache import SharedMemoryCache
+from biomed.preprocessor.cache.numpyArrayFileCache import NumpyArrayFileCache
+from biomed.properties_manager import PropertiesManager
 from pandas import DataFrame
+from nltk import sent_tokenize
+from hashlib import md5
 
 class PolymorphPreprocessor( PreProcessor ):
     def __init__(
         self,
-        Cache: Cache,
+        AlreadyProcessed: Cache,
+        Shared: Cache,
         Simple: Normalizer,
         SimpleFlags: list,
         Complex: Normalizer,
         ComplexFlags: list
     ):
-        self.__Cache = Cache
+        self.__AlreadyProcessed = AlreadyProcessed
+        self.__SharedMemory = Shared
         self.__SimpleFlags = SimpleFlags
         self.__Simple = Simple
         self.__ComplexFlags = ComplexFlags
         self.__Complex = Complex
 
     def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
-        return self.__extractText(
+        return self.__reflectOrExtract(
             list( frame[ "pmid" ] ),
             list( frame[ "text" ] ),
             flags
         )
 
+    def __reflectOrExtract( self, Pmid: list, Text: list, Flags: str ) -> list:
+        if not self.__isApplicable( Flags ):
+            return Text
+        else:
+            return self.__getCachedListOrCompute( Pmid, Text, Flags )
+
+    def __getCachedListOrCompute( self, Pmid: list, Text: list, Flags: str ) -> list:
+        SetId = self.__computeSetId( Pmid, Flags )
+        if self.__AlreadyProcessed.has( SetId ):
+            return self.__AlreadyProcessed.get( SetId )
+        else:
+            return self.__cacheAndReturn(
+                SetId,
+                self.__extractText( Pmid, Text, Flags )
+            )
+
+    def __computeSetId( self, Pmid: list, Flags: str ) -> str:
+        Pmid = list( Pmid ) # note we have to copy it regarding to not destroy the order
+        Pmid.sort()
+        Pmid = [ str(integer) for integer in Pmid ]
+        Flags = self.__toSortedString( Flags )
+        SetId = md5()
+        SetId.update( "-".join( Pmid ).encode( 'utf-8' ) )
+        SetId.update( "-{}".format( Flags ).encode( 'utf-8' ) )
+        return str( SetId.hexdigest() )
+
+    def __cacheAndReturn( self, SetId: str, ProcessedText: list ) -> list:
+        self.__AlreadyProcessed.set( SetId, ProcessedText )
+        return ProcessedText
+
     def __extractText( self, Pmid: list, Text: list, Flags: str ) -> list:
         for Index in range( 0, len( Text ) ):
-            print('Pmid[ Index ]', Pmid[ Index ])
+            print( 'Preprocess {}'.format( Pmid[ Index ] ) )
             Text[ Index ] = self.__useCacheOrNormalizer(
                 Pmid[ Index ],
                 Text[ Index ],
@@ -44,8 +79,8 @@ class PolymorphPreprocessor( PreProcessor ):
     def __useCacheOrNormalizer( self, Pmid: int, Text: str, Flags: str ) -> str:
         Flags = self.__toSortedString( Flags )
         CacheKey = "{}{}".format( Pmid, Flags )
-        if self.__Cache.has( CacheKey ):
-            return self.__Cache.get( CacheKey )
+        if self.__SharedMemory.has( CacheKey ):
+            return self.__SharedMemory.get( CacheKey )
         else:
             return self.__applyTextNormalizerAndCache( CacheKey, Text, Flags )
 
@@ -56,7 +91,7 @@ class PolymorphPreprocessor( PreProcessor ):
 
     def __applyTextNormalizerAndCache( self, CacheKey: str, Text: str, Flags: str ) -> str:
         Result = self.__applyTextNormalizer( Text, Flags )
-        self.__Cache.set( CacheKey, Result )
+        self.__SharedMemory.set( CacheKey, Result )
         return Result
 
     def __applyTextNormalizer( self, Text: str, Flags: str ) -> str:
@@ -84,7 +119,6 @@ class PolymorphPreprocessor( PreProcessor ):
     def __isApplicable( self, Flags: str ) -> bool:
         return self.__useSimple( Flags ) or self.__useComplex( Flags )
 
-
     def __useSimple( self, Flags: list ) -> bool:
         for Flag in Flags:
             if Flag in self.__SimpleFlags:
@@ -110,8 +144,11 @@ class PolymorphPreprocessor( PreProcessor ):
         __DistrubutedCache = SharedMemoryCache.Factory.getInstance()
 
         @staticmethod
-        def getInstance() -> PreProcessor:
+        def getInstance( Properties: PropertiesManager ) -> PreProcessor:
             return PolymorphPreprocessor(
+                NumpyArrayFileCache.Factory.getInstance(
+                    Properties.cache_dir
+                ),
                 PolymorphPreprocessor.Factory.__DistrubutedCache,
                 PolymorphPreprocessor.Factory.__Simple,
                 PolymorphPreprocessor.Factory.__SimpleFlags,
