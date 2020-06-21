@@ -1,5 +1,5 @@
-from normalizer.normalizer import Normalizer
-from normalizer.normalizer import NormalizerFactory
+from biomed.preprocessor.normalizer.normalizer import Normalizer
+from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 import stanza
 
 class ComplexNormalizer( Normalizer ):

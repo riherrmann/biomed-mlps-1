@@ -1,13 +1,13 @@
 import os as OS
 import sys as Sys
 
-AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor' ) )
+AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..' ) )
 if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
 import unittest
-from normalizer.complexNormalizer import ComplexNormalizer
-from normalizer.normalizer import Normalizer
+from biomed.preprocessor.normalizer.complexNormalizer import ComplexNormalizer
+from biomed.preprocessor.normalizer.normalizer import Normalizer
 
 class ComplexNormalizerSpec( unittest.TestCase ):
 

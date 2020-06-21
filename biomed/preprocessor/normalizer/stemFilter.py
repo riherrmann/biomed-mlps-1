@@ -1,5 +1,5 @@
-from normalizer.filter import Filter
-from normalizer.filter import FilterFactory
+from biomed.preprocessor.normalizer.filter import Filter
+from biomed.preprocessor.normalizer.filter import FilterFactory
 from nltk.stem import PorterStemmer
 
 class StemFilter( Filter ):

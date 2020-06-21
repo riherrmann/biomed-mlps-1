@@ -3,13 +3,15 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
-
+from pandas import DataFrame
+from biomed.preprocessor.pre_processor import PreProcessor
 from biomed.mlps_manager import MLPsManager
 
 
 class TextMiningManager:
-    def __init__(self, properties_manager):
+    def __init__(self, properties_manager, preprocessor: PreProcessor):
         self.properties_manager = properties_manager
+        self.__preprocessor = preprocessor
         self.batch_size = None
         self.nb_classes = None
         self.Y_train = None
@@ -35,11 +37,20 @@ class TextMiningManager:
                                      max_features=properties['max_features'], ngram_range=properties['ngram_range'],
                                      sublinear_tf=properties['sublinear_tf'])
 
-        vectorizer = vectorizer.fit(training_data['text'])
-        training_features = vectorizer.transform(training_data['text'])
+        preprocessed_training_data = self.__preprocess_text( training_data )
+        preprocessed_test_data = self.__preprocess_text( test_data )
 
-        test_features = vectorizer.transform(test_data['text'])
+        vectorizer = vectorizer.fit( preprocessed_training_data )
+        training_features = vectorizer.transform( preprocessed_training_data )
+
+        test_features = vectorizer.transform( preprocessed_test_data )
         return training_features, test_features
+
+    def __preprocess_text( self, data: DataFrame ) -> list:
+        return self.__preprocessor.preprocess_text_corpus(
+            data,
+            self.properties_manager.preprocessor_variant
+        )
 
     def _prepare_input_data(self, data):
         self.training_data, self.test_data = self._data_train_test_split(data)

@@ -1,9 +1,9 @@
-from normalizer.normalizer import Normalizer
-from normalizer.normalizer import NormalizerFactory
-from normalizer.stemFilter import StemFilter
-from normalizer.stopWordsFilter import StopWordsFilter
-from normalizer.lowerFilter import LowerFilter
-from normalizer.punctuationFilter import PunctuationFilter
+from biomed.preprocessor.normalizer.normalizer import Normalizer
+from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
+from biomed.preprocessor.normalizer.stemFilter import StemFilter
+from biomed.preprocessor.normalizer.stopWordsFilter import StopWordsFilter
+from biomed.preprocessor.normalizer.lowerFilter import LowerFilter
+from biomed.preprocessor.normalizer.punctuationFilter import PunctuationFilter
 from nltk import word_tokenize
 
 class SimpleNormalizer( Normalizer ):

@@ -1,15 +1,15 @@
 import os as OS
 import sys as Sys
 
-AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', 'biomed', 'preprocessor' ) )
+AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', ) )
 if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
 import unittest
-from normalizer.normalizer import Normalizer
-from cache.cache import Cache
-from polymorph_preprocessor import PolymorphPreprocessor
-from pre_processor import PreProcessor
+from biomed.preprocessor.normalizer.normalizer import Normalizer
+from biomed.preprocessor.cache.cache import Cache
+from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
+from biomed.preprocessor.pre_processor import PreProcessor
 from pandas import DataFrame
 
 class StubbedNormalizer( Normalizer ):

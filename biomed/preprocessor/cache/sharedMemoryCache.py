@@ -1,5 +1,5 @@
-from cache.cache import Cache
-from cache.cache import CacheFactory
+from biomed.preprocessor.cache.cache import Cache
+from biomed.preprocessor.cache.cache import CacheFactory
 from multiprocessing import Manager, Lock
 
 class SharedMemoryCache( Cache ):

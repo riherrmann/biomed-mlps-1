@@ -1,13 +1,13 @@
 import os as OS
 import sys as Sys
 
-AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..', 'biomed', 'preprocessor' ) )
+AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..' ) )
 if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
 import unittest
-from cache.cache import Cache
-from cache.sharedMemoryCache import SharedMemoryCache
+from biomed.preprocessor.cache.cache import Cache
+from biomed.preprocessor.cache.sharedMemoryCache import SharedMemoryCache
 from multiprocessing import Process, Lock
 
 class SharedMemoryCacheSpec( unittest.TestCase ):
