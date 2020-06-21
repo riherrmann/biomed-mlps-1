@@ -24,3 +24,4 @@ class PropertiesManager:
                 verbose=0,
             )
         )
+        self.preprocessor_variant = "avn"
