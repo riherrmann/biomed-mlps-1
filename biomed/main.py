@@ -20,5 +20,7 @@ if __name__ == '__main__':
     print('Build MLP and get predictions')
     preds = tmm.get_binary_mlp_predictions()
     print(preds)
-    # for row in training_data['pmid']:
-    #     print(row)
+    print('number of cancer predictions found:', len([x for x in preds if x != 0]))
+    for x in preds:
+        if x != 0:
+            print('cancer found:', x)

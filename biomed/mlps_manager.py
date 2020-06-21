@@ -1,6 +1,7 @@
 import tensorflow
 from keras import Sequential
 from keras.layers import Dense, Activation, Dropout
+import numpy as np
 
 
 class MLPsManager:
@@ -31,11 +32,15 @@ class MLPsManager:
                        epochs=train_props['epochs'],
                        batch_size=train_props['batch_size'],
                        validation_split=train_props['validation_split'],
-                       worker=self.properties_manager.workers,
+                       workers=self.properties_manager.workers,
                        use_multiprocessing=True if self.properties_manager.workers > 1 else False
                        )
 
         print("Generating test predictions...")
         pred_props = self.properties_manager.binary_mlp_properties['prediction_properties']
-        predictions = self.model.predict_classes(X_test, verbose=pred_props['verbose'])
+        # predictions = self.model.predict_classes(X_test, verbose=pred_props['verbose'])
+        if len(Y_train[0]) > 2:
+            predictions = np.argmax(self.model.predict(X_test), axis=-1)
+        else:
+            predictions = (self.model.predict(X_test) > 0.5).astype("int32")
         return predictions
