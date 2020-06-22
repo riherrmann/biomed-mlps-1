@@ -35,7 +35,6 @@ class PolymorphPreprocessor( PreProcessor ):
         self.__Cache = Cache
         self.__SimpleFlags = SimpleFlags
         self.__ComplexFlags = ComplexFlags
-
         self.__prepareNormalizers( Simple, Complex, Workers )
 
     def __prepareNormalizers(
@@ -51,6 +50,7 @@ class PolymorphPreprocessor( PreProcessor ):
             self.__Complex.append( ComplexFactory.getInstance() )
 
     def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
+        self.__SharedMemory.set( "Dirty", False )
         PmIds, Texts = self.__cleanUpData(
             list( frame[ "pmid" ] ),
             list( frame[ "text" ] )
@@ -94,7 +94,7 @@ class PolymorphPreprocessor( PreProcessor ):
         sleep( 0 )# aka yield
         self.__waitUntilDone( Jobs )
 
-        return self.__returnParallelResults( PmIds, PairedValues )
+        return self.__returnParallelResults( PmIds, Flags )
 
     def __splitInputs( self, PmIds: list, Text: list, Flags: str ) -> list:
         Buckets = list()
@@ -124,12 +124,17 @@ class PolymorphPreprocessor( PreProcessor ):
         for Job in Jobs:
             Job.join()
 
-    def __returnParallelResults( self, PmIds: list, PairedValues: list ) -> list:
+    def __returnParallelResults( self, PmIds: list, Flags: str ) -> list:
+        print( "Gathering computed sets" )
         Results = list()
-        for X in range( 0, len( PmIds ) ):
-            for ValueTuple in PairedValues[ X % self.__Workers ]:
-                Results.append( self.__SharedMemory.get( ValueTuple[ 0 ] ) )
+        for PmId in PmIds:
+            Results.append(
+                self.__SharedMemory.get(
+                    self.__createCacheKey( PmId, Flags )
+                )
+            )
 
+        self.__saveOnDone()
         return Results
 
     @staticmethod
@@ -142,12 +147,14 @@ class PolymorphPreprocessor( PreProcessor ):
         sleep(0)# aka yield
         for Value in PairedValues:
             This.__multiExtractText( Value, Flags, Worker )
+        print( "Job is Done!" )
 
     def __multiExtractText( self, Paired: tuple, Flags: str, Worker: int ):
         print( 'Preprocess {} in worker {}'.format( Paired[ 0 ], Worker ) )
 
         if not self.__SharedMemory.has( Paired[ 0 ] ):
             self.__applyTextNormalizerAndCache( Paired[ 0 ], Paired[ 1 ], Flags, Worker )
+            self.__SharedMemory.set(  "Dirty", True )
 
     def __extractText( self, PmIds: list, Text: list, Flags: str, Worker: int ) -> list:
         for Index in range( 0, len( Text ) ):
@@ -158,7 +165,13 @@ class PolymorphPreprocessor( PreProcessor ):
                 Worker,
             )
 
+        self.__saveOnDone()
         return Text
+
+    def __saveOnDone( self ):
+        if self.__SharedMemory.get( "Dirty" ):
+            self.__SharedMemory.set( "Dirty", False )
+            self.__save()
 
     def __useCacheOrNormalizer(
         self,
@@ -173,6 +186,7 @@ class PolymorphPreprocessor( PreProcessor ):
         if self.__SharedMemory.has( CacheKey ):
             return self.__SharedMemory.get( CacheKey )
         else:
+            self.__SharedMemory.set( "Dirty", True )
             return self.__applyTextNormalizerAndCache( CacheKey, Text, Flags, Worker )
 
     def __createCacheKey( self, PmId: int, Flags: str ) -> str:
@@ -240,7 +254,7 @@ class PolymorphPreprocessor( PreProcessor ):
     def __reassemble( self, Text: list ) -> str:
         return " ".join( Text )
 
-    def __del__( self ):
+    def __save( self ):
         if self.__SharedMemory.size() > 0:
             self.__AlreadyProcessed.set( "hardId42", self.__SharedMemory.toDict() )
 

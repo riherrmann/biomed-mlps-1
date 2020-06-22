@@ -4,4 +4,5 @@ import os as OS
 
 nltk.download( 'popular' )
 stanza.download( 'en' )
-OS.mkdir( "./.cache", 0o770 )
+if not OS.path.isdir( "./.cache" ):
+    OS.mkdir( "./.cache", 0o770 )
