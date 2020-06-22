@@ -23,6 +23,12 @@ class SharedMemoryCache( Cache ):
     def __str__( self ) -> str:
         return str( self.__Cache )
 
+    def size( self ) -> int:
+        return len( self.__Cache )
+
+    def toDict( self ) -> dict:
+        return dict( self.__Cache )
+
     class Factory( CacheFactory ):
         __Manager = Manager()
 

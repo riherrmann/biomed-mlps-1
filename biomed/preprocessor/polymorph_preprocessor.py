@@ -11,7 +11,6 @@ from biomed.preprocessor.facilitymanager.mFacilityManager import MariosFacilityM
 from biomed.properties_manager import PropertiesManager
 from pandas import DataFrame
 from nltk import sent_tokenize
-from hashlib import md5
 from multiprocessing import Process
 from time import sleep
 
@@ -70,31 +69,8 @@ class PolymorphPreprocessor( PreProcessor ):
         if not self.__isApplicable( Flags ):
             return Text
         else:
-            return self.__getCachedListOrCompute( PmIds, Text, Flags )
+            return self.__runInParallelOrSequence( PmIds, Text, Flags )
 
-    def __getCachedListOrCompute( self, PmIds: list, Text: list, Flags: str ) -> list:
-        SetId = self.__computeSetId( PmIds, Flags )
-        if self.__AlreadyProcessed.has( SetId ):
-            return self.__AlreadyProcessed.get( SetId )
-        else:
-            return self.__cacheAndReturn(
-                SetId,
-                self.__runInParallelOrSequence( PmIds, Text, Flags )
-            )
-
-    def __computeSetId( self, PmIds: list, Flags: str ) -> str:
-        PmIds = PmIds.copy() # note we have to copy it regarding to not destroy the order
-        PmIds.sort()
-        PmIds = [ str(integer) for integer in PmIds ]
-        Flags = self.__toSortedString( Flags )
-        SetId = md5()
-        SetId.update( "-".join( PmIds ).encode( 'utf-8' ) )
-        SetId.update( "-{}".format( Flags ).encode( 'utf-8' ) )
-        return str( SetId.hexdigest() )
-
-    def __cacheAndReturn( self, SetId: str, ProcessedText: list ) -> list:
-        self.__AlreadyProcessed.set( SetId, ProcessedText )
-        return ProcessedText
 
     def __runInParallelOrSequence( self, PmIds: list, Text: list, Flags: str ) -> list:
         if not self.__ForkIt:
@@ -121,7 +97,9 @@ class PolymorphPreprocessor( PreProcessor ):
         return self.__returnParallelResults( PmIds, PairedValues )
 
     def __splitInputs( self, PmIds: list, Text: list, Flags: str ) -> list:
-        Buckets = [[]]*self.__Workers
+        Buckets = list()
+        for Index in range( 0, self.__Workers ):
+            Buckets.append( list() )
 
         for Index in range( 0, len( PmIds ) ):
             Buckets[ Index % self.__Workers ].append(
@@ -166,8 +144,9 @@ class PolymorphPreprocessor( PreProcessor ):
             This.__multiExtractText( Value, Flags, Worker )
 
     def __multiExtractText( self, Paired: tuple, Flags: str, Worker: int ):
-        print( 'Preprocess {}'.format( Paired[ 0 ] ) )
-        if not self.__Cache.has( Paired[ 0 ] ):
+        print( 'Preprocess {} in worker {}'.format( Paired[ 0 ], Worker ) )
+
+        if not self.__SharedMemory.has( Paired[ 0 ] ):
             self.__applyTextNormalizerAndCache( Paired[ 0 ], Paired[ 1 ], Flags, Worker )
 
     def __extractText( self, PmIds: list, Text: list, Flags: str, Worker: int ) -> list:
@@ -189,7 +168,6 @@ class PolymorphPreprocessor( PreProcessor ):
         Worker: int
     ) -> str:
         CacheKey = self.__createCacheKey( PmId, Flags )
-
         print( 'Preprocess {}'.format( CacheKey ) )
 
         if self.__SharedMemory.has( CacheKey ):
@@ -262,25 +240,45 @@ class PolymorphPreprocessor( PreProcessor ):
     def __reassemble( self, Text: list ) -> str:
         return " ".join( Text )
 
+    def __del__( self ):
+        if self.__SharedMemory.size() > 0:
+            self.__AlreadyProcessed.set( "hardId42", self.__SharedMemory.toDict() )
+
     class Factory( PreProcessorFactory ):
         __FacilityManager = MariosFacilityManager.Factory.getInstance()
         __Simple = SimpleNormalizer.Factory
         __SimpleFlags = [ "s", "l", "w" ]
         __Complex = ComplexNormalizer.Factory
         __ComplexFlags = [ "n", "v", "a" ]
-        __DistrubutedCache = SharedMemoryCache.Factory.getInstance()
 
         @staticmethod
         def getInstance( Properties: PropertiesManager ) -> PreProcessor:
+            FileCache = NumpyArrayFileCache.Factory.getInstance(
+                Properties.cache_dir
+            )
+
             return PolymorphPreprocessor(
                 PolymorphPreprocessor.Factory.__FacilityManager,
                 Properties.workers,
-                NumpyArrayFileCache.Factory.getInstance(
-                    Properties.cache_dir
-                ),
-                PolymorphPreprocessor.Factory.__DistrubutedCache,
+                FileCache,
+                PolymorphPreprocessor.Factory.__loadSharedMemory( FileCache ),
                 PolymorphPreprocessor.Factory.__Simple,
                 PolymorphPreprocessor.Factory.__SimpleFlags,
                 PolymorphPreprocessor.Factory.__Complex,
                 PolymorphPreprocessor.Factory.__ComplexFlags
             )
+
+        @staticmethod
+        def __loadSharedMemory( FileCache: Cache ) -> Cache:
+            SharedMemory = SharedMemoryCache.Factory.getInstance()
+
+            if FileCache.has( "hardId42" ):
+                PolymorphPreprocessor.Factory.__loadIntoSharedMemory( FileCache, SharedMemory )
+
+            return SharedMemory
+
+        @staticmethod
+        def __loadIntoSharedMemory( FileCache: Cache, SharedMemory: Cache ):
+            StaticValues = FileCache.get( "hardId42" )
+            for Key in StaticValues:
+                SharedMemory.set( Key, StaticValues[ Key ] )

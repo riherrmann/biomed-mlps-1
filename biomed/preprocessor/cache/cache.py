@@ -19,6 +19,14 @@ class Cache(ABC):
     def set( Key: str, Value ):
         pass
 
+    @abstractmethod
+    def size() -> int:
+        pass
+
+    @abstractmethod
+    def toDict() -> dict:
+        pass
+
 class CacheFactory( ABC ):
     @abstractstatic
     def getInstance() -> Cache:
