@@ -11,7 +11,7 @@ class PropertiesManager:
         )
         self.test_size = 0.3
         self.test_split_size = 0.3
-        self.binary_mlp_properties = dict(
+        self.mlp_model_1_properties = dict(
             training_properties=dict(
                 epochs=5,
                 batch_size=16,
@@ -20,6 +20,13 @@ class PropertiesManager:
             building_properties=dict(
                 loss='categorical_crossentropy',
                 optimizer='rmsprop',
+                dense_1 = 256,
+                activation_1 = 'relu',
+                dropout_1 = 0.4,
+                dense_2 = 128,
+                activation_2 = 'relu',
+                dropout_2 = 0.2,
+                activation_final = 'softmax',
             ),
             prediction_properties=dict(
                 verbose=0,

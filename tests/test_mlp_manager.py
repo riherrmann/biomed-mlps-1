@@ -1,5 +1,5 @@
 import numpy as np
-from biomed.mlps_manager import MLPsManager
+from biomed.mlp_manager import MLPManager
 from biomed.properties_manager import PropertiesManager
 
 
@@ -11,7 +11,7 @@ def test_train_and_run_binary_mlp(datadir):
     input_dim = X_train.shape[1]
     nb_classes = len(Y_train[0])
     pm = PropertiesManager()
-    mlpsm = MLPsManager(pm)
-    mlpsm.build_binary_mlp(input_dim, nb_classes)
-    predictions = mlpsm.train_and_run_binary_mlp(X_train, X_test, Y_train)
+    mlpsm = MLPManager(pm)
+    mlpsm.build_mlp_model_1(input_dim, nb_classes)
+    predictions = mlpsm.train_and_run_mlp_model_1(X_train, X_test, Y_train)
     assert len(predictions) == len(Y_test)
