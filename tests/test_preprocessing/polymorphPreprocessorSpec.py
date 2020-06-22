@@ -11,9 +11,22 @@ from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
 from biomed.preprocessor.pre_processor import PreProcessor
+from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.properties_manager import PropertiesManager
 from pandas import DataFrame
 from multiprocessing import Manager
+
+class StubbedFacilityManager( FacilityManager ):
+    def __init__( self ):
+        self.WasCalled = False
+        self.ReturnEmptySet = False
+
+    def clean( self, PmIds: list, Texts: list ) -> tuple:
+        self.WasCalled = True
+        if self.ReturnEmptySet:
+            return ( [], [] )
+        else:
+            return ( PmIds, Texts )
 
 class StubbedNormalizer( Normalizer ):
     def __init__( self ):
@@ -54,6 +67,7 @@ class StubbedCache( Cache ):
 class PolymorphPreprocessorSpec( unittest.TestCase ):
 
     def __initPreprocessorDependencies( self ):
+        self.__FM = StubbedFacilityManager()
         self.__FakeCache = {}
         self.__FakeCache2 = {}
         self.__Complex = StubbedNormalizerFactory()
@@ -67,6 +81,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__initPreprocessorDependencies()
 
         self.__Prepro = PolymorphPreprocessor(
+            self.__FM,
             1,
             self.__FileCache,
             self.__Shared,
@@ -323,6 +338,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         self.__initPreprocessorDependencies()
         self.__Prepro = PolymorphPreprocessor(
+            self.__FM,
             1,
             self.__FileCache,
             self.__Shared,
@@ -374,6 +390,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__Shared = StubbedCache( self.__FakeCache )
 
         self.__Prepro = PolymorphPreprocessor(
+            self.__FM,
             3,
             self.__FileCache,
             self.__Shared,
@@ -402,25 +419,30 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         for Text in MyFrame[ "text" ]:
             self.assertTrue( Text in Parsed )
 
+    def it_clean_up_the_data( self ):
+        TestData = {
+            'pmid': [ 42 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 23 ],
+            'is_cancer': [ False ],
+            'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
+        }
 
-Suite = unittest.TestSuite()
-Suite.addTests( [
-    PolymorphPreprocessorSpec( "it_is_a_PreProcessor" ),
-    PolymorphPreprocessorSpec( "it_does_not_alter_the_source" ),
-    PolymorphPreprocessorSpec( "it_ignores_unknown_flags" ),
-    PolymorphPreprocessorSpec( "it_uses_simple_normalizer" ),
-    PolymorphPreprocessorSpec( "it_uses_complex_normalizer" ),
-    PolymorphPreprocessorSpec( "it_uses_both_normalizers" ),
-    PolymorphPreprocessorSpec( "it_iterates_over_all_given_texts" ),
-    PolymorphPreprocessorSpec( "it_uses_a_cache_to_determine_if_the_value_was_already_processed" ),
-    PolymorphPreprocessorSpec( "it_caches_new_text_variants" ),
-    PolymorphPreprocessorSpec( "it_does_not_lookup_the_cache_if_no_variant_is_applicable" ),
-    PolymorphPreprocessorSpec( "it_looks_up_on_known_applicable_variants" ),
-    PolymorphPreprocessorSpec( "it_returns_the_value_of_the_file_cache" ),
-    PolymorphPreprocessorSpec( "it_caches_new_set_variants" ),
-    PolymorphPreprocessorSpec( "it_does_not_run_in_parallel_if_only_one_worker_is_given" ),
-    PolymorphPreprocessorSpec( "it_runs_in_parallel" )
-] )
+        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
 
-Runner = unittest.TextTestRunner()
-Runner.run( Suite )
+        self.assertTrue( self.__FM.WasCalled )
+
+    def it_fails_on_empty_dataset( self ):
+        TestData = {
+            'pmid': [ 42 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 23 ],
+            'is_cancer': [ False ],
+            'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
+        }
+
+        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        self.__FM.ReturnEmptySet = True
+        with self.assertRaises( RuntimeError ):
+            self.__Prepro.preprocess_text_corpus( MyFrame, "l" )

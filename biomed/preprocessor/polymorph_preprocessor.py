@@ -6,6 +6,8 @@ from biomed.preprocessor.normalizer.complexNormalizer import ComplexNormalizer
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.cache.sharedMemoryCache import SharedMemoryCache
 from biomed.preprocessor.cache.numpyArrayFileCache import NumpyArrayFileCache
+from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
+from biomed.preprocessor.facilitymanager.mFacilityManager import MariosFacilityManager
 from biomed.properties_manager import PropertiesManager
 from pandas import DataFrame
 from nltk import sent_tokenize
@@ -16,6 +18,7 @@ from time import sleep
 class PolymorphPreprocessor( PreProcessor ):
     def __init__(
         self,
+        FM: FacilityManager,
         Workers: int,
         AlreadyProcessed: Cache,
         Shared: Cache,
@@ -24,6 +27,7 @@ class PolymorphPreprocessor( PreProcessor ):
         Complex: NormalizerFactory,
         ComplexFlags: list
     ):
+        self.__FM = FM
         self.__AlreadyProcessed = AlreadyProcessed
         self.__SharedMemory = Shared
         Workers = max( Workers, 1 )
@@ -48,35 +52,43 @@ class PolymorphPreprocessor( PreProcessor ):
             self.__Complex.append( ComplexFactory.getInstance() )
 
     def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
-        return self.__reflectOrExtract(
+        PmIds, Texts = self.__cleanUpData(
             list( frame[ "pmid" ] ),
-            list( frame[ "text" ] ),
-            flags
+            list( frame[ "text" ] )
         )
 
-    def __reflectOrExtract( self, Pmid: list, Text: list, Flags: str ) -> list:
+        return self.__reflectOrExtract( PmIds, Texts, flags )
+
+    def __cleanUpData( self, PmIds: list, Texts: list ) -> tuple:
+        Result = self.__FM.clean( PmIds, Texts )
+        if not Result[ 0 ] or not Result[ 1 ]:
+            raise RuntimeError( "ERROR: Empty Dataset detected." )
+
+        return Result
+
+    def __reflectOrExtract( self, PmIds: list, Text: list, Flags: str ) -> list:
         if not self.__isApplicable( Flags ):
             return Text
         else:
-            return self.__getCachedListOrCompute( Pmid, Text, Flags )
+            return self.__getCachedListOrCompute( PmIds, Text, Flags )
 
-    def __getCachedListOrCompute( self, Pmid: list, Text: list, Flags: str ) -> list:
-        SetId = self.__computeSetId( Pmid, Flags )
+    def __getCachedListOrCompute( self, PmIds: list, Text: list, Flags: str ) -> list:
+        SetId = self.__computeSetId( PmIds, Flags )
         if self.__AlreadyProcessed.has( SetId ):
             return self.__AlreadyProcessed.get( SetId )
         else:
             return self.__cacheAndReturn(
                 SetId,
-                self.__runInParallelOrSequence( Pmid, Text, Flags )
+                self.__runInParallelOrSequence( PmIds, Text, Flags )
             )
 
-    def __computeSetId( self, Pmid: list, Flags: str ) -> str:
-        Pmid = list( Pmid ) # note we have to copy it regarding to not destroy the order
-        Pmid.sort()
-        Pmid = [ str(integer) for integer in Pmid ]
+    def __computeSetId( self, PmIds: list, Flags: str ) -> str:
+        PmIds = PmIds.copy() # note we have to copy it regarding to not destroy the order
+        PmIds.sort()
+        PmIds = [ str(integer) for integer in PmIds ]
         Flags = self.__toSortedString( Flags )
         SetId = md5()
-        SetId.update( "-".join( Pmid ).encode( 'utf-8' ) )
+        SetId.update( "-".join( PmIds ).encode( 'utf-8' ) )
         SetId.update( "-{}".format( Flags ).encode( 'utf-8' ) )
         return str( SetId.hexdigest() )
 
@@ -84,37 +96,37 @@ class PolymorphPreprocessor( PreProcessor ):
         self.__AlreadyProcessed.set( SetId, ProcessedText )
         return ProcessedText
 
-    def __runInParallelOrSequence( self, Pmid: list, Text: list, Flags: str ) -> list:
+    def __runInParallelOrSequence( self, PmIds: list, Text: list, Flags: str ) -> list:
         if not self.__ForkIt:
             return self.__extractText(
-                Pmid,
+                PmIds,
                 Text,
                 Flags,
                 0
             )
         else:
             return self.__runInParallel(
-                Pmid,
+                PmIds,
                 Text,
                 Flags
             )
 
-    def __runInParallel( self, Pmid: list, Text: list, Flags: str ) -> list:
+    def __runInParallel( self, PmIds: list, Text: list, Flags: str ) -> list:
         Jobs = list()
-        PairedValues = self.__splitInputs( Pmid, Text, Flags )
+        PairedValues = self.__splitInputs( PmIds, Text, Flags )
         self.__spawnJobs( Jobs, PairedValues, Flags )
         sleep( 0 )# aka yield
         self.__waitUntilDone( Jobs )
 
-        return self.__returnParallelResults( Pmid, PairedValues )
+        return self.__returnParallelResults( PmIds, PairedValues )
 
-    def __splitInputs( self, Pmid: list, Text: list, Flags: str ) -> list:
+    def __splitInputs( self, PmIds: list, Text: list, Flags: str ) -> list:
         Buckets = [[]]*self.__Workers
 
-        for Index in range( 0, len( Pmid ) ):
+        for Index in range( 0, len( PmIds ) ):
             Buckets[ Index % self.__Workers ].append(
                 (
-                    self.__createCacheKey( Pmid[ Index ], Flags ),
+                    self.__createCacheKey( PmIds[ Index ], Flags ),
                     Text[ Index ]
                 )
             )
@@ -134,9 +146,9 @@ class PolymorphPreprocessor( PreProcessor ):
         for Job in Jobs:
             Job.join()
 
-    def __returnParallelResults( self, Pmid: list, PairedValues: list ) -> list:
+    def __returnParallelResults( self, PmIds: list, PairedValues: list ) -> list:
         Results = list()
-        for X in range( 0, len( Pmid ) ):
+        for X in range( 0, len( PmIds ) ):
             for ValueTuple in PairedValues[ X % self.__Workers ]:
                 Results.append( self.__SharedMemory.get( ValueTuple[ 0 ] ) )
 
@@ -158,10 +170,10 @@ class PolymorphPreprocessor( PreProcessor ):
         if not self.__Cache.has( Paired[ 0 ] ):
             self.__applyTextNormalizerAndCache( Paired[ 0 ], Paired[ 1 ], Flags, Worker )
 
-    def __extractText( self, Pmid: list, Text: list, Flags: str, Worker: int ) -> list:
+    def __extractText( self, PmIds: list, Text: list, Flags: str, Worker: int ) -> list:
         for Index in range( 0, len( Text ) ):
             Text[ Index ] = self.__useCacheOrNormalizer(
-                Pmid[ Index ],
+                PmIds[ Index ],
                 Text[ Index ],
                 Flags,
                 Worker,
@@ -171,12 +183,12 @@ class PolymorphPreprocessor( PreProcessor ):
 
     def __useCacheOrNormalizer(
         self,
-        Pmid: int,
+        PmId: int,
         Text: str,
         Flags: str,
         Worker: int
     ) -> str:
-        CacheKey = self.__createCacheKey( Pmid, Flags )
+        CacheKey = self.__createCacheKey( PmId, Flags )
 
         print( 'Preprocess {}'.format( CacheKey ) )
 
@@ -185,9 +197,9 @@ class PolymorphPreprocessor( PreProcessor ):
         else:
             return self.__applyTextNormalizerAndCache( CacheKey, Text, Flags, Worker )
 
-    def __createCacheKey( self, Pmid: int, Flags: str ) -> str:
+    def __createCacheKey( self, PmId: int, Flags: str ) -> str:
         Flags = self.__toSortedString( Flags )
-        return "{}{}".format( Pmid, Flags )
+        return "{}{}".format( PmId, Flags )
 
     def __toSortedString( self, Str: str ) -> str:
         Tmp = list( Str )
@@ -251,6 +263,7 @@ class PolymorphPreprocessor( PreProcessor ):
         return " ".join( Text )
 
     class Factory( PreProcessorFactory ):
+        __FacilityManager = MariosFacilityManager.Factory.getInstance()
         __Simple = SimpleNormalizer.Factory
         __SimpleFlags = [ "s", "l", "w" ]
         __Complex = ComplexNormalizer.Factory
@@ -260,6 +273,7 @@ class PolymorphPreprocessor( PreProcessor ):
         @staticmethod
         def getInstance( Properties: PropertiesManager ) -> PreProcessor:
             return PolymorphPreprocessor(
+                PolymorphPreprocessor.Factory.__FacilityManager,
                 Properties.workers,
                 NumpyArrayFileCache.Factory.getInstance(
                     Properties.cache_dir
