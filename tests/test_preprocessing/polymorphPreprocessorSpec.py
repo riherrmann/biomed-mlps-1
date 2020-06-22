@@ -7,11 +7,13 @@ if AdditionalPath not in Sys.path:
 
 import unittest
 from biomed.preprocessor.normalizer.normalizer import Normalizer
+from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
 from biomed.preprocessor.pre_processor import PreProcessor
 from biomed.properties_manager import PropertiesManager
 from pandas import DataFrame
+from multiprocessing import Manager
 
 class StubbedNormalizer( Normalizer ):
     def __init__( self ):
@@ -22,6 +24,16 @@ class StubbedNormalizer( Normalizer ):
         self.WasCalled = True
         self.CallCounter += 1
         return Text
+
+class StubbedNormalizerFactory( NormalizerFactory ):
+    def __init__( self ):
+        self.CallCounter = 0
+        self.LastNormalizers = list()
+
+    def getInstance( self ):
+        self.CallCounter += 1
+        self.LastNormalizers.append( StubbedNormalizer() )
+        return self.LastNormalizers[ len( self.LastNormalizers ) - 1 ]
 
 class StubbedCache( Cache ):
     def __init__( self, GivenCache: dict ):
@@ -40,15 +52,19 @@ class StubbedCache( Cache ):
         self.__GivenCache[ Key ] = Value
 
 class PolymorphPreprocessorSpec( unittest.TestCase ):
-    def setUp( self ):
+
+    def __initPreprocessorDependencies( self ):
         self.__FakeCache = {}
         self.__FakeCache2 = {}
-        self.__Complex = StubbedNormalizer()
-        self.__Simple = StubbedNormalizer()
+        self.__Complex = StubbedNormalizerFactory()
+        self.__Simple = StubbedNormalizerFactory()
         self.__SimpleFlags = [ "s", "l", "w" ]
         self.__ComplexFlags = [ "n", "v", "a" ]
         self.__Shared = StubbedCache( self.__FakeCache )
         self.__FileCache = StubbedCache( self.__FakeCache2 )
+
+    def setUp( self ):
+        self.__initPreprocessorDependencies()
 
         self.__Prepro = PolymorphPreprocessor(
             1,
@@ -100,8 +116,8 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         self.__Prepro.preprocess_text_corpus( MyFrame, "opc" )
 
-        self.assertFalse( self.__Simple.WasCalled )
-        self.assertFalse( self.__Complex.WasCalled )
+        self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
+        self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
     def it_uses_simple_normalizer( self ):
         TestData = {
@@ -115,8 +131,8 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
 
-        self.assertTrue( self.__Simple.WasCalled )
-        self.assertFalse( self.__Complex.WasCalled )
+        self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
+        self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
     def it_uses_complex_normalizer( self ):
         TestData = {
@@ -130,8 +146,8 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         self.__Prepro.preprocess_text_corpus( MyFrame, "n" )
 
-        self.assertFalse( self.__Simple.WasCalled )
-        self.assertTrue( self.__Complex.WasCalled )
+        self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
+        self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
     def it_uses_both_normalizers( self ):
         TestData = {
@@ -144,8 +160,8 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         self.__Prepro.preprocess_text_corpus( MyFrame, "nl" )
 
-        self.assertTrue( self.__Simple.WasCalled )
-        self.assertTrue( self.__Complex.WasCalled )
+        self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
+        self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
     def it_iterates_over_all_given_texts( self ):
         TestData = {
@@ -165,12 +181,12 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         self.assertEqual(
             len( TestData[ "text" ] ),
-            self.__Complex.CallCounter
+            self.__Complex.LastNormalizers[ 0 ].CallCounter
         )
 
         self.assertEqual(
             len( TestData[ "text" ] ),
-            self.__Simple.CallCounter
+            self.__Simple.LastNormalizers[ 0 ].CallCounter
         )
 
 
@@ -187,8 +203,8 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         Result = self.__Prepro.preprocess_text_corpus( MyFrame, "a" )
-        self.assertFalse( self.__Complex.WasCalled )
-        self.assertFalse( self.__Simple.WasCalled )
+        self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
+        self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertEqual(
              Result[ 0 ],
              self.__FakeCache[ "42a" ]
@@ -206,7 +222,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
 
         self.__Prepro.preprocess_text_corpus( MyFrame, "a" )
-        self.assertTrue( self.__Complex.WasCalled )
+        self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( "42a" in self.__FakeCache )
         self.assertEqual(
             TestData[ "text" ][ 0 ],
@@ -255,8 +271,8 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         Result = self.__Prepro.preprocess_text_corpus( MyFrame, "a" )
 
-        self.assertFalse( self.__Complex.WasCalled )
-        self.assertFalse( self.__Simple.WasCalled )
+        self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
+        self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertListEqual(
              Result,
              self.__FakeCache2[ "0e2f1a75f3af555d48a593a9e0a610ee" ]
@@ -278,14 +294,14 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
 
-        self.assertTrue( self.__Complex.WasCalled )
-        self.assertTrue( self.__Simple.WasCalled )
+        self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
+        self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertListEqual(
             TestData[ "text" ],
             self.__FakeCache2[ "a88cc70d078ce3d60e7b51757cda82c7" ]
         )
 
-    def it_runs_in_paralell( self ):
+    def it_does_not_run_in_parallel_if_only_one_worker_is_given( self ):
         TestData = {
             'pmid': [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ],
             'text': [
@@ -305,6 +321,57 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        self.__initPreprocessorDependencies()
+        self.__Prepro = PolymorphPreprocessor(
+            1,
+            self.__FileCache,
+            self.__Shared,
+            self.__Simple,
+            self.__SimpleFlags,
+            self.__Complex,
+            self.__ComplexFlags
+        )
+
+        self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
+
+        self.assertEqual(
+            1,
+            self.__Simple.CallCounter
+        )
+
+        self.assertEqual(
+            len( MyFrame[ "text" ] ),
+            self.__Complex.LastNormalizers[ 0 ].CallCounter
+        )
+
+        self.assertEqual(
+            len( MyFrame[ "text" ] ),
+            self.__Simple.LastNormalizers[ 0 ].CallCounter
+        )
+
+    def it_runs_in_parallel( self ):
+        TestData = {
+            'pmid': [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ],
+            'text': [
+                "My little cute Poney is a Poney",
+                "My little farm is cute.",
+                "My little programm is a application and runs and runs and runs.",
+                "My little farm is cute.",
+                "My little cute Poney is a Poney",
+                "My little farm is cute.",
+                "My little programm is a application and runs and runs and runs.",
+                "My little cute Poney is a Poney",
+                "My little farm is cute.",
+                "My little programm is a application and runs and runs and runs.",
+                "My little farm is cute.",
+                "My little cute Poney is a Poney",
+            ]
+        }
+
+        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        self.__initPreprocessorDependencies()
+        self.__FakeCache = Manager().dict()
+        self.__Shared = StubbedCache( self.__FakeCache )
 
         self.__Prepro = PolymorphPreprocessor(
             3,
@@ -317,7 +384,43 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         )
 
         self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
+        self.assertEqual(
+            3,
+            len( self.__Complex.LastNormalizers )
+        )
+        self.assertEqual(
+            3,
+            len( self.__Simple.LastNormalizers )
+        )
 
-        self.assertTrue( self.__Complex.WasCalled )
-        self.assertTrue( self.__Simple.WasCalled )
-        # TODO
+        for Normierer in self.__Complex.LastNormalizers:
+            self.assertFalse( Normierer.WasCalled )
+        for Normierer in self.__Simple.LastNormalizers:
+            self.assertFalse( Normierer.WasCalled )
+
+        Parsed = self.__FakeCache.values()
+        for Text in MyFrame[ "text" ]:
+            self.assertTrue( Text in Parsed )
+
+
+Suite = unittest.TestSuite()
+Suite.addTests( [
+    PolymorphPreprocessorSpec( "it_is_a_PreProcessor" ),
+    PolymorphPreprocessorSpec( "it_does_not_alter_the_source" ),
+    PolymorphPreprocessorSpec( "it_ignores_unknown_flags" ),
+    PolymorphPreprocessorSpec( "it_uses_simple_normalizer" ),
+    PolymorphPreprocessorSpec( "it_uses_complex_normalizer" ),
+    PolymorphPreprocessorSpec( "it_uses_both_normalizers" ),
+    PolymorphPreprocessorSpec( "it_iterates_over_all_given_texts" ),
+    PolymorphPreprocessorSpec( "it_uses_a_cache_to_determine_if_the_value_was_already_processed" ),
+    PolymorphPreprocessorSpec( "it_caches_new_text_variants" ),
+    PolymorphPreprocessorSpec( "it_does_not_lookup_the_cache_if_no_variant_is_applicable" ),
+    PolymorphPreprocessorSpec( "it_looks_up_on_known_applicable_variants" ),
+    PolymorphPreprocessorSpec( "it_returns_the_value_of_the_file_cache" ),
+    PolymorphPreprocessorSpec( "it_caches_new_set_variants" ),
+    PolymorphPreprocessorSpec( "it_does_not_run_in_parallel_if_only_one_worker_is_given" ),
+    PolymorphPreprocessorSpec( "it_runs_in_parallel" )
+] )
+
+Runner = unittest.TextTestRunner()
+Runner.run( Suite )
