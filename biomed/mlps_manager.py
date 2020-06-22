@@ -40,7 +40,10 @@ class MLPsManager:
         pred_props = self.properties_manager.binary_mlp_properties['prediction_properties']
         # predictions = self.model.predict_classes(X_test, verbose=pred_props['verbose'])
         if len(Y_train[0]) > 2:
-            predictions = np.argmax(self.model.predict(X_test), axis=-1)
+            predictions = np.argmax(self.model.predict(X_test,
+                                                       workers=self.properties_manager.workers,
+                                                       use_multiprocessing=True if self.properties_manager.workers > 1 else False
+                                                       ), axis=-1)
         else:
-            predictions = (self.model.predict(X_test) > 0.5).astype("int32")
+            predictions = self.model.predict_classes(X_test)
         return predictions
