@@ -12,7 +12,7 @@ if __name__ == '__main__':
     pm = PropertiesManager()
     tmm = TextMiningManager(
         pm,
-        PolymorphPreprocessor.Factory.getInstance()
+        PolymorphPreprocessor.Factory.getInstance( pm )
     )
     print('Setup for input data')
     tmm.setup_for_input_data(training_data)

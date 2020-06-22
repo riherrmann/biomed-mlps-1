@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pandas import DataFrame
+from biomed.properties_manager import PropertiesManager
 
 class abstractstatic(staticmethod):
     __slots__ = ()
@@ -15,5 +16,5 @@ class PreProcessor(ABC):
 
 class PreProcessorFactory( ABC ):
     @abstractstatic
-    def getInstance() -> PreProcessor:
+    def getInstance( Properties: PropertiesManager ) -> PreProcessor:
         pass

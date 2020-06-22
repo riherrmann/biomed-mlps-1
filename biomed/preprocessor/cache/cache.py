@@ -12,7 +12,7 @@ class Cache(ABC):
     def has( Key: str ) -> bool:
         pass
     @abstractmethod
-    def get( Key: str ) -> str:
+    def get( Key: str ):
         pass
 
     @abstractmethod
@@ -22,4 +22,9 @@ class Cache(ABC):
 class CacheFactory( ABC ):
     @abstractstatic
     def getInstance() -> Cache:
+        pass
+
+class FileCacheFactory( ABC ):
+    @abstractstatic
+    def getInstance( PathToCacheDir: str ) -> Cache:
         pass

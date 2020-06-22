@@ -1,3 +1,5 @@
+import os as OS
+
 class PropertiesManager:
     def __init__(self):
         self.tfidf_transformation_properties = dict(
@@ -24,4 +26,9 @@ class PropertiesManager:
             )
         )
         self.workers = 3
+        self.cache_dir = OS.path.abspath(
+            OS.path.join(
+                OS.path.dirname( __file__ ), "..", ".cache"
+            )
+        )
         self.preprocessor_variant = "swl"
