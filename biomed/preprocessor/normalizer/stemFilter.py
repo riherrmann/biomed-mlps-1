@@ -10,7 +10,6 @@ class StemFilter( Filter ):
         return self.__Stemmer.stem( Text )
 
     class Factory( FilterFactory ):
-        __Stemmer = PorterStemmer()
         @staticmethod
         def getInstance() -> Filter:
-            return StemFilter( StemFilter.Factory.__Stemmer )
+            return StemFilter( PorterStemmer() )

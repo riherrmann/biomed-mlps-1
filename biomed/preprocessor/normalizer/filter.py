@@ -13,6 +13,7 @@ class Filter( ABC ):
         pass
 
 class FilterFactory( ABC ):
+
     @abstractstatic
     def getInstance() -> Filter:
         pass

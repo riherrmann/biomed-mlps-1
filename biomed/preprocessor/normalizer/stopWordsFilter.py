@@ -10,8 +10,9 @@ class StopWordsFilter( Filter ):
         return "" if Text.lower() in self.__Words else Text
 
     class Factory( FilterFactory ):
-        #We can customize that
+        # We can customize that
         __Words = stopwords.words( 'english' )
+
         @staticmethod
         def getInstance() -> Filter:
             return StopWordsFilter( StopWordsFilter.Factory.__Words )

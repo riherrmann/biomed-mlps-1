@@ -37,13 +37,10 @@ class TextMiningManager:
                                      max_features=properties['max_features'], ngram_range=properties['ngram_range'],
                                      sublinear_tf=properties['sublinear_tf'])
 
+        print("preprocessing trainings data")
         preprocessed_training_data = self.__preprocess_text(training_data)
-        np.save('tmp/preprocessed_training_data.npy', preprocessed_training_data)
+        print("preprocessing test data")
         preprocessed_test_data = self.__preprocess_text(test_data)
-        np.save('tmp/preprocessed_test_data.npy', preprocessed_test_data)
-
-        # preprocessed_training_data = np.load('tmp/preprocessed_training_data.npy')
-        # preprocessed_test_data = np.load('tmp/preprocessed_test_data.npy')
 
         vectorizer = vectorizer.fit(preprocessed_training_data)
         training_features = vectorizer.transform(preprocessed_training_data)

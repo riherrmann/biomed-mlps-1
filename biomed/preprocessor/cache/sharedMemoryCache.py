@@ -30,5 +30,5 @@ class SharedMemoryCache( Cache ):
         def getInstance() -> Cache:
             return SharedMemoryCache(
                 SharedMemoryCache.Factory.__Manager.dict(),
-                Lock()
+                SharedMemoryCache.Factory.__Manager.Lock()
             )

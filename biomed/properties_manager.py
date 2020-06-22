@@ -32,10 +32,10 @@ class PropertiesManager:
                 verbose=0,
             )
         )
-        self.workers = 3
+        self.workers = 2
         self.cache_dir = OS.path.abspath(
             OS.path.join(
                 OS.path.dirname( __file__ ), "..", ".cache"
             )
         )
-        self.preprocessor_variant = "swl"
+        self.preprocessor_variant = "avn"

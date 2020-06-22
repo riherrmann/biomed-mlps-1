@@ -3,13 +3,25 @@ from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 import stanza
 
 class ComplexNormalizer( Normalizer ):
-    def __init__( self, Pipe ):
-        self.__Pipe = Pipe
+    def __init__( self ):
+        self.__Pipe = None
 
     def apply( self, Text: str, Flags: str ) -> str:
+        self.__initPipeLine()
+
         return self._reassemble(
             self.__filter( self.__Pipe( Text ).sentences[ 0 ].words, Flags )
         )
+
+
+    def __initPipeLine( self ):
+        if not self.__Pipe:
+            self.__Pipe = stanza.Pipeline(
+                lang='en',
+                processors='tokenize,pos,lemma,ner',
+                logging_level = "WARN"
+            )
+
 
     def __filter( self, Words: list, Flags ) -> list:
         Result = list()
@@ -40,10 +52,6 @@ class ComplexNormalizer( Normalizer ):
         Filtered.append( Word.lemma )
 
     class Factory( NormalizerFactory ):
-        __Pipeline = stanza.Pipeline(
-            lang='en',
-            processors='tokenize,mwt,pos,lemma,ner'
-        )
         @staticmethod
         def getInstance() -> Normalizer:
-            return ComplexNormalizer( ComplexNormalizer.Factory.__Pipeline )
+            return ComplexNormalizer()

@@ -11,7 +11,7 @@ class abstractstatic(staticmethod):
 
 class PreProcessor(ABC):
     @abstractmethod
-    def preprocess_text_corpus(self, frame: DataFrame, flags: str ) -> list:
+    def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
         pass
 
 class PreProcessorFactory( ABC ):
