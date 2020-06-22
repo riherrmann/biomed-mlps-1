@@ -22,7 +22,7 @@ class NumpyArrayFileCache( Cache ):
     def get( self, Key: str ):
         File = self.__keyToFileName( Key )
         if self.__has( File ):
-            return numpy.load( File )
+            return numpy.load( File, allow_pickle=True ).item()
         else:
             return None
 
@@ -31,6 +31,12 @@ class NumpyArrayFileCache( Cache ):
         self.__Lock.acquire()
         numpy.save( File, Value )
         self.__Lock.release()
+
+    def size( self ):
+        raise NotImplementedError()
+
+    def toDict( self ):
+        raise NotImplementedError()
 
     class Factory( FileCacheFactory ):
         __Manager = Manager()

@@ -88,3 +88,22 @@ class SharedMemoryCacheSpec( unittest.TestCase ):
                 P2Value[ Key ],
                 MyCache.get( Key )
             )
+
+    def it_returns_its_current_size( self ):
+        Cache = { "a": "poney" }
+        Expected = 2
+        MyCache = SharedMemoryCache( Cache, Lock() )
+        self.assertEqual(
+            Expected,
+            MyCache.size()
+        )
+
+    def it_returns_its_value_as_dict( self ):
+        Cache = { "a": "poney" }
+        MyCache = SharedMemoryCache( Cache, Lock() )
+        Values = MyCache.toDict()
+        self.assertTrue( isinstance( Values, dict ) )
+        self.assertDictEqual(
+            Cache,
+            Values
+        )

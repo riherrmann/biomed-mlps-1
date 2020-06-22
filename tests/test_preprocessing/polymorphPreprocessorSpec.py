@@ -13,6 +13,7 @@ from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
 from biomed.preprocessor.pre_processor import PreProcessor
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.properties_manager import PropertiesManager
+import numpy
 from pandas import DataFrame
 from multiprocessing import Manager
 
@@ -64,6 +65,12 @@ class StubbedCache( Cache ):
     def set( self, Key: str, Value: str ):
         self.__GivenCache[ Key ] = Value
 
+    def size( self ) -> int:
+        return 1
+
+    def toDict( self ) -> dict:
+        return dict( self.__GivenCache )
+
 class PolymorphPreprocessorSpec( unittest.TestCase ):
 
     def __initPreprocessorDependencies( self ):
@@ -92,7 +99,11 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
        )
 
     def it_is_a_PreProcessor( self ):
-        MyProc = PolymorphPreprocessor.Factory.getInstance( PropertiesManager() )
+        Path = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), 'testTmp' ) )
+        OS.mkdir( Path, 0o777 )
+        PM = PropertiesManager()
+        PM.cache_dir = Path
+        MyProc = PolymorphPreprocessor.Factory.getInstance( PM )
         self.assertTrue( isinstance( MyProc, PreProcessor ) )
 
     def it_does_not_alter_the_source( self ):
@@ -244,78 +255,6 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__FakeCache[ "42a" ]
         )
 
-    def it_does_not_lookup_the_cache_if_no_variant_is_applicable( self ):
-        TestData = {
-            'pmid': [ 42 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 23 ],
-            'is_cancer': [ False ],
-            'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
-        }
-
-        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "opc" )
-
-        self.assertFalse( self.__FileCache.WasLookedUp )
-
-    def it_looks_up_on_known_applicable_variants( self ):
-        TestData = {
-            'pmid': [ 42 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 23 ],
-            'is_cancer': [ False ],
-            'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
-        }
-
-        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
-
-        self.assertTrue( self.__FileCache.WasLookedUp )
-
-    def it_returns_the_value_of_the_file_cache( self ):
-        TestData = {
-            'pmid': [ 42 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 23 ],
-            'is_cancer': [ False ],
-            'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
-        }
-
-        self.__FakeCache2[ "0e2f1a75f3af555d48a593a9e0a610ee" ] =  [ TestData[ "text"][ 0 ].lower() ]
-
-        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        Result = self.__Prepro.preprocess_text_corpus( MyFrame, "a" )
-
-        self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
-        self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
-        self.assertListEqual(
-             Result,
-             self.__FakeCache2[ "0e2f1a75f3af555d48a593a9e0a610ee" ]
-         )
-
-    def it_caches_new_set_variants( self ):
-        TestData = {
-            'pmid': [ 42, 41, 40],
-            'cancer_type': [ -1, -1, -1 ],
-            'doid': [ 23, 23, 21 ],
-            'is_cancer': [ False, False, False ],
-            'text': [
-                "My little cute Poney is a Poney",
-                "My little farm is cute.",
-                "My little programm is a application and runs and runs and runs."
-            ]
-        }
-
-        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
-
-        self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
-        self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
-        self.assertListEqual(
-            TestData[ "text" ],
-            self.__FakeCache2[ "a88cc70d078ce3d60e7b51757cda82c7" ]
-        )
-
     def it_does_not_run_in_parallel_if_only_one_worker_is_given( self ):
         TestData = {
             'pmid': [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ],
@@ -446,3 +385,48 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__FM.ReturnEmptySet = True
         with self.assertRaises( RuntimeError ):
             self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
+
+    def it_saves_the_shared_memory_on_exit( self ):
+        self.__FakeCache[ "42a" ] =  "some text"
+
+        del self.__Prepro
+
+        self.assertDictEqual(
+            self.__FakeCache,
+            self.__FakeCache2[ "hardId42" ]
+        )
+
+    def it_loads_shared_memory_on_init( self ):
+        Path = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), 'testTmp' ) )
+        File = OS.path.join( Path, "hardId42.npy" )
+        Saved = { "42l": "stop words" }
+        OS.mkdir( Path, 0o777 )
+        numpy.save( File, Saved )
+        TestData = {
+            'pmid': [ 42 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 23 ],
+            'is_cancer': [ False ],
+            'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
+        }
+
+        PM = PropertiesManager()
+        PM.cache_dir = Path
+        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        MyProc = PolymorphPreprocessor.Factory.getInstance( PM )
+        Results = MyProc.preprocess_text_corpus( MyFrame, "l" )
+        del MyProc
+
+        self.assertEqual(
+            Saved[ "42l" ],
+            Results[ 0 ]
+        )
+
+    def tearDown( self ):
+        Path = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), 'testTmp' ) )
+        File = OS.path.join( Path, "hardId42.npy" )
+        if OS.path.isfile( File ):
+            OS.remove( File )
+
+        if OS.path.isdir( Path ):
+            OS.rmdir( Path )
