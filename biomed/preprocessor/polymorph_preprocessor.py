@@ -121,7 +121,9 @@ class PolymorphPreprocessor( PreProcessor ):
         return self.__returnParallelResults( PmIds, PairedValues )
 
     def __splitInputs( self, PmIds: list, Text: list, Flags: str ) -> list:
-        Buckets = [[]]*self.__Workers
+        Buckets = list()
+        for Index in range( 0, self.__Workers ):
+            Buckets.append( list() )
 
         for Index in range( 0, len( PmIds ) ):
             Buckets[ Index % self.__Workers ].append(
@@ -166,7 +168,7 @@ class PolymorphPreprocessor( PreProcessor ):
             This.__multiExtractText( Value, Flags, Worker )
 
     def __multiExtractText( self, Paired: tuple, Flags: str, Worker: int ):
-        print( 'Preprocess {}'.format( Paired[ 0 ] ) )
+        print( 'Preprocess {} in worker {}'.format( Paired[ 0 ], Worker ) )
         if not self.__Cache.has( Paired[ 0 ] ):
             self.__applyTextNormalizerAndCache( Paired[ 0 ], Paired[ 1 ], Flags, Worker )
 
