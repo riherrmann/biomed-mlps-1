@@ -38,4 +38,4 @@ class PropertiesManager:
                 OS.path.dirname( __file__ ), "..", ".cache"
             )
         )
-        self.preprocessor_variant = "swl"
+        self.preprocessor_variant = "avn"
