@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from pandas import DataFrame
 from biomed.preprocessor.pre_processor import PreProcessor
-from biomed.mlps_manager import MLPsManager
+from biomed.mlp_manager import MLPManager
 
 
 class TextMiningManager:
@@ -24,7 +24,7 @@ class TextMiningManager:
         self.training_data = None
         self.test_data = None
         self.doid_unique = None
-        self.mlpsm = MLPsManager(self.properties_manager)
+        self.mlpsm = MLPManager(self.properties_manager)
 
     def _data_train_test_split(self, data):
         test_size = self.properties_manager.test_split_size
@@ -97,9 +97,9 @@ class TextMiningManager:
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
 
     def get_binary_mlp_predictions(self):
-        self.mlpsm.build_binary_mlp(input_dim=self.input_dim, nb_classes=self.nb_classes)
-        predictions = self.mlpsm.train_and_run_binary_mlp(X_train=self.X_train, X_test=self.X_test,
-                                                          Y_train=self.Y_train)
+        self.mlpsm.build_mlp_model_1(input_dim=self.input_dim, nb_classes=self.nb_classes)
+        predictions = self.mlpsm.train_and_run_mlp_model_1(X_train=self.X_train, X_test=self.X_test,
+                                                           Y_train=self.Y_train)
         return predictions
 
     def map_doid_values_to_sequential(self, y_data):
