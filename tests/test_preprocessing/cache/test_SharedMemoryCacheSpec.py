@@ -11,16 +11,16 @@ from biomed.preprocessor.cache.sharedMemoryCache import SharedMemoryCache
 from multiprocessing import Process, Lock
 
 class SharedMemoryCacheSpec( unittest.TestCase ):
-    def it_is_a_Cache( self ):
+    def test_it_is_a_Cache( self ):
         MyCache = SharedMemoryCache.Factory.getInstance()
         self.assertTrue( isinstance( MyCache, Cache ) )
 
-    def it_tells_if_contains_a_id( self ):
+    def test_it_tells_if_contains_a_id( self ):
         MyCache = SharedMemoryCache( { "a": "bala" }, Lock() )
         self.assertTrue( MyCache.has( "a" ) )
         self.assertFalse( MyCache.has( "b" ) )
 
-    def it_returns_a_stored_value( self ):
+    def test_it_returns_a_stored_value( self ):
         Stored = "My little poney farm."
         Cache = { "a": Stored }
         MyCache = SharedMemoryCache( Cache, Lock() )
@@ -29,14 +29,14 @@ class SharedMemoryCacheSpec( unittest.TestCase ):
             MyCache.get( "a" )
         )
 
-    def it_returns_None_if_the_given_key_is_not_in_the_cache( self ):
+    def test_it_returns_None_if_the_given_key_is_not_in_the_cache( self ):
         MyCache = SharedMemoryCache( dict(), Lock() )
         self.assertEqual(
             None,
             MyCache.get( "a" )
         )
 
-    def it_stores_data( self ):
+    def test_it_stores_data( self ):
         Cache = dict()
         Expected = "blabla"
         MyCache = SharedMemoryCache( Cache, Lock() )
@@ -47,7 +47,7 @@ class SharedMemoryCacheSpec( unittest.TestCase ):
             Cache[ "a" ]
         )
 
-    def it_overwrites_data( self ):
+    def test_it_overwrites_data( self ):
         Cache = { "a": "poney" }
         Expected = "blabla"
         MyCache = SharedMemoryCache( Cache, Lock() )
@@ -58,7 +58,7 @@ class SharedMemoryCacheSpec( unittest.TestCase ):
             Cache[ "a" ]
         )
 
-    def it_works_in_a_multiprocess_context( self ):
+    def test_it_works_in_a_multiprocess_context( self ):
         def worker( Cache: Cache, ToFill: dict ):
             for Key in ToFill:
                 Cache.set( Key, ToFill[ Key ] )
@@ -89,16 +89,16 @@ class SharedMemoryCacheSpec( unittest.TestCase ):
                 MyCache.get( Key )
             )
 
-    def it_returns_its_current_size( self ):
+    def test_it_returns_its_current_size( self ):
         Cache = { "a": "poney" }
-        Expected = 2
+        Expected = 1
         MyCache = SharedMemoryCache( Cache, Lock() )
         self.assertEqual(
             Expected,
             MyCache.size()
         )
 
-    def it_returns_its_value_as_dict( self ):
+    def test_it_returns_its_value_as_dict( self ):
         Cache = { "a": "poney" }
         MyCache = SharedMemoryCache( Cache, Lock() )
         Values = MyCache.toDict()

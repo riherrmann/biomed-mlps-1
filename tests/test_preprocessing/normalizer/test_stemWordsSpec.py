@@ -11,11 +11,11 @@ from biomed.preprocessor.normalizer.filter import Filter
 
 class StemFilterSpec( unittest.TestCase ):
 
-    def it_is_a_filter( self ):
+    def test_it_is_a_filter( self ):
         MyFilter = StemFilter.Factory.getInstance()
         self.assertTrue( isinstance( MyFilter, Filter ) )
 
-    def it_stems_a_given_word( self ):
+    def test_it_stems_a_given_word( self ):
         MyFilter = StemFilter.Factory.getInstance()
         self.assertEqual(
             "write",

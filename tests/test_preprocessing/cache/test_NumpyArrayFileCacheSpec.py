@@ -35,45 +35,45 @@ class NumpyArrayFileCacheSpec( unittest.TestCase ):
     def tearDown( self ):
         self.__remove()
 
-    def it_fails_if_the_cache_dir_does_not_exists( self ):
+    def test_it_fails_if_the_cache_dir_does_not_exists( self ):
         self.__remove()
         self.assertRaises( RuntimeError )
 
-    def it_fails_if_the_cache_dir_is_not_readable( self ):
+    def test_it_fails_if_the_cache_dir_is_not_readable( self ):
         OS.chmod( self.__Path, 0o100 )
         self.assertRaises( RuntimeError )
 
-    def it_fails_if_the_cache_dir_is_not_writeable( self ):
+    def test_it_fails_if_the_cache_dir_is_not_writeable( self ):
         OS.chmod( self.__Path, 0o660 )
         self.assertRaises( RuntimeError )
 
-    def it_is_a_Cache( self ):
+    def test_it_is_a_Cache( self ):
         MyCache = NumpyArrayFileCache.Factory.getInstance( self.__Path )
         self.assertTrue( isinstance( MyCache, Cache ) )
 
-    def it_tells_if_contains_a_id( self ):
+    def test_it_tells_if_contains_a_id( self ):
         self.__createTestFile( [ 1, 2, 3 ], "1.npy" )
         MyCache = NumpyArrayFileCache.Factory.getInstance( self.__Path )
         self.assertTrue( MyCache.has( "1" ) )
         self.assertFalse( MyCache.has( "2" ) )
 
-    def it_returns_a_stored_value( self ):
-        Stored = [ 1, 2, 3 ]
+    def test_it_returns_a_stored_value( self ):
+        Stored = { "a": [ 1, 2, 3 ] }
         self.__createTestFile( Stored, "1.npy" )
         MyCache = NumpyArrayFileCache.Factory.getInstance( self.__Path )
-        self.assertListEqual(
+        self.assertDictEqual(
             Stored,
-            list( MyCache.get( "1" ) )
+            MyCache.get( "1" )
         )
 
-    def it_returns_none_if_the_key_does_not_exists( self ):
+    def test_it_returns_none_if_the_key_does_not_exists( self ):
         MyCache = NumpyArrayFileCache.Factory.getInstance( self.__Path )
         self.assertEqual(
             None,
             MyCache.get( "23" )
         )
 
-    def it_stores_given_data( self ):
+    def test_it_stores_given_data( self ):
         ToStore = [ 1, 2, 3 ]
         MyCache = NumpyArrayFileCache.Factory.getInstance( self.__Path )
         MyCache.set( "1", ToStore )
@@ -84,7 +84,7 @@ class NumpyArrayFileCacheSpec( unittest.TestCase ):
 
         self.__Files.append( OS.path.join( self.__Path, "1.npy"  ) )
 
-    def it_overwrites_stored_data( self ):
+    def test_it_overwrites_stored_data( self ):
         ToStore = [ 1, 2, 3 ]
         self.__createTestFile( ToStore, "1.npy" )
 
