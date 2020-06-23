@@ -39,3 +39,15 @@ class PropertiesManager:
             )
         )
         self.preprocessor_variant = "avn"
+
+    def __setitem__(self, field, value):
+        if not hasattr( self, field ):
+            raise KeyError( "Illegal field {} in proprerty manager.".format( field ) )
+
+        self.__setattr__(field, value)
+
+    def __getitem__(self, field):
+        if not hasattr( self, field ):
+            raise KeyError( "Illegal field {} in proprerty manager.".format( field ) )
+
+        return self.__getattribute__(field)

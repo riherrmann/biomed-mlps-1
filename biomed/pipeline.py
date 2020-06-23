@@ -1,18 +1,11 @@
 import collections
 
-from biomed.properties_manager import PropertiesManager
 from biomed.text_mining_manager import TextMiningManager
-from biomed.preprocessor.pre_processor import PreProcessor
 
 def pipeline(
     training_data,
-    pm: PropertiesManager,
-    pp: PreProcessor
+    tmm: TextMiningManager,
 ) -> int:
-    tmm = TextMiningManager(
-        pm,
-        pp
-    )
     print('Setup for input data')
     tmm.setup_for_input_data(training_data)
     target_dimension = 'doid'
