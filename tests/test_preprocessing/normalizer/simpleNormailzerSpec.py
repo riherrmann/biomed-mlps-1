@@ -19,26 +19,40 @@ class SimpleNormalizerSpec( unittest.TestCase ):
         MyNormal = SimpleNormalizer.Factory.getInstance()
         self.assertEquals(
             "my little poney",
-            MyNormal.apply( "My Little Poney.", "l" )
+            MyNormal.apply( [ "My Little Poney." ], "l" )[ 0 ]
         )
 
     def it_removes_stopwords( self ):
         MyNormal = SimpleNormalizer.Factory.getInstance()
         self.assertEquals(
             "text stop words",
-            MyNormal.apply( "A text of stop words.", "w" )
+            MyNormal.apply( [ "A text of stop words." ], "w" )[ 0 ]
         )
 
     def it_stems_words( self ):
         MyNormal = SimpleNormalizer.Factory.getInstance()
         self.assertEquals(
             "My poney write text",
-            MyNormal.apply( "My poney writes texts.", "s" )
+            MyNormal.apply( [ "My poney writes texts." ], "s" )[ 0 ]
         )
 
     def it_uses_mutiple_filter( self ):
         MyNormal = SimpleNormalizer.Factory.getInstance()
         self.assertEquals(
             "poney write text stop word",
-            MyNormal.apply( "My Poney writes Texts of Stop words.", "slw" )
+            MyNormal.apply( [ "My Poney writes Texts of Stop words." ], "slw" )[ 0 ]
+        )
+
+    def it_handles_multiple_senetences( self ):
+        MyNormal = SimpleNormalizer.Factory.getInstance()
+        self.assertEquals(
+            "My poney write a text It is happi about that and it is write more" ,
+            MyNormal.apply( [ "My poney writes a texts. It is happy about that. And it is writing more." ], "s" )[ 0 ]
+        )
+
+    def it_handles_a_batch_of_documents( self ):
+        MyNormal = SimpleNormalizer.Factory.getInstance()
+        self.assertListEqual(
+            ["My poney write a text", "It is happi about it", "and it is write more" ] ,
+            MyNormal.apply( [ "My poney writes a texts.", "It is happy about it.", "And it is writing more." ], "s" )
         )

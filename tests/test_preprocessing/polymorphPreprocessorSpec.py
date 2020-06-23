@@ -206,12 +206,12 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__Prepro.preprocess_text_corpus( MyFrame, "nl" )
 
         self.assertEqual(
-            len( TestData[ "text" ] ),
+            1,
             self.__Complex.LastNormalizers[ 0 ].CallCounter
         )
 
         self.assertEqual(
-            len( TestData[ "text" ] ),
+            1,
             self.__Simple.LastNormalizers[ 0 ].CallCounter
         )
 
@@ -295,12 +295,12 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         )
 
         self.assertEqual(
-            len( MyFrame[ "text" ] ),
+            1,
             self.__Complex.LastNormalizers[ 0 ].CallCounter
         )
 
         self.assertEqual(
-            len( MyFrame[ "text" ] ),
+            1,
             self.__Simple.LastNormalizers[ 0 ].CallCounter
         )
 
@@ -386,10 +386,17 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         with self.assertRaises( RuntimeError ):
             self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
 
-    def it_saves_the_shared_memory_on_exit( self ):
-        self.__FakeCache[ "42a" ] =  "some text"
+    def it_saves_the_shared_memory_on_a_cache_miss_after_the_computing_stage( self ):
+        TestData = {
+            'pmid': [ 42 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 23 ],
+            'is_cancer': [ False ],
+            'text': [ "I love my poney." ],
+        }
 
-        del self.__Prepro
+        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
 
         self.assertDictEqual(
             self.__FakeCache,

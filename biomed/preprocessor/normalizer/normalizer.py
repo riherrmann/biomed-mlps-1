@@ -9,7 +9,7 @@ class abstractstatic(staticmethod):
 
 class Normalizer( ABC ):
     @abstractmethod
-    def apply( self, Token: str, Flags: list ) -> str:
+    def apply( self, StackOfDocuments: list, Flags: list ) -> list:
         pass
 
     def _reassemble( self, Text: list ) -> str:

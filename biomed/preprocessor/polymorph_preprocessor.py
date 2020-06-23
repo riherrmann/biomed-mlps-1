@@ -10,9 +10,9 @@ from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.preprocessor.facilitymanager.mFacilityManager import MariosFacilityManager
 from biomed.properties_manager import PropertiesManager
 from pandas import DataFrame
-from nltk import sent_tokenize
 from multiprocessing import Process
 from time import sleep
+from math import ceil
 
 class PolymorphPreprocessor( PreProcessor ):
     def __init__(
@@ -35,7 +35,6 @@ class PolymorphPreprocessor( PreProcessor ):
         self.__Cache = Cache
         self.__SimpleFlags = SimpleFlags
         self.__ComplexFlags = ComplexFlags
-
         self.__prepareNormalizers( Simple, Complex, Workers )
 
     def __prepareNormalizers(
@@ -51,71 +50,88 @@ class PolymorphPreprocessor( PreProcessor ):
             self.__Complex.append( ComplexFactory.getInstance() )
 
     def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
-        PmIds, Texts = self.__cleanUpData(
+        self.__SharedMemory.set( "Dirty", False )
+        PmIds, Documents = self.__cleanUpData(
             list( frame[ "pmid" ] ),
             list( frame[ "text" ] )
         )
 
-        return self.__reflectOrExtract( PmIds, Texts, flags )
+        return self.__reflectOrExtract( PmIds, Documents, self.__toSortedString( flags ) )
 
-    def __cleanUpData( self, PmIds: list, Texts: list ) -> tuple:
-        Result = self.__FM.clean( PmIds, Texts )
+    def __cleanUpData( self, PmIds: list, Documents: list ) -> tuple:
+        Result = self.__FM.clean( PmIds, Documents )
         if not Result[ 0 ] or not Result[ 1 ]:
             raise RuntimeError( "ERROR: Empty Dataset detected." )
 
         return Result
 
-    def __reflectOrExtract( self, PmIds: list, Text: list, Flags: str ) -> list:
+    def __reflectOrExtract( self, PmIds: list, Document: list, Flags: str ) -> list:
         if not self.__isApplicable( Flags ):
-            return Text
+            return Document
         else:
-            return self.__runInParallelOrSequence( PmIds, Text, Flags )
+            return self.__runInParallelOrSequence( PmIds, Document, Flags )
 
 
-    def __runInParallelOrSequence( self, PmIds: list, Text: list, Flags: str ) -> list:
+    def __runInParallelOrSequence( self, PmIds: list, Document: list, Flags: str ) -> list:
         if not self.__ForkIt:
-            return self.__extractText(
+            return self.__extractDocument(
                 PmIds,
-                Text,
+                Document,
                 Flags,
-                0
             )
         else:
             return self.__runInParallel(
                 PmIds,
-                Text,
+                Document,
                 Flags
             )
 
-    def __runInParallel( self, PmIds: list, Text: list, Flags: str ) -> list:
+    def __runInParallel( self, PmIds: list, Documents: list, Flags: str ) -> list:
+        print( "Gathering already computed" )
+        ToDo, AlreadDone = self.__filterAlreadyComputed( PmIds, Documents, Flags )
+
+        print( "prepare documents" )
+        self.__excuteRun( ToDo[ 0 ], ToDo[ 1 ], Flags )
+
+        self.__saveOnDone()
+        print( "Gathering output" )
+        return self.__returnFromCache( ToDo[ 0 ] + AlreadDone )
+
+    def __excuteRun( self, CacheIds: list, Documents: list, Flags: str ):
+        if not CacheIds:
+            return
+
         Jobs = list()
-        PairedValues = self.__splitInputs( PmIds, Text, Flags )
-        self.__spawnJobs( Jobs, PairedValues, Flags )
+        BagOfCacheIds, BagOfDocuments = self.__splitInputs( CacheIds, Documents, Flags )
+
+        self.__spawnJobs( Jobs, BagOfCacheIds, BagOfDocuments, Flags )
         sleep( 0 )# aka yield
         self.__waitUntilDone( Jobs )
 
-        return self.__returnParallelResults( PmIds, PairedValues )
+    def __splitInputs( self, CacheIds: list, Documents: list, Flags: str ) -> tuple:
+        SizeOfChunk = ceil( len( CacheIds ) / self.__Workers )
+        SubsetOfIds = list( self.__computeChunk( SizeOfChunk, CacheIds ) )
+        SubsetOfDocuments = list( self.__computeChunk( SizeOfChunk, Documents ) )
 
-    def __splitInputs( self, PmIds: list, Text: list, Flags: str ) -> list:
-        Buckets = list()
-        for Index in range( 0, self.__Workers ):
-            Buckets.append( list() )
+        return ( SubsetOfIds, SubsetOfDocuments )
 
-        for Index in range( 0, len( PmIds ) ):
-            Buckets[ Index % self.__Workers ].append(
-                (
-                    self.__createCacheKey( PmIds[ Index ], Flags ),
-                    Text[ Index ]
-                )
-            )
+    def __computeChunk( self, N: int, BagOfStuff: list ) -> list:
+        for Index in range( 0, len( BagOfStuff ), N ):
+            yield BagOfStuff[ Index:Index + N]
 
-        return Buckets
-
-    def __spawnJobs( self, Jobs, PairedValues: list, Flags: str ):
-        for Index in range( 0, self.__Workers ):
+    def __spawnJobs( self, Jobs, BagOfCacheIds: list, BagOfDocuments: list, Flags: str ):
+        # Note there could be more worker than stuff to process
+        for Index in range( 0, len( BagOfCacheIds ) ):
+            print( "Spawn job #{}". format( Index ) )
             Job = Process(
                 target = PolymorphPreprocessor._run,
-                args = ( self, Index, PairedValues[ Index ], Flags )
+                args = (
+                    self,
+                    Index,
+                    BagOfCacheIds[ Index ],
+                    BagOfDocuments[ Index ],
+                    Flags
+                )
             )
             Jobs.append( Job )
             Job.start()
@@ -124,101 +140,90 @@ class PolymorphPreprocessor( PreProcessor ):
         for Job in Jobs:
             Job.join()
 
-    def __returnParallelResults( self, PmIds: list, PairedValues: list ) -> list:
-        Results = list()
-        for X in range( 0, len( PmIds ) ):
-            for ValueTuple in PairedValues[ X % self.__Workers ]:
-                Results.append( self.__SharedMemory.get( ValueTuple[ 0 ] ) )
-
-        return Results
-
     @staticmethod
     def _run(
         This,
         Worker: int,
-        PairedValues: list,
+        CacheIds: list,
+        Documents: list,
         Flags: str
     ):
         sleep(0)# aka yield
-        for Value in PairedValues:
-            This.__multiExtractText( Value, Flags, Worker )
 
-    def __multiExtractText( self, Paired: tuple, Flags: str, Worker: int ):
-        print( 'Preprocess {} in worker {}'.format( Paired[ 0 ], Worker ) )
-
-        if not self.__SharedMemory.has( Paired[ 0 ] ):
-            self.__applyTextNormalizerAndCache( Paired[ 0 ], Paired[ 1 ], Flags, Worker )
-
-    def __extractText( self, PmIds: list, Text: list, Flags: str, Worker: int ) -> list:
-        for Index in range( 0, len( Text ) ):
-            Text[ Index ] = self.__useCacheOrNormalizer(
-                PmIds[ Index ],
-                Text[ Index ],
-                Flags,
-                Worker,
-            )
-
-        return Text
-
-    def __useCacheOrNormalizer(
-        self,
-        PmId: int,
-        Text: str,
-        Flags: str,
-        Worker: int
-    ) -> str:
-        CacheKey = self.__createCacheKey( PmId, Flags )
-        print( 'Preprocess {}'.format( CacheKey ) )
-
-        if self.__SharedMemory.has( CacheKey ):
-            return self.__SharedMemory.get( CacheKey )
-        else:
-            return self.__applyTextNormalizerAndCache( CacheKey, Text, Flags, Worker )
-
-    def __createCacheKey( self, PmId: int, Flags: str ) -> str:
-        Flags = self.__toSortedString( Flags )
-        return "{}{}".format( PmId, Flags )
-
-    def __toSortedString( self, Str: str ) -> str:
-        Tmp = list( Str )
-        Tmp.sort()
-        return "".join( Tmp )
-
-    def __applyTextNormalizerAndCache(
-        self,
-        CacheKey: str,
-        Text: str,
-        Flags: str,
-        Worker: int
-    ) -> str:
-        Result = self.__applyTextNormalizer( Text, Flags, Worker )
-        self.__SharedMemory.set( CacheKey, Result )
-        return Result
-
-    def __applyTextNormalizer( self, Text: str, Flags: str, Worker: int ) -> str:
-        return self.__reassemble(
-            self.__normalize( sent_tokenize( Text ), Flags, Worker )
+        This.__computeAndWriteToCache(
+            CacheIds,
+            Documents,
+            Flags,
+            Worker
         )
 
-    def __normalize( self, Sentences: list, Flags: str, Worker: int ) -> list:
-        ParsedSentences = list()
-        for Sentence in Sentences:
-            ParsedSentences.append(
-                self.__normalizePerSentence( Sentence, Flags, Worker )
+        print( "Job #{} is done!".format( Worker ) )
+
+    def __extractDocument( self, PmIds: list, Documents: list, Flags: str ) -> list:
+        print( "Gathering already computed" )
+        ToDo, AlreadDone = self.__filterAlreadyComputed( PmIds, Documents, Flags )
+
+        print( "Prepare documents" )
+        self.__computeAndWriteToCache(
+            ToDo[ 0 ],
+            ToDo[ 1 ],
+            Flags,
+            0
+        )
+
+        self.__saveOnDone()
+        print( "Gathering output" )
+        return self.__returnFromCache( ToDo[ 0 ] + AlreadDone )
+
+    def __saveOnDone( self ):
+        if self.__SharedMemory.get( "Dirty" ):
+            self.__SharedMemory.set( "Dirty", False )
+            self.__save()
+
+    def __returnFromCache( self, CacheIds: list ):
+        ParsedDocuments = list()
+        for Id in CacheIds:
+            ParsedDocuments.append( self.__SharedMemory.get( Id ) )
+
+        return ParsedDocuments
+
+    def __filterAlreadyComputed( self, PmIds: list, Documents: list,  Flags: str ) -> tuple:
+        SubsetOfIds = list()
+        SubsetOfDocuments = list()
+        AlreadyCached = list()
+        for Index in range( 0, len( PmIds ) ):
+            CacheId = self.__createCacheKey( PmIds[ Index ], Flags )
+            if not self.__SharedMemory.has( CacheId ):
+                self.__SharedMemory.set( "Dirty", True )
+                SubsetOfIds.append( CacheId )
+                SubsetOfDocuments.append( Documents[ Index ] )
+            else:
+                AlreadyCached.append( CacheId )
+
+        return ( ( SubsetOfIds, SubsetOfDocuments ), AlreadyCached )
+
+    def __computeAndWriteToCache( self, CacheIds: list, Documents: list, Flags: str, Worker: int ):
+        if not CacheIds:
+            return
+
+        NormalizedDocuments = self.__normalize( Documents, Flags, Worker )
+
+        for Index in range( 0, len( CacheIds ) ):
+            self.__SharedMemory.set(
+                CacheIds[ Index ],
+                NormalizedDocuments[ Index ]
             )
 
-        return ParsedSentences
-
-    def __normalizePerSentence( self, Text: str, Flags: str, Worker: int ) -> str:
-        ParsedSentence = Text
+    def __normalize( self, StackOfDocuments: list, Flags: str, Worker: int ) -> list:
+        ParsedDocuments = StackOfDocuments
 
         if self.__useComplex( Flags ):
-            ParsedSentence = self.__Complex[ Worker ].apply( ParsedSentence, Flags )
+            ParsedDocuments = self.__Complex[ Worker ].apply( ParsedDocuments, Flags )
 
         if self.__useSimple( Flags ):
-            ParsedSentence = self.__Simple[ Worker ].apply( ParsedSentence, Flags )
+            ParsedDocuments = self.__Simple[ Worker ].apply( ParsedDocuments, Flags )
 
-        return ParsedSentence
+        return ParsedDocuments
 
     def __isApplicable( self, Flags: str ) -> bool:
         return self.__useSimple( Flags ) or self.__useComplex( Flags )
@@ -237,10 +242,15 @@ class PolymorphPreprocessor( PreProcessor ):
         else:
             return False
 
-    def __reassemble( self, Text: list ) -> str:
-        return " ".join( Text )
+    def __createCacheKey( self, PmId: int, Flags: str ) -> str:
+        return "{}{}".format( PmId, Flags )
 
-    def __del__( self ):
+    def __toSortedString( self, Str: str ) -> str:
+        Tmp = list( Str )
+        Tmp.sort()
+        return "".join( Tmp )
+
+    def __save( self ):
         if self.__SharedMemory.size() > 0:
             self.__AlreadyProcessed.set( "hardId42", self.__SharedMemory.toDict() )
 

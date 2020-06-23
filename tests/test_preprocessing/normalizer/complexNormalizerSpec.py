@@ -19,26 +19,54 @@ class ComplexNormalizerSpec( unittest.TestCase ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
             "poney text Bulloc",
-            MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "n" )
+            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc." ], "n" )[ 0 ]
         )
 
     def it_filters_verbs_out( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
             "write",
-            MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "v" )
+            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc." ], "v" )[ 0 ]
         )
 
     def it_filters_adjectives_out( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
             "little",
-            MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "a" )
+            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc." ], "a" )[ 0 ]
         )
 
     def it_filters_mixed_out( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
-            "little poney write text Bulloc",
-            MyNormal.apply( "My little poney is writing a text for me, Bulloc.", "nv" )
+            "poney write text Bulloc",
+            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc." ], "nv" )[ 0 ]
+        )
+
+    def it_reads_muliple_sentences( self ):
+        MyNormal = ComplexNormalizer.Factory.getInstance()
+        self.assertListEqual(
+            [ "write love" ],
+            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc. It loves writing." ], "v" )
+        )
+
+    def it_filters_odd_document_formats( self ):
+        MyNormal = ComplexNormalizer.Factory.getInstance()
+        self.assertListEqual(
+            [ "write love" ],
+            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc.\n\n\n\n\nIt loves writing." ], "v" )
+        )
+
+    def it_filters_empty_sentences( self ):
+        MyNormal = ComplexNormalizer.Factory.getInstance()
+        self.assertListEqual(
+            [ "little" ],
+            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc.\n\n\n\n\nIt loves writing." ], "a" )
+        )
+
+    def it_takes_a_stack_of_documents( self ):
+        MyNormal = ComplexNormalizer.Factory.getInstance()
+        self.assertListEqual(
+            [ "write", "love", "hate", "love" ],
+            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc.", "It loves writing.", "But it hates cake.", "Love it!" ], "v" )
         )

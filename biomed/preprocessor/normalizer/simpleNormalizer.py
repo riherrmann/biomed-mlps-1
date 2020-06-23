@@ -4,16 +4,34 @@ from biomed.preprocessor.normalizer.stemFilter import StemFilter
 from biomed.preprocessor.normalizer.stopWordsFilter import StopWordsFilter
 from biomed.preprocessor.normalizer.lowerFilter import LowerFilter
 from biomed.preprocessor.normalizer.punctuationFilter import PunctuationFilter
-from nltk import word_tokenize
+from nltk import word_tokenize, sent_tokenize
 
 class SimpleNormalizer( Normalizer ):
     def __init__( self, Filter ):
         self.__Filter = Filter
 
-    def apply( self, Text: str, Flags: str ) -> str:
+    def apply( self, StackOfDocuments: list, Flags: str ) -> list:
+        ParsedStack = list()
+        for Document in StackOfDocuments:
+            ParsedStack.append( self.__filterDocument( Document, Flags ) )
+
+        return ParsedStack
+
+    def __filterDocument( self, Document: str, Flags: str ) -> str:
         return self._reassemble(
-            self.__applyFilters( word_tokenize( Text ), Flags )
+            self.__filterSentences( sent_tokenize( Document ), Flags )
         )
+
+    def __filterSentences( self, Sentences: list, Flags: str ) -> str:
+        ParsedSentences = list()
+        for Sentence in Sentences:
+            ParsedSentences.append(
+                self._reassemble(
+                    self.__applyFilters( word_tokenize( Sentence ), Flags )
+                )
+            )
+
+        return ParsedSentences
 
     def __applyFilters( self, Tokens: list, Flags: str ) -> list:
         Purge = 0
