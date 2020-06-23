@@ -206,12 +206,12 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__Prepro.preprocess_text_corpus( MyFrame, "nl" )
 
         self.assertEqual(
-            len( TestData[ "text" ] ),
+            1,
             self.__Complex.LastNormalizers[ 0 ].CallCounter
         )
 
         self.assertEqual(
-            len( TestData[ "text" ] ),
+            1,
             self.__Simple.LastNormalizers[ 0 ].CallCounter
         )
 
@@ -295,12 +295,12 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         )
 
         self.assertEqual(
-            len( MyFrame[ "text" ] ),
+            1,
             self.__Complex.LastNormalizers[ 0 ].CallCounter
         )
 
         self.assertEqual(
-            len( MyFrame[ "text" ] ),
+            1,
             self.__Simple.LastNormalizers[ 0 ].CallCounter
         )
 
