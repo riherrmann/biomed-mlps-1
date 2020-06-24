@@ -1,14 +1,17 @@
 import unittest
 from unittest.mock import MagicMock, patch, ANY
+from pandas import DataFrame
 from biomed.pipeline_runner import PipelineRunner
+from biomed.pipeline import Pipeline
+from multiprocessing import Process
 
-class StubbedSubprocess:
-    def start( self ):
-        pass
-    def join( self ):
-        pass
+def reflectId( Data: DataFrame, Config: dict ):
+    return Config[ "id" ]
 
 class PipelineRunnerSpec( unittest.TestCase ):
+    def test_it_is_a_Pipeline_Runner( self ):
+        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+        self.assertTrue( isinstance( Runner, PipelineRunner ) )
 
     @patch( 'biomed.pipeline_runner.Process' )
     def test_it_instanciates_worker_processes( self, MProcess: MagicMock ):
@@ -19,15 +22,83 @@ class PipelineRunnerSpec( unittest.TestCase ):
             { "id": 3, "workers": 42 }
         ]
 
-        Runner = PipelineRunner()
+        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
         Runner.run( Permutations, Workers )
         self.assertEqual(
             Workers,
             MProcess.call_count
         )
 
+    @patch( 'biomed.pipeline_runner.Pipeline.Factory.getInstance' )
+    def test_it_runs_the_pipeline_with_given_permutations( self, PMF: MagicMock ):
+        TestData = {
+            'pmid': [ 42 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 23 ],
+            'is_cancer': [ False ],
+            'text': [ "My little cute poney is a poney" ]
+        }
+
+        Data = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Permutations = [ {
+            "id": 1,
+            "data": Data,
+            "workers": 23
+        }, {
+            "id": 2,
+            "data": Data,
+            "workers": 42
+        } ]
+
+        GivenDimension = "is_cancer"
+
+        P = MagicMock( spec = Pipeline )
+        P.pipe.side_effect = reflectId
+        PMF.return_value = P
+
+        Runner = PipelineRunner.Factory.getInstance( GivenDimension )
+        Runner.run( Permutations )
+
+        PMF.assert_called_once_with( GivenDimension )
+        P.pipe.assert_any_call( Data, Permutations[ 0 ] )
+        P.pipe.assert_any_call( Data, Permutations[ 1 ] )
+
+    @patch( 'biomed.pipeline_runner.Pipeline.Factory.getInstance' )
+    def test_it_gathers_and_returns_the_output_of_the_pipeline( self, PMF: MagicMock ):
+        TestData = {
+            'pmid': [ 42 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 23 ],
+            'is_cancer': [ False ],
+            'text': [ "My little cute poney is a poney" ]
+        }
+
+        Data = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Permutations = [ {
+            "id": 1,
+            "data": Data,
+            "workers": 23
+        }, {
+            "id": 2,
+            "data": Data,
+            "workers": 42
+        } ]
+
+        P = MagicMock( spec = Pipeline )
+        P.pipe.side_effect = reflectId
+        PMF.return_value = P
+
+        ExpectedOutput = { 1: 1 , 2: 2 }
+        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+
+        self.assertDictEqual(
+            ExpectedOutput,
+            Runner.run( Permutations )
+        )
+
+    @patch( 'biomed.pipeline_runner.Pipeline.Factory' )
     @patch( 'biomed.pipeline_runner.Process' )
-    def test_it_spilts_the_permutation_in_chunks( self, MProcess: MagicMock ):
+    def test_it_spilts_the_permutation_in_chunks( self, MProcess: MagicMock, _ ):
         Workers = 2
         Permutations = [
             { "id": 1, "workers": 32 },
@@ -35,7 +106,7 @@ class PipelineRunnerSpec( unittest.TestCase ):
             { "id": 3, "workers": 42 }
         ]
 
-        Runner = PipelineRunner()
+        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
         Runner.run( Permutations, Workers )
 
         MProcess.assert_any_call(
@@ -55,11 +126,11 @@ class PipelineRunnerSpec( unittest.TestCase ):
                 ] )
         )
 
+    @patch( 'biomed.pipeline_runner.Pipeline.Factory' )
     @patch( 'biomed.pipeline_runner.Process' )
-    def test_it_dispatches_the_subprocess( self, MProcess: MagicMock ):
+    def test_it_dispatches_the_subprocess( self, MProcess: MagicMock, _ ):
 
-        SubProcess = StubbedSubprocess()
-        SubProcess.start = MagicMock()
+        SubProcess = MagicMock( spec = Process )
         MProcess.return_value = SubProcess
 
         Permutations = [
@@ -69,18 +140,18 @@ class PipelineRunnerSpec( unittest.TestCase ):
         ]
         Workers = 2
 
-        Runner = PipelineRunner()
+        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
         Runner.run( Permutations, Workers )
         self.assertEqual(
             Workers,
             SubProcess.start.call_count
         )
 
+    @patch( 'biomed.pipeline_runner.Pipeline.Factory' )
     @patch( 'biomed.pipeline_runner.Process' )
-    def test_it_waits_of_all_subprocess( self, MProcess: MagicMock ):
+    def test_it_waits_of_all_subprocess( self, MProcess: MagicMock, _ ):
 
-        SubProcess = StubbedSubprocess()
-        SubProcess.join = MagicMock()
+        SubProcess = MagicMock( Process )
         MProcess.return_value = SubProcess
 
         Permutations = [
@@ -90,9 +161,40 @@ class PipelineRunnerSpec( unittest.TestCase ):
         ]
         Workers = 2
 
-        Runner = PipelineRunner()
+        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
         Runner.run( Permutations, Workers )
         self.assertEqual(
             Workers,
             SubProcess.join.call_count
+        )
+
+    @patch( 'biomed.pipeline_runner.Pipeline.Factory.getInstance' )
+    def test_it_gathers_and_returns_the_output_of_the_pipeline_in_for_all_subprocesses( self, PMF: MagicMock ):
+        TestData = {
+            'pmid': [ 42 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 23 ],
+            'is_cancer': [ False ],
+            'text': [ "My little cute poney is a poney" ]
+        }
+
+        Data = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Permutations = [
+            { "id": 1, "workers": 32, "data": Data },
+            { "id": 2, "workers": 2, "data": Data },
+            { "id": 3, "workers": 42, "data": Data }
+        ]
+
+        Workers = 2
+
+        P = MagicMock( spec = Pipeline )
+        P.pipe.side_effect = reflectId
+        PMF.return_value = P
+
+        ExpectedOutput = { 1: 1 , 2: 2, 3: 3 }
+        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+
+        self.assertDictEqual(
+            ExpectedOutput,
+            Runner.run( Permutations, Workers )
         )

@@ -1,8 +1,5 @@
 from biomed.file_handler import FileHandler
-from biomed.properties_manager import PropertiesManager
-from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
-from biomed.text_mining_manager import TextMiningManager
-from biomed.pipeline import pipeline
+from biomed.pipeline_runner import PipelineRunner
 
 
 
@@ -11,14 +8,11 @@ if __name__ == '__main__':
     fh = FileHandler()
     training_data = fh.read_tsv_pandas_data_structure(training_data_location)
 
-    pm =  PropertiesManager()
+    Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+    preds = Runner.run( [ { "id": 1, "data": training_data } ] )
 
-    counter = pipeline(
-        training_data,
-        TextMiningManager(
-            pm,
-            PolymorphPreprocessor.Factory.getInstance( pm )
-        )
-    )
-
-    print('(doid, count):', counter.most_common())
+    print(preds)
+    #cancer_types_found = [x for x in preds if x != 0]
+    #cancer_types_found = tmm.map_doid_values_to_nonsequential(cancer_types_found)
+    #print('number of cancer predictions found:', len(cancer_types_found))
+    #print('(doid, count):', counter.most_common())

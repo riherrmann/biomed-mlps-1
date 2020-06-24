@@ -1,22 +1,42 @@
-import collections
-
+from pandas import DataFrame
+from biomed.properties_manager import PropertiesManager
+from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
 from biomed.text_mining_manager import TextMiningManager
 
-def pipeline(
-    training_data,
-    tmm: TextMiningManager,
-) -> int:
-    print('Setup for input data')
-    tmm.setup_for_input_data(training_data)
-    target_dimension = 'doid'
-    # target_dimension = 'is_cancer'
-    print('Setup for target dimension', target_dimension)
-    tmm.setup_for_target_dimension(target_dimension)
-    print('Build MLP and get predictions')
-    preds = tmm.get_binary_mlp_predictions()
-    print(preds)
-    cancer_types_found = [x for x in preds if x != 0]
-    cancer_types_found = tmm.map_doid_values_to_nonsequential(cancer_types_found)
-    print('number of cancer predictions found:', len(cancer_types_found))
+class Pipeline:
+    class Factory:
+        @staticmethod
+        def getInstance( target_dimension: str ):
+            return Pipeline(
+                PropertiesManager(),
+                target_dimension
+            )
 
-    return collections.Counter(cancer_types_found)
+    def __init__(
+        self,
+        Properties: PropertiesManager,
+        Target: str
+    ):
+        self.__Properties = Properties
+        self.__Target = Target
+        self.__TextMining = TextMiningManager(
+            Properties,
+            PolymorphPreprocessor.Factory.getInstance( Properties )
+        )
+
+    def pipe( self, training_data: DataFrame, properties: dict = None ):
+        self.__reassign( properties )
+
+        print( 'Setup for input data')
+        self.__TextMining.setup_for_input_data( training_data )
+        print( 'Setup for target dimension', self.__Target )
+        self.__TextMining.setup_for_target_dimension( self.__Target )
+        print( 'Build MLP and get predictions' )
+        return self.__TextMining.get_binary_mlp_predictions()
+
+    def __reassign( self, New: dict ):
+        if not New:
+            return
+        else:
+            for Key in New:
+                self.__Properties[ Key ] = New[ Key ]

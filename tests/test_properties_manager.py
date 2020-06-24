@@ -10,11 +10,6 @@ class PropertiesManagerSpec( unittest.TestCase ):
             Manager[ "workers" ]
         )
 
-    def test_it_fails_on_unknown_properties( self ):
-        Manager = PropertiesManager()
-        with self.assertRaises( KeyError ):
-            Manager[ "neverGonnaWork" ]
-
     def test_it_sets_values_like_a_dict( self ):
         Manager = PropertiesManager()
         ExpectedValue = 23
@@ -23,8 +18,3 @@ class PropertiesManagerSpec( unittest.TestCase ):
             ExpectedValue,
             Manager.workers
         )
-
-    def test_it_fails_on_unknown_fiel_while_setting( self ):
-        Manager = PropertiesManager()
-        with self.assertRaises( KeyError ):
-            Manager[ "neverGonnaWork" ] = 23
