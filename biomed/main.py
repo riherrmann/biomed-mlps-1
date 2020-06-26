@@ -1,11 +1,21 @@
 import collections
+import os as OS
+import sys as Sys
+
+AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..' ) )
+if AdditionalPath not in Sys.path:
+    Sys.path.append( AdditionalPath )
 
 from biomed.file_handler import FileHandler
 from biomed.pipeline_runner import PipelineRunner
 
-
 if __name__ == '__main__':
-    training_data_location = "training_data/train.tsv"
+    training_data_location = training_data_location = OS.path.abspath(
+        OS.path.join(
+            OS.path.dirname( __file__ ), "..", "training_data", "train.tsv"
+        )
+    )
+
     fh = FileHandler()
     training_data = fh.read_tsv_pandas_data_structure(training_data_location)
 
