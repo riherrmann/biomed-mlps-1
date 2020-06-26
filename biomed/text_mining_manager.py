@@ -93,17 +93,14 @@ class TextMiningManager:
             self.nb_classes = 2
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
 
-    def get_binary_mlp_predictions(self, sequential = True ):
+    def get_binary_mlp_predictions(self):
         self.mlpsm.build_mlp_model_1(input_dim=self.input_dim, nb_classes=self.nb_classes)
         predictions = self.mlpsm.train_and_run_mlp_model_1(X_train=self.X_train, X_test=self.X_test,
                                                            Y_train=self.Y_train)
-        return ( predictions, self.__make_output( predictions, sequential ) )
-
-    def __make_output( self, predictions, sequential ):
-        if sequential:
-            return self.__map_doid_values_to_sequential( predictions )
-        else:
-            return self.__map_doid_values_to_nonsequential( predictions )
+        return (
+            predictions,
+            self.__map_doid_values_to_nonsequential( predictions )
+        )
 
     def __map_doid_values_to_sequential(self, y_data):
         output = []

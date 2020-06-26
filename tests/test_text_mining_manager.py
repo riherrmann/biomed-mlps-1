@@ -98,19 +98,6 @@ def test_setup_for_target_dimension(datadir):
     # numpy.save('tests/test_mlps_manager/Y_train.npy', sut.Y_train)
     # numpy.save('tests/test_mlps_manager/Y_test.npy', sut.Y_test)
 
-def test_map_doid_values_to_sequential(datadir):
-    pp = StubbedPreprocessor()
-    pm = PropertiesManager()
-    mlp = MagicMock( spec = MLPManager )
-    mlp.train_and_run_mlp_model_1.return_value = [-1, 1234, 789, 42, -1]
-
-    sut = TextMiningManager(pm, pp)
-    sut.doid_unique = [-1, 1234, 789, 42]
-    sut.mlpsm = mlp
-
-    output_y_data = sut.get_binary_mlp_predictions( sequential = True )
-    assert output_y_data[ 1 ] == [0, 1, 2, 3, 0]
-
 def test_map_doid_values_to_nonsequential(datadir):
     pp = StubbedPreprocessor()
     pm = PropertiesManager()
@@ -121,5 +108,5 @@ def test_map_doid_values_to_nonsequential(datadir):
     sut.doid_unique = [-1, 1234, 789, 42]
     sut.mlpsm = mlp
 
-    output_y_data = sut.get_binary_mlp_predictions( sequential = False )
+    output_y_data = sut.get_binary_mlp_predictions()
     assert output_y_data[ 1 ] == [-1, 1234, 789, 42, -1]

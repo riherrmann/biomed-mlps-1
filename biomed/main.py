@@ -10,7 +10,7 @@ if __name__ == '__main__':
     training_data = fh.read_tsv_pandas_data_structure(training_data_location)
 
     Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
-    preds = Runner.run( [ { "id": 1, "data": training_data } ] )
+    preds = Runner.run( [ { "id": "1", "data": training_data } ] )
 
     print(preds[ "1" ][ 0 ])
 
