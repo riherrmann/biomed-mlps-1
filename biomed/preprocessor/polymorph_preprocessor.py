@@ -10,7 +10,7 @@ from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.preprocessor.facilitymanager.mFacilityManager import MariosFacilityManager
 from biomed.properties_manager import PropertiesManager
 from pandas import DataFrame
-from multiprocessing import Process
+from multiprocessing import Process, Lock, Manager
 from time import sleep
 from math import ceil
 
@@ -24,7 +24,8 @@ class PolymorphPreprocessor( PreProcessor ):
         Simple: NormalizerFactory,
         SimpleFlags: list,
         Complex: NormalizerFactory,
-        ComplexFlags: list
+        ComplexFlags: list,
+        Lock: Lock
     ):
         self.__FM = FM
         self.__AlreadyProcessed = AlreadyProcessed
@@ -36,6 +37,7 @@ class PolymorphPreprocessor( PreProcessor ):
         self.__SimpleFlags = SimpleFlags
         self.__ComplexFlags = ComplexFlags
         self.__prepareNormalizers( Simple, Complex, Workers )
+        self.__Lock = Lock
 
     def __prepareNormalizers(
         self,
@@ -206,13 +208,19 @@ class PolymorphPreprocessor( PreProcessor ):
         if not CacheIds:
             return
 
-        NormalizedDocuments = self.__normalize( Documents, Flags, Worker )
+        self.__writeToCache(
+            CacheIds,
+            self.__normalize( Documents, Flags, Worker )
+        )
 
+    def __writeToCache( self, CacheIds: list, NormalizedDocuments: list ):
+        self.__Lock.acquire()
         for Index in range( 0, len( CacheIds ) ):
             self.__SharedMemory.set(
                 CacheIds[ Index ],
                 NormalizedDocuments[ Index ]
             )
+        self.__Lock.release()
 
     def __normalize( self, StackOfDocuments: list, Flags: str, Worker: int ) -> list:
         ParsedDocuments = StackOfDocuments
@@ -260,6 +268,7 @@ class PolymorphPreprocessor( PreProcessor ):
         __SimpleFlags = [ "s", "l", "w" ]
         __Complex = ComplexNormalizer.Factory
         __ComplexFlags = [ "n", "v", "a" ]
+        __SharedLock = Manager().Lock()
 
         @staticmethod
         def getInstance( Properties: PropertiesManager ) -> PreProcessor:
@@ -275,7 +284,8 @@ class PolymorphPreprocessor( PreProcessor ):
                 PolymorphPreprocessor.Factory.__Simple,
                 PolymorphPreprocessor.Factory.__SimpleFlags,
                 PolymorphPreprocessor.Factory.__Complex,
-                PolymorphPreprocessor.Factory.__ComplexFlags
+                PolymorphPreprocessor.Factory.__ComplexFlags,
+                PolymorphPreprocessor.Factory.__SharedLock,
             )
 
         @staticmethod

@@ -6,6 +6,7 @@ if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
 import unittest
+from unittest.mock import MagicMock
 from biomed.preprocessor.normalizer.normalizer import Normalizer
 from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
@@ -15,7 +16,7 @@ from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.properties_manager import PropertiesManager
 import numpy
 from pandas import DataFrame
-from multiprocessing import Manager
+from multiprocessing import Manager, Lock
 
 class StubbedFacilityManager( FacilityManager ):
     def __init__( self ):
@@ -71,6 +72,12 @@ class StubbedCache( Cache ):
     def toDict( self ) -> dict:
         return dict( self.__GivenCache )
 
+class StubbedLock:
+    def acquire():
+        pass
+    def release():
+        pass
+
 class PolymorphPreprocessorSpec( unittest.TestCase ):
 
     def __initPreprocessorDependencies( self ):
@@ -95,7 +102,8 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__Simple,
             self.__SimpleFlags,
             self.__Complex,
-            self.__ComplexFlags
+            self.__ComplexFlags,
+            MagicMock( spec=StubbedLock )
        )
 
     def test_it_is_a_PreProcessor( self ):
@@ -284,7 +292,8 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__Simple,
             self.__SimpleFlags,
             self.__Complex,
-            self.__ComplexFlags
+            self.__ComplexFlags,
+            MagicMock( spec=StubbedLock )
         )
 
         self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
@@ -336,7 +345,8 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__Simple,
             self.__SimpleFlags,
             self.__Complex,
-            self.__ComplexFlags
+            self.__ComplexFlags,
+            MagicMock( spec=StubbedLock )
         )
 
         self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
