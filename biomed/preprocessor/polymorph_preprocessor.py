@@ -267,7 +267,7 @@ class PolymorphPreprocessor( PreProcessor ):
         __Simple = SimpleNormalizer.Factory
         __SimpleFlags = [ "s", "l", "w" ]
         __Complex = ComplexNormalizer.Factory
-        __ComplexFlags = [ "n", "v", "a" ]
+        __ComplexFlags = [ "n", "v", "a", "u", "y" ]
         __SharedLock = Manager().Lock()
 
         @staticmethod

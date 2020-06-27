@@ -72,6 +72,7 @@ class ComplexNormalizer( Normalizer ):
         return ParsedDocuments
 
     def __filter( self, Document: list, Words: list, Flags: str ) -> int:
+        print( Words )
         for Word in Words:
             if "n" in Flags:
                 self.__appendNouns( Document, Word )
@@ -79,19 +80,32 @@ class ComplexNormalizer( Normalizer ):
                 self.__appendVerbs( Document, Word )
             if "a" in Flags:
                 self.__appendAdj( Document, Word )
+            if "y" in Flags:
+                self.__appendSym( Document, Word )
+            if "u" in Flags:
+                self.__appendNumerals( Document, Word )
+
 
         return int( Words[ -1 ].misc.split( "|end_char=" )[ 1 ] )
 
     def __appendNouns( self, Filtered: list, Word: NLPToken ):
-        if Word.xpos == "NN" or Word.xpos == "NNP":
-            self.__append( Filtered, Word )
+        self.__checkAndAppend( "NOUN", Filtered, Word )
+        self.__checkAndAppend( "PROPN", Filtered, Word )
 
     def __appendVerbs( self, Filtered: list, Word: NLPToken ):
-        if Word.upos == "VERB":
-            self.__append( Filtered, Word )
+        self.__checkAndAppend( "VERB", Filtered, Word )
 
     def __appendAdj( self, Filtered: list, Word: NLPToken ):
-        if Word.upos == "ADJ":
+        self.__checkAndAppend( "ADJ", Filtered, Word )
+
+    def __appendSym( self, Filtered, Word: NLPToken ):
+        self.__checkAndAppend( "SYM", Filtered, Word )
+
+    def __appendNumerals( self, Filtered, Word: NLPToken ):
+        self.__checkAndAppend( "NUM", Filtered, Word )
+
+    def __checkAndAppend( self, Type, Filtered, Word: NLPToken ):
+        if Word.upos == Type:
             self.__append( Filtered, Word )
 
     def __append( self, Filtered: list, Word: NLPToken ):

@@ -36,6 +36,21 @@ class ComplexNormalizerSpec( unittest.TestCase ):
             MyNormal.apply( [ "My little poney is writing a text for me, Bulloc." ], "a" )[ 0 ]
         )
 
+    def test_it_filters_symbols_out( self ):
+        MyNormal = ComplexNormalizer.Factory.getInstance()
+        self.assertEqual(
+            "$",
+            MyNormal.apply( [ "And then he just found $1." ], "y" )[ 0 ]
+        )
+
+    def test_it_filters_numerals_out( self ):
+        MyNormal = ComplexNormalizer.Factory.getInstance()
+        self.assertEqual(
+            "3.14159265359",
+            MyNormal.apply( [ "And then he just found 3.14159265359." ], "u" )[ 0 ]
+        )
+
+
     def test_it_filters_mixed_out( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertEqual(
