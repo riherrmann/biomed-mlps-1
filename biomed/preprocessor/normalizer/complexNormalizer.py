@@ -72,7 +72,6 @@ class ComplexNormalizer( Normalizer ):
         return ParsedDocuments
 
     def __filter( self, Document: list, Words: list, Flags: str ) -> int:
-        print( Words )
         for Word in Words:
             if "n" in Flags:
                 self.__appendNouns( Document, Word )
@@ -84,7 +83,6 @@ class ComplexNormalizer( Normalizer ):
                 self.__appendSym( Document, Word )
             if "u" in Flags:
                 self.__appendNumerals( Document, Word )
-
 
         return int( Words[ -1 ].misc.split( "|end_char=" )[ 1 ] )
 
@@ -98,10 +96,10 @@ class ComplexNormalizer( Normalizer ):
     def __appendAdj( self, Filtered: list, Word: NLPToken ):
         self.__checkAndAppend( "ADJ", Filtered, Word )
 
-    def __appendSym( self, Filtered, Word: NLPToken ):
+    def __appendSym( self, Filtered: list, Word: NLPToken ):
         self.__checkAndAppend( "SYM", Filtered, Word )
 
-    def __appendNumerals( self, Filtered, Word: NLPToken ):
+    def __appendNumerals( self, Filtered: list, Word: NLPToken ):
         self.__checkAndAppend( "NUM", Filtered, Word )
 
     def __checkAndAppend( self, Type, Filtered, Word: NLPToken ):

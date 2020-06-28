@@ -22,13 +22,13 @@ if __name__ == '__main__':
     Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
     preds = Runner.run( [ { "id": "1", "data": training_data } ] )
 
-    print(preds[ "1" ][ 0 ])
+    for key in preds:
+        prediction = preds[ key ]
+        found = list()
+        for index in range( 0, len( prediction[ 0 ] ) ):
+            if prediction[ 0 ][ index ] != 0:
+                found.append( prediction[ 1 ][ index ] )
 
-    found = list()
-    for index in range( 0, len( preds[ "1" ][ 0 ] ) ):
-        if preds[ "1" ][ 0 ][ index ] != 0:
-            found.append( preds[ "1" ][ 1 ][ index ] )
-
-    print('number of cancer predictions found:', len(found))
-    counter = collections.Counter(found)
-    print('(doid, count):', counter.most_common())
+        print('number of cancer predictions found:', len(found))
+        counter = collections.Counter(found)
+        print('(doid, count):', counter.most_common())
