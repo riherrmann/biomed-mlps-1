@@ -19,13 +19,16 @@ class Pipeline:
     ):
         self.__Properties = Properties
         self.__Target = Target
+
+    def __startTextminer( self ):
         self.__TextMining = TextMiningManager(
-            Properties,
-            PolymorphPreprocessor.Factory.getInstance( Properties )
+            self.__Properties,
+            PolymorphPreprocessor.Factory.getInstance( self.__Properties )
         )
 
     def pipe( self, training_data: DataFrame, properties: dict = None ):
         self.__reassign( properties )
+        self.__startTextminer()
 
         print( 'Setup for input data')
         self.__TextMining.setup_for_input_data( training_data )

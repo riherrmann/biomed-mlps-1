@@ -28,11 +28,21 @@ class PipelineSpec( unittest.TestCase ):
         PMF: MagicMock,
         PPF: MagicMock
     ):
+        TestData = {
+            'pmid': [ 42 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 23 ],
+            'is_cancer': [ False ],
+            'text': [ "My little cute poney is a poney" ]
+        }
+
+        Given = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
 
         PM = MagicMock( spec = PropertiesManager )
         PMF.return_value = PM
 
-        Pipeline.Factory.getInstance( "is_cancer" )
+        Pipe = Pipeline.Factory.getInstance( "is_cancer" )
+        Pipe.pipe( Given )
 
         PPF.assert_called_once_with( PM )
 
