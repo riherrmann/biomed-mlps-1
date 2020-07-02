@@ -39,3 +39,15 @@ class PropertiesManager:
             )
         )
         self.preprocessor_variant = "avn"
+
+    def __setitem__(self, field, value):
+        if not hasattr( self, field ):
+            return
+
+        self.__setattr__(field, value)
+
+    def __getitem__(self, field):
+        if not hasattr( self, field ):
+            return None
+        else:
+            return self.__getattribute__(field)

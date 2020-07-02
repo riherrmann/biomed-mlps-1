@@ -11,11 +11,11 @@ from biomed.preprocessor.facilitymanager.mFacilityManager import MariosFacilityM
 
 class MariosFacilityManagerSpec( unittest.TestCase ):
 
-    def it_is_a_FacilityManager( self ):
+    def test_it_is_a_FacilityManager( self ):
         MyFM = MariosFacilityManager.Factory.getInstance()
         self.assertTrue( isinstance( MyFM, FacilityManager ) )
 
-    def it_removes_dupletts_by_id( self ):
+    def test_it_removes_dupletts_by_id( self ):
         Ids = [ 12, 12, 13 ]
         Texts = [ "a", "v", "b" ]
 
@@ -32,7 +32,7 @@ class MariosFacilityManagerSpec( unittest.TestCase ):
             [ "a", "b" ]
         )
 
-    def it_removes_empty_tuples( self ):
+    def test_it_removes_empty_tuples( self ):
         Ids = [ 11, 12, 13 ]
         Texts = [ "a", "", "b" ]
 

@@ -69,8 +69,8 @@ class TextMiningManager:
         y_train = np.array(training_data[target_dimension])
         y_test = np.array(test_data[target_dimension])
         if target_dimension == 'doid':
-            y_train = self.map_doid_values_to_sequential(y_train)
-            self.Y_test = self.map_doid_values_to_sequential(y_test)
+            y_train = self.__map_doid_values_to_sequential(y_train)
+            self.Y_test = self.__map_doid_values_to_sequential(y_test)
         self.Y_train = tensorflow.keras.utils.to_categorical(y_train, self.nb_classes)
 
     def _normalize_input_data(self):
@@ -93,13 +93,19 @@ class TextMiningManager:
             self.nb_classes = 2
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
 
-    def get_binary_mlp_predictions(self):
+    def get_binary_mlp_predictions(self, sequential = True ):
         self.mlpsm.build_mlp_model_1(input_dim=self.input_dim, nb_classes=self.nb_classes)
         predictions = self.mlpsm.train_and_run_mlp_model_1(X_train=self.X_train, X_test=self.X_test,
                                                            Y_train=self.Y_train)
-        return predictions
+        return ( predictions, self.__make_output( predictions, sequential ) )
 
-    def map_doid_values_to_sequential(self, y_data):
+    def __make_output( self, predictions, sequential ):
+        if sequential:
+            return self.__map_doid_values_to_sequential( predictions )
+        else:
+            return self.__map_doid_values_to_nonsequential( predictions )
+
+    def __map_doid_values_to_sequential(self, y_data):
         output = []
         for input_doid in y_data:
             for target_doid, input_doid_mapping in enumerate(self.doid_unique):
@@ -107,7 +113,7 @@ class TextMiningManager:
                     output.append(target_doid)
         return output
 
-    def map_doid_values_to_nonsequential(self, y_data):
+    def __map_doid_values_to_nonsequential(self, y_data):
         output = []
         for seq_doid in y_data:
             output.append(self.doid_unique[seq_doid])

@@ -1,10 +1,10 @@
-import numpy
+from unittest.mock import MagicMock, patch
 from biomed.file_handler import FileHandler
 from biomed.properties_manager import PropertiesManager
 from biomed.text_mining_manager import TextMiningManager
+from biomed.mlp_manager import MLPManager
 from biomed.preprocessor.pre_processor import PreProcessor
 from pandas import DataFrame
-
 
 class StubbedPreprocessor(PreProcessor):
     def __init__(self):
@@ -98,22 +98,28 @@ def test_setup_for_target_dimension(datadir):
     # numpy.save('tests/test_mlps_manager/Y_train.npy', sut.Y_train)
     # numpy.save('tests/test_mlps_manager/Y_test.npy', sut.Y_test)
 
-
 def test_map_doid_values_to_sequential(datadir):
     pp = StubbedPreprocessor()
     pm = PropertiesManager()
+    mlp = MagicMock( spec = MLPManager )
+    mlp.train_and_run_mlp_model_1.return_value = [-1, 1234, 789, 42, -1]
+
     sut = TextMiningManager(pm, pp)
     sut.doid_unique = [-1, 1234, 789, 42]
-    input_y_data = [-1, 1234, 789, 42, -1]
-    output_y_data = sut.map_doid_values_to_sequential(input_y_data)
-    assert output_y_data == [0, 1, 2, 3, 0]
+    sut.mlpsm = mlp
 
+    output_y_data = sut.get_binary_mlp_predictions( sequential = True )
+    assert output_y_data[ 1 ] == [0, 1, 2, 3, 0]
 
 def test_map_doid_values_to_nonsequential(datadir):
     pp = StubbedPreprocessor()
     pm = PropertiesManager()
+    mlp = MagicMock( spec = MLPManager )
+    mlp.train_and_run_mlp_model_1.return_value = [0, 1, 2, 3, 0]
+
     sut = TextMiningManager(pm, pp)
     sut.doid_unique = [-1, 1234, 789, 42]
-    input_y_data = [0, 1, 2, 3, 0]
-    output_y_data = sut.map_doid_values_to_nonsequential(input_y_data)
-    assert output_y_data == [-1, 1234, 789, 42, -1]
+    sut.mlpsm = mlp
+
+    output_y_data = sut.get_binary_mlp_predictions( sequential = False )
+    assert output_y_data[ 1 ] == [-1, 1234, 789, 42, -1]

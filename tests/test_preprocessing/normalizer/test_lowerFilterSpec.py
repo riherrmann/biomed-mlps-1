@@ -11,11 +11,11 @@ from biomed.preprocessor.normalizer.filter import Filter
 
 class LowerFilterSpec( unittest.TestCase ):
 
-    def it_is_a_filter( self ):
+    def test_it_is_a_filter( self ):
         MyFilter = LowerFilter.Factory.getInstance()
         self.assertTrue( isinstance( MyFilter, Filter ) )
 
-    def it_brings_a_given_token_into_lower_case( self ):
+    def test_it_brings_a_given_token_into_lower_case( self ):
         MyFilter = LowerFilter.Factory.getInstance()
         self.assertEqual(
             "uppercase",

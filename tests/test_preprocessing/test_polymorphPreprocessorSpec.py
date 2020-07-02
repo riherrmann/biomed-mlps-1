@@ -98,7 +98,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__ComplexFlags
        )
 
-    def it_is_a_PreProcessor( self ):
+    def test_it_is_a_PreProcessor( self ):
         Path = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), 'testTmp' ) )
         OS.mkdir( Path, 0o777 )
         PM = PropertiesManager()
@@ -106,7 +106,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         MyProc = PolymorphPreprocessor.Factory.getInstance( PM )
         self.assertTrue( isinstance( MyProc, PreProcessor ) )
 
-    def it_does_not_alter_the_source( self ):
+    def test_it_does_not_alter_the_source( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -130,7 +130,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             Source
         )
 
-    def it_ignores_unknown_flags( self ):
+    def test_it_ignores_unknown_flags( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -145,7 +145,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    def it_uses_simple_normalizer( self ):
+    def test_it_uses_simple_normalizer( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -160,7 +160,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    def it_uses_complex_normalizer( self ):
+    def test_it_uses_complex_normalizer( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -175,7 +175,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    def it_uses_both_normalizers( self ):
+    def test_it_uses_both_normalizers( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -189,7 +189,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    def it_iterates_over_all_given_texts( self ):
+    def test_it_iterates_over_all_given_texts( self ):
         TestData = {
             'pmid': [ 42, 41, 40 ],
             'cancer_type': [ -1, -1, -1 ],
@@ -216,7 +216,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         )
 
 
-    def it_uses_a_cache_to_determine_if_the_value_was_already_processed( self ):
+    def test_it_uses_a_cache_to_determine_if_the_value_was_already_processed( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -236,7 +236,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
              self.__FakeCache[ "42a" ]
          )
 
-    def it_caches_new_text_variants( self ):
+    def test_it_caches_new_text_variants( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -255,7 +255,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__FakeCache[ "42a" ]
         )
 
-    def it_does_not_run_in_parallel_if_only_one_worker_is_given( self ):
+    def test_it_does_not_run_in_parallel_if_only_one_worker_is_given( self ):
         TestData = {
             'pmid': [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ],
             'text': [
@@ -304,7 +304,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__Simple.LastNormalizers[ 0 ].CallCounter
         )
 
-    def it_runs_in_parallel( self ):
+    def test_it_runs_in_parallel( self ):
         TestData = {
             'pmid': [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ],
             'text': [
@@ -358,7 +358,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         for Text in MyFrame[ "text" ]:
             self.assertTrue( Text in Parsed )
 
-    def it_clean_up_the_data( self ):
+    def test_it_clean_up_the_data( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -372,7 +372,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         self.assertTrue( self.__FM.WasCalled )
 
-    def it_fails_on_empty_dataset( self ):
+    def test_it_fails_on_empty_dataset( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -386,7 +386,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         with self.assertRaises( RuntimeError ):
             self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
 
-    def it_saves_the_shared_memory_on_a_cache_miss_after_the_computing_stage( self ):
+    def test_it_saves_the_shared_memory_on_a_cache_miss_after_the_computing_stage( self ):
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -403,7 +403,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__FakeCache2[ "hardId42" ]
         )
 
-    def it_loads_shared_memory_on_init( self ):
+    def test_it_loads_shared_memory_on_init( self ):
         Path = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), 'testTmp' ) )
         File = OS.path.join( Path, "hardId42.npy" )
         Saved = { "42l": "stop words" }

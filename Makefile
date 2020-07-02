@@ -1,8 +1,11 @@
 main:
 	pipenv run python -m biomed.main
 
-test:
+testAll:
 	pipenv run python -m pytest tests
+
+test:
+	pipenv run python -m pytest $(ARGS)
 
 deps/clean:
 	@pipenv --rm
