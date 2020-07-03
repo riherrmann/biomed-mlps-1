@@ -12,16 +12,15 @@ class ComplexNormalizer( Normalizer ):
         self.__Pipe = None
 
     def __initPipeLine( self ):
-        if not self.__Pipe:
-            self.__Pipe = stanza.Pipeline(
-                lang='en',
-                processors='tokenize,pos,lemma',
-                use_gpu=True,
-                logging_level = "WARN",
-                verbose=False,
-                tokenize_batch_size=128,
-                lemma_batch_size=200,
-            )
+        self.__Pipe = stanza.Pipeline(
+            lang='en',
+            processors='tokenize,pos,lemma',
+            use_gpu=True,
+            logging_level = "WARN",
+            verbose=False,
+            tokenize_batch_size=128,
+            lemma_batch_size=200,
+        )
 
     def apply( self, StackOfDocument: list, Flags: str ) -> list:
         self.__initPipeLine()
