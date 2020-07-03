@@ -33,9 +33,13 @@ class TextMiningManager:
 
     def _tfidf_transformation(self, training_data, test_data):
         properties = self.properties_manager.tfidf_transformation_properties
-        vectorizer = TfidfVectorizer(min_df=properties['min_df'], max_df=properties['max_df'],
-                                     max_features=properties['max_features'], ngram_range=properties['ngram_range'],
-                                     sublinear_tf=properties['sublinear_tf'])
+        vectorizer = TfidfVectorizer(
+            min_df=properties['min_df'],
+            max_df=properties['max_df'],
+            max_features=properties['max_features'],
+            ngram_range=properties['ngram_range'],
+            sublinear_tf=properties['sublinear_tf']
+        )
 
         print("preprocessing trainings data")
         preprocessed_training_data = self.__preprocess_text(training_data)
@@ -51,7 +55,7 @@ class TextMiningManager:
     def __preprocess_text(self, data: DataFrame) -> list:
         return self.__preprocessor.preprocess_text_corpus(
             data,
-            self.properties_manager.preprocessor_variant
+            self.properties_manager.preprocessing[ "variant" ]
         )
 
     def _prepare_input_data(self, data):
@@ -68,9 +72,11 @@ class TextMiningManager:
     def _prepare_target_data(self, test_data, training_data, target_dimension: str):
         y_train = np.array(training_data[target_dimension])
         y_test = np.array(test_data[target_dimension])
+
         if target_dimension == 'doid':
             y_train = self.__map_doid_values_to_sequential(y_train)
             self.Y_test = self.__map_doid_values_to_sequential(y_test)
+
         self.Y_train = tensorflow.keras.utils.to_categorical(y_train, self.nb_classes)
 
     def _normalize_input_data(self):
@@ -94,9 +100,15 @@ class TextMiningManager:
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
 
     def get_binary_mlp_predictions(self):
-        self.mlpsm.build_mlp_model_1(input_dim=self.input_dim, nb_classes=self.nb_classes)
-        predictions = self.mlpsm.train_and_run_mlp_model_1(X_train=self.X_train, X_test=self.X_test,
-                                                           Y_train=self.Y_train)
+        self.mlpsm.build_mlp_model(
+            input_dim=self.input_dim,
+            nb_classes=self.nb_classes
+        )
+        predictions = self.mlpsm.train_and_run_mlp_model(
+            X_train=self.X_train,
+            X_test=self.X_test,
+            Y_train=self.Y_train
+        )
         return (
             predictions,
             self.__map_doid_values_to_nonsequential( predictions )
