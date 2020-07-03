@@ -1,16 +1,15 @@
 from biomed.mlp.mlp import MLP
 from biomed.mlp.simple import SimpleFFN
-from biomed.mlp.simpleBackPropagation import SimpleBackPropagationFFN
+from biomed.mlp.simpleEx import SimpleExtendedFFN
 from biomed.properties_manager import PropertiesManager
 
 class MLPManager(MLP):
     __Models = {
         "s": SimpleFFN.Factory,
-        "sb": SimpleBackPropagationFFN.Factory
+        "sx": SimpleExtendedFFN.Factory
     }
 
     def __init__( self, pm: PropertiesManager ):
-        print( MLPManager.__Models[ pm.model ] )
         self.__Model = MLPManager.__Models[ pm.model ].getInstance( pm )
 
     def build_mlp_model( self, input_dim, nb_classes ):

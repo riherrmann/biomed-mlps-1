@@ -11,9 +11,9 @@ class MLPManagerSpec( unittest.TestCase ):
         MLPManager( pm )
         Model.assert_called_once_with( pm )
 
-    @patch('biomed.mlp_manager.SimpleBackPropagationFFN.Factory.getInstance')
-    def test_it_initializes_a_simple_backpropagation_model(self, Model: MagicMock):
+    @patch('biomed.mlp_manager.SimpleExtendedFFN.Factory.getInstance')
+    def test_it_initializes_a_simple_extended_model(self, Model: MagicMock):
         pm = PropertiesManager()
-        pm.model = "sb"
+        pm.model = "sx"
         MLPManager( pm )
         Model.assert_called_once_with( pm )
