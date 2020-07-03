@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, Activation
 from biomed.properties_manager import PropertiesManager
 from biomed.mlp.mlp import MLP
 from biomed.mlp.mlp import MLPFactory
@@ -77,6 +77,7 @@ class SimpleFFN( MLP ):
                 activation = "sigmoid"
             )
         )
+        Model.add( Activation( 'softmax' ) )
 
         Model.compile(
             loss='categorical_crossentropy',
