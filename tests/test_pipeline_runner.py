@@ -10,7 +10,7 @@ def reflectId( Data: DataFrame, Config: dict ):
 
 class PipelineRunnerSpec( unittest.TestCase ):
     def test_it_is_a_Pipeline_Runner( self ):
-        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+        Runner = PipelineRunner.Factory.getInstance()
         self.assertTrue( isinstance( Runner, PipelineRunner ) )
 
     @patch( 'biomed.pipeline_runner.Process' )
@@ -22,7 +22,7 @@ class PipelineRunnerSpec( unittest.TestCase ):
             { "id": 3, "workers": 42 }
         ]
 
-        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+        Runner = PipelineRunner.Factory.getInstance()
         Runner.run( Permutations, Workers )
         self.assertEqual(
             Workers,
@@ -50,16 +50,13 @@ class PipelineRunnerSpec( unittest.TestCase ):
             "workers": 42
         } ]
 
-        GivenDimension = "is_cancer"
-
         P = MagicMock( spec = Pipeline )
         P.pipe.side_effect = reflectId
         PMF.return_value = P
 
-        Runner = PipelineRunner.Factory.getInstance( GivenDimension )
+        Runner = PipelineRunner.Factory.getInstance()
         Runner.run( Permutations )
 
-        PMF.assert_called_once_with( GivenDimension )
         P.pipe.assert_any_call( Data, Permutations[ 0 ] )
         P.pipe.assert_any_call( Data, Permutations[ 1 ] )
 
@@ -89,7 +86,7 @@ class PipelineRunnerSpec( unittest.TestCase ):
         PMF.return_value = P
 
         ExpectedOutput = { 1: 1 , 2: 2 }
-        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+        Runner = PipelineRunner.Factory.getInstance()
 
         self.assertDictEqual(
             ExpectedOutput,
@@ -106,7 +103,7 @@ class PipelineRunnerSpec( unittest.TestCase ):
             { "id": 3, "workers": 42 }
         ]
 
-        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+        Runner = PipelineRunner.Factory.getInstance()
         Runner.run( Permutations, Workers )
 
         MProcess.assert_any_call(
@@ -140,7 +137,7 @@ class PipelineRunnerSpec( unittest.TestCase ):
         ]
         Workers = 2
 
-        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+        Runner = PipelineRunner.Factory.getInstance()
         Runner.run( Permutations, Workers )
         self.assertEqual(
             Workers,
@@ -161,7 +158,7 @@ class PipelineRunnerSpec( unittest.TestCase ):
         ]
         Workers = 2
 
-        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+        Runner = PipelineRunner.Factory.getInstance()
         Runner.run( Permutations, Workers )
         self.assertEqual(
             Workers,
@@ -192,7 +189,7 @@ class PipelineRunnerSpec( unittest.TestCase ):
         PMF.return_value = P
 
         ExpectedOutput = { 1: 1 , 2: 2, 3: 3 }
-        Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+        Runner = PipelineRunner.Factory.getInstance()
 
         self.assertDictEqual(
             ExpectedOutput,

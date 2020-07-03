@@ -6,10 +6,10 @@ from biomed.mlp.mlp import MLP
 from biomed.mlp.mlp import MLPFactory
 
 class BackPropagation( Layer ):
-    def __init__( self, units=32, input_dim=32):
+    def __init__( self, units=32, target="is_cancer"):
         super( BackPropagation, self ).__init__()
         self.w = self.add_weight(
-            shape=(input_dim, units),
+            shape=( self.__dimensions( target ), units ),
             initializer="glorot_uniform",
             trainable=True
         )
@@ -19,6 +19,12 @@ class BackPropagation( Layer ):
             initializer="zeros",
             trainable=True
         )
+
+    def __dimensions( self, Target ):
+        if Target == "is_cancer":
+            return 2
+        else:
+            return 42 #TODO
 
     def call( self, inputs ):
         return tf.matmul( inputs, self.w ) + self.b

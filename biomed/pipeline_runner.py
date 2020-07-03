@@ -6,13 +6,12 @@ from time import sleep
 class PipelineRunner:
     class Factory:
         @staticmethod
-        def getInstance( target_dimension: str ):
-            return PipelineRunner( target_dimension )
+        def getInstance():
+            return PipelineRunner()
 
     __MemoryManager = Manager()
 
-    def __init__( self, target_dimension: str ):
-        self.__Target = target_dimension
+    def __init__( self ):
         self.__Output = None
 
     def __getChunkSize(
@@ -67,6 +66,6 @@ class PipelineRunner:
         This.__runPipeline( Permutations )
 
     def __runPipeline( self, Permutations: list ):
-        Pipe = Pipeline.Factory.getInstance( self.__Target )
+        Pipe = Pipeline.Factory.getInstance()
         for Configuration in Permutations:
             self.__Output[ Configuration[ "id" ] ] = Pipe.pipe( Configuration[ "data" ], Configuration )
