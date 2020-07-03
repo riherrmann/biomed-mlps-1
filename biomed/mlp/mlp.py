@@ -33,6 +33,7 @@ class MLP( ABC ):
         self._Model.fit(
             x = X_train,
             y = Y_train,
+            loss = "mean_squared_error",
             epochs = self._Properties.training_properties[ 'epochs' ],
             batch_size = self._Properties.training_properties['batch_size'],
             validation_split = self._Properties.training_properties['validation_split'],
