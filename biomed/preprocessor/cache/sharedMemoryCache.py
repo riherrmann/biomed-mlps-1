@@ -30,11 +30,9 @@ class SharedMemoryCache( Cache ):
         return dict( self.__Cache )
 
     class Factory( CacheFactory ):
-        __Manager = Manager()
-
         @staticmethod
         def getInstance() -> Cache:
             return SharedMemoryCache(
-                SharedMemoryCache.Factory.__Manager.dict(),
-                SharedMemoryCache.Factory.__Manager.Lock()
+                Manager().dict(),
+                Manager().Lock()
             )

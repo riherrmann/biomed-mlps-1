@@ -34,7 +34,7 @@ class PipelineRunner:
 
     def __computeChunk( self, N: int, BagOfStuff: list ) -> list:
         for Index in range( 0, len( BagOfStuff ), N ):
-            yield BagOfStuff[ Index:Index + N]
+            yield BagOfStuff[ Index:Index + N ]
 
     def __runInParallel( self, Permutations: list, Workers: int ):
         Jobs = list()

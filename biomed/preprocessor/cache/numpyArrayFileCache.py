@@ -39,8 +39,6 @@ class NumpyArrayFileCache( Cache ):
         raise NotImplementedError()
 
     class Factory( FileCacheFactory ):
-        __Manager = Manager()
-
         @staticmethod
         def __checkDir( Dir, Readable=True, Writeable=True ):
             if OS.path.isdir( Dir ) is False:
@@ -75,5 +73,5 @@ class NumpyArrayFileCache( Cache ):
 
             return NumpyArrayFileCache(
                 PathToCacheDir,
-                NumpyArrayFileCache.Factory.__Manager.Lock()
+                Manager().Lock()
             )
