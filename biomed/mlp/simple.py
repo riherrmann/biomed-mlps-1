@@ -81,7 +81,7 @@ class SimpleFFN( MLP ):
 
         Model.compile(
             loss='categorical_crossentropy',
-            optimizer='adam',
+            optimizer='sgd',
             metrics=['accuracy']
         )
 
