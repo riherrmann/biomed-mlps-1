@@ -11,5 +11,5 @@ def test_train_and_run_simple_extended_ffn(datadir):
     nb_classes = len(Y_train[0])
     mlpsm = SimpleExtendedFFN.Factory.getInstance( PropertiesManager() )
     mlpsm.build_mlp_model(input_dim, nb_classes)
-    predictions = mlpsm.train_and_run_mlp_model(X_train, X_test, Y_train)
+    predictions, scores = mlpsm.train_and_run_mlp_model(X_train, X_test, Y_train, Y_test)
     assert len(predictions) == len(Y_test)

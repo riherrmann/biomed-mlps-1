@@ -21,7 +21,7 @@ class MLP( ABC ):
     def __isMultiprocessing( self ):
         return True if self._Properties[ "training_properties" ][ "workers" ] > 1 else False
 
-    def train_and_run_mlp_model(self, X_train, X_test, Y_train):
+    def train_and_run_mlp_model(self, X_train, X_test, Y_train, Y_test):
         print("Training...")
         self._Model.fit(
             x = X_train,
@@ -50,7 +50,19 @@ class MLP( ABC ):
                 batch_size = 1,
             )
 
-        return Predictions
+        #see: https://keras.io/api/models/model/#evaluate & https://keras.io/api/models/model_training_apis/
+        print( self._Model.metrics_names )
+        Scores = self._Model.evaluate(
+            X_test,
+            Y_test,
+            batch_size = self._Properties.training_properties['batch_size'],
+            workers = self._Properties.training_properties['workers'],
+            use_multiprocessing = self.__isMultiprocessing(),
+            verbose = 0,
+            return_dict = True
+        )
+
+        return ( Predictions, Scores )
 
 class MLPFactory:
     @abstractstatic

@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Input
+from keras.layers import Dense
 from biomed.properties_manager import PropertiesManager
 from biomed.mlp.mlp import MLP
 from biomed.mlp.mlp import MLPFactory
