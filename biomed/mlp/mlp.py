@@ -21,13 +21,6 @@ class MLP( ABC ):
     def __isMultiprocessing( self ):
         return True if self._Properties[ "training_properties" ][ "workers" ] > 1 else False
 
-    def __predict( self, X_test ):
-        return self._Model.predict(
-            X_test,
-            workers = self._Properties[ "training_properties" ][ "workers" ],
-            use_multiprocessing = self.__isMultiprocessing()
-        )
-
     def train_and_run_mlp_model(self, X_train, X_test, Y_train):
         print("Training...")
         self._Model.fit(
@@ -43,11 +36,19 @@ class MLP( ABC ):
         print("Generating test predictions...")
         if len( Y_train[0] ) > 2:
             Predictions = np.argmax(
-                self.__predict( X_test ),
+                self._Model.predict(
+                    X_test,
+                    batch_size = 1,
+                    workers = self._Properties[ "training_properties" ][ "workers" ],
+                    use_multiprocessing = self.__isMultiprocessing()
+                ),
                 axis = -1
             )
         else:
-            Predictions = self.__predict( X_test )
+            Predictions = self._Model.predict_classes(
+                X_test,
+                batch_size = 1,
+            )
 
         return Predictions
 
