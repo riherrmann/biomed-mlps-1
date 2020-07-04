@@ -18,7 +18,7 @@ class SimpleFFN( MLP ):
         Model = Sequential()
         #input layer
         Model.add(
-            Input(
+            Dense(
                 units=1000,
                 input_dim = input_dim,
             )

@@ -108,5 +108,5 @@ def test_map_doid_values_to_nonsequential(datadir):
     sut.doid_unique = [-1, 1234, 789, 42]
     sut.mlpsm = mlp
 
-    output_y_data = sut.get_binary_mlp_predictions()
+    output_y_data = sut.get_mlp_predictions()
     assert output_y_data[ 1 ] == [-1, 1234, 789, 42, -1]

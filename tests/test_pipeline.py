@@ -77,7 +77,7 @@ class PipelineSpec( unittest.TestCase ):
     def test_it_returns_the_computed_predictions( self, TM: MagicMock, _ ):
         Expected = 42
         TMM = MagicMock( spec = TextMiningManager )
-        TMM.get_binary_mlp_predictions.return_value = Expected
+        TMM.get_mlp_predictions.return_value = Expected
         TM.return_value = TMM
 
         Pipe = Pipeline.Factory.getInstance()

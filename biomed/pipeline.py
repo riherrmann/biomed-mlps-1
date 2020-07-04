@@ -27,7 +27,7 @@ class Pipeline:
         print( 'Setup for target dimension', self.__Properties[ "classifier" ] )
         self.__TextMining.setup_for_target_dimension( self.__Properties[ "classifier" ] )
         print( 'Build MLP and get predictions' )
-        return self.__TextMining.get_binary_mlp_predictions()
+        return self.__TextMining.get_mlp_predictions()
 
     def __reassign( self, New: dict ):
         if not New:

@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Input
+from keras.layers import Dense
 from keras.optimizers import SGD
 from biomed.properties_manager import PropertiesManager
 from biomed.mlp.mlp import MLP
@@ -19,7 +19,7 @@ class SimpleExtendedFFN( MLP ):
         Model = Sequential()
         #input layer
         Model.add(
-            Input(
+            Dense(
                 units=1000,
                 input_dim = input_dim,
             )

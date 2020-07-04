@@ -99,7 +99,7 @@ class TextMiningManager:
             self.nb_classes = 2
         self._prepare_target_data(self.test_data, self.training_data, target_dimension)
 
-    def get_binary_mlp_predictions(self):
+    def get_mlp_predictions(self):
         self.mlpsm.build_mlp_model(
             input_dim=self.input_dim,
             nb_classes=self.nb_classes
