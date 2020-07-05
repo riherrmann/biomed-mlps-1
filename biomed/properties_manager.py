@@ -12,7 +12,6 @@ class PropertiesManager:
             sublinear_tf=True,
         )
         self.test_size = 0.3
-        self.test_split_size = 0.3
         self.training_properties = dict(
             epochs = 425,
             batch_size = 10,
