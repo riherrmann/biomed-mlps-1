@@ -21,7 +21,15 @@ class MLP( ABC ):
     def __isMultiprocessing( self ):
         return True if self._Properties[ "training_properties" ][ "workers" ] > 1 else False
 
-    def train_and_run_mlp_model(self, X_train, X_test, Y_train):
+    def __predict( self, X_test ):
+        return self._Model.predict(
+            X_test,
+            batch_size = self._Properties.training_properties['batch_size'],
+            workers = self._Properties[ "training_properties" ][ "workers" ],
+            use_multiprocessing = self.__isMultiprocessing()
+        )
+
+    def train_and_run_mlp_model(self, X_train, X_test, Y_train, Y_test):
         print("Training...")
         self._Model.fit(
             x = X_train,
@@ -36,21 +44,26 @@ class MLP( ABC ):
         print("Generating test predictions...")
         if len( Y_train[0] ) > 2:
             Predictions = np.argmax(
-                self._Model.predict(
-                    X_test,
-                    batch_size = 1,
-                    workers = self._Properties[ "training_properties" ][ "workers" ],
-                    use_multiprocessing = self.__isMultiprocessing()
-                ),
+                self.__predict( X_test ),
                 axis = -1
             )
         else:
-            Predictions = self._Model.predict_classes(
-                X_test,
-                batch_size = 1,
-            )
+            Predictions = np.where( self.__predict( X_test ) > 0.5, 1,0 )
 
-        return Predictions
+        print( Predictions, flush = True )
+
+        #see: https://keras.io/api/models/model/#evaluate & https://keras.io/api/models/model_training_apis/
+        Scores = self._Model.evaluate(
+            X_test,
+            Y_test,
+            batch_size = self._Properties.training_properties['batch_size'],
+            workers = self._Properties.training_properties['workers'],
+            use_multiprocessing = self.__isMultiprocessing(),
+            verbose = 0,
+            return_dict = True
+        )
+
+        return ( Predictions, Scores )
 
 class MLPFactory:
     @abstractstatic

@@ -104,14 +104,18 @@ class TextMiningManager:
             input_dim=self.input_dim,
             nb_classes=self.nb_classes
         )
-        predictions = self.mlpsm.train_and_run_mlp_model(
+
+        predictions, scores = self.mlpsm.train_and_run_mlp_model(
             X_train=self.X_train,
             X_test=self.X_test,
-            Y_train=self.Y_train
+            Y_train=self.Y_train,
+            Y_test=self.Y_test
         )
+
         return (
             predictions,
-            self.__map_doid_values_to_nonsequential( predictions )
+            self.__map_doid_values_to_nonsequential( predictions ),
+            scores,
         )
 
     def __map_doid_values_to_sequential(self, y_data):

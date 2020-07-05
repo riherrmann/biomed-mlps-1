@@ -17,3 +17,18 @@ class MLPManagerSpec( unittest.TestCase ):
         pm.model = "sx"
         MLPManager( pm )
         Model.assert_called_once_with( pm )
+
+
+    @patch('biomed.mlp_manager.SimpleBFFN.Factory.getInstance')
+    def test_it_initializes_a_simple_b_model(self, Model: MagicMock):
+        pm = PropertiesManager()
+        pm.model = "sb"
+        MLPManager( pm )
+        Model.assert_called_once_with( pm )
+
+    @patch('biomed.mlp_manager.SimpleBExtendedFFN.Factory.getInstance')
+    def test_it_initializes_a_simple_bex_model(self, Model: MagicMock):
+        pm = PropertiesManager()
+        pm.model = "sxb"
+        MLPManager( pm )
+        Model.assert_called_once_with( pm )

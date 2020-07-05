@@ -1,6 +1,7 @@
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import SGD
+from keras.regularizers import l1
 from biomed.properties_manager import PropertiesManager
 from biomed.mlp.mlp import MLP
 from biomed.mlp.mlp import MLPFactory
@@ -20,21 +21,23 @@ class SimpleExtendedFFN( MLP ):
         #input layer
         Model.add(
             Dense(
-                units=1000,
+                units = 10,
+                activity_regularizer= l1( 0.0001 ),
                 input_dim = input_dim,
+                activation = "relu",
             )
         )
         #hidden layer
         Model.add(
             Dense(
-                units = 500,
+                units = 5,
                 kernel_initializer = "random_uniform",
                 bias_initializer = "zeros",
-                activation = "sigmoid"
+                activation = "relu"
             )
         )
         #output layer
-        Model.add( Dense( units = nb_classes, activation ='softmax' ) )
+        Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
 
         Rate = 0.1
         Decay = Rate / self._Properties.training_properties[ 'epochs' ]

@@ -14,17 +14,17 @@ class PropertiesManager:
         self.test_size = 0.3
         self.test_split_size = 0.3
         self.training_properties = dict(
-            epochs = 5,
-            batch_size = 16,
+            epochs = 425,
+            batch_size = 10,
             validation_split = 0.1,
             workers = 2,
         )
         self.prediction_properties = dict(
-            verbose = 0,
+            verbose = 1,
         )
         self.preprocessing = dict(
             workers = 2,
-            variant = "avn",
+            variant = "lsw",
         )
         self.cache_dir = OS.path.abspath(
             OS.path.join(

@@ -102,7 +102,7 @@ def test_map_doid_values_to_nonsequential(datadir):
     pp = StubbedPreprocessor()
     pm = PropertiesManager()
     mlp = MagicMock( spec = MLPManager )
-    mlp.train_and_run_mlp_model.return_value = [0, 1, 2, 3, 0]
+    mlp.train_and_run_mlp_model.return_value = ([0, 1, 2, 3, 0],[])
 
     sut = TextMiningManager(pm, pp)
     sut.doid_unique = [-1, 1234, 789, 42]
