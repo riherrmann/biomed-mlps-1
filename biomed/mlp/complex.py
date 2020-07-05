@@ -113,7 +113,7 @@ class ComplexFFN( MLP ):
         Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
 
         Model.compile(
-            loss='mean_squared_error',
+            loss='binary_crossentropy',
             optimizer='sgd',
             metrics=['accuracy']
         )
