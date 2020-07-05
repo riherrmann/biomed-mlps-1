@@ -48,9 +48,10 @@ class MLP( ABC ):
                 axis = -1
             )
         else:
-            Predictions = np.where( self.__predict( X_test ) > 0.5, 1,0 )
-
-        print( Predictions, flush = True )
+            Predictions = self._Model.predict_classes(
+                X_test,
+                batch_size = self._Properties.training_properties['batch_size'],
+            )
 
         #see: https://keras.io/api/models/model/#evaluate & https://keras.io/api/models/model_training_apis/
         Scores = self._Model.evaluate(
