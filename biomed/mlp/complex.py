@@ -21,7 +21,7 @@ class ComplexFFN( MLP ):
         #hidden layers
         Model.add(
             Dense(
-                units=1024,
+                units=2048,
                 input_dim = input_dim,
                 activation = "relu",
                 activity_regularizer = l1(0.0001)
@@ -30,7 +30,7 @@ class ComplexFFN( MLP ):
         #hidden layers
         Model.add(
             Dense(
-                units=512,
+                units=1024,
                 kernel_initializer = "random_uniform",
                 bias_initializer = "zeros",
                 activation = "relu",
@@ -39,7 +39,7 @@ class ComplexFFN( MLP ):
         Model.add( Dropout( 0.5 ) )
         Model.add(
             Dense(
-                units = 256,
+                units = 512,
                 kernel_initializer = "random_uniform",
                 bias_initializer = "zeros",
                 activation = "relu",
@@ -48,7 +48,7 @@ class ComplexFFN( MLP ):
         Model.add( Dropout( 0.45 ) )
         Model.add(
             Dense(
-                units = 128,
+                units = 256,
                 kernel_initializer = "random_uniform",
                 bias_initializer = "zeros",
                 activation = "relu",
