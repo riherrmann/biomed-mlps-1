@@ -1,4 +1,5 @@
 from biomed.mlp.mlp import MLP
+from biomed.mlp.multiSimple import MultiSimpleFFN
 from biomed.mlp.simple import SimpleFFN
 from biomed.mlp.simpleEx import SimpleExtendedFFN
 from biomed.mlp.simpleB import SimpleBFFN
@@ -11,6 +12,7 @@ class MLPManager(MLP):
         "sx": SimpleExtendedFFN.Factory,
         "sb": SimpleBFFN.Factory,
         "sxb": SimpleBExtendedFFN.Factory,
+        "ms": MultiSimpleFFN.Factory,
     }
 
     def __init__( self, pm: PropertiesManager ):
