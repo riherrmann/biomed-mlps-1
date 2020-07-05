@@ -8,6 +8,7 @@ if AdditionalPath not in Sys.path:
 
 from biomed.file_handler import FileHandler
 from biomed.pipeline_runner import PipelineRunner
+from biomed.plotter import Plotter
 
 if __name__ == '__main__':
     training_data_location = training_data_location = OS.path.abspath(
@@ -19,7 +20,11 @@ if __name__ == '__main__':
     fh = FileHandler()
     training_data = fh.read_tsv_pandas_data_structure(training_data_location)
 
-    Runner = PipelineRunner.Factory.getInstance( "is_cancer" )
+    plotter = Plotter()
+    plotter.plot_target_distribution(training_data)
+    # exit(0)
+
+    Runner = PipelineRunner.Factory.getInstance('is_cancer')
     preds = Runner.run( [ { "id": "1", "data": training_data } ] )
 
     for key in preds:
