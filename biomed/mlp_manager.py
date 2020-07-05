@@ -16,6 +16,7 @@ class MLPManager(MLP):
     }
 
     def __init__( self, pm: PropertiesManager ):
+        super( MLPManager, self ).__init__( pm )
         self.__Model = MLPManager.__Models[ pm.model ].getInstance( pm )
 
     def build_mlp_model( self, input_dim, nb_classes ):
