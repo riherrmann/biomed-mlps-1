@@ -12,17 +12,20 @@ from biomed.plotter import Plotter
 
 def printResults( Predictions ):
     def outputResults( prediction: list ):
-        found = list()
+        found_targets = list()
+        found_pmids = list()
         for index in range( 0, len( prediction[ 0 ] ) ):
             if prediction[ 0 ][ index ] != 0:
-                found.append( prediction[ 1 ][ index ] )
+                found_targets.append( prediction[ 1 ][ index ] )
+                found_pmids.append( prediction[ 3 ][ 'pmid' ].iloc[ index ] )
 
         print("scores:")
         print( prediction[ 2 ] )
 
-        print('number of cancer predictions found:', len(found))
-        counter = collections.Counter(found)
+        print('number of cancer predictions found_targets:', len(found_targets))
+        counter = collections.Counter(found_targets)
         print('(doid, count):', counter.most_common())
+        print('cancer found in articles with PMID:', found_pmids)
 
     for key in Predictions:
         print( "Configuration ID ", key )

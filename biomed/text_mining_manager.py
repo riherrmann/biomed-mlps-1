@@ -116,6 +116,7 @@ class TextMiningManager:
             predictions,
             self.__map_doid_values_to_nonsequential( predictions ),
             scores,
+            self.test_data,
         )
 
     def __map_doid_values_to_sequential(self, y_data):
