@@ -1,6 +1,7 @@
 from keras.models import Sequential
 from keras.layers import Dense
 from biomed.properties_manager import PropertiesManager
+from keras.regularizers import l1
 from biomed.mlp.mlp import MLP
 from biomed.mlp.mlp import MLPFactory
 
@@ -19,24 +20,25 @@ class SimpleFFN( MLP ):
         #input layer
         Model.add(
             Dense(
-                units=1000,
+                units=10,
                 input_dim = input_dim,
             )
         )
         #hidden layer
         Model.add(
             Dense(
-                units = 500,
+                units = 5,
                 kernel_initializer = "random_uniform",
                 bias_initializer = "zeros",
-                activation = "sigmoid",
+                activation = "relu",
+
             )
         )
         #output layer
-        Model.add( Dense( units = nb_classes, activation ='softmax' ) )
+        Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
 
         Model.compile(
-            loss='categorical_crossentropy',
+            loss='mean_squared_error',
             optimizer='sgd',
             metrics=['accuracy']
         )
