@@ -277,7 +277,7 @@ class PolymorphPreprocessor( PreProcessor ):
 
             return PolymorphPreprocessor(
                 PolymorphPreprocessor.Factory.__FacilityManager,
-                Properties.workers,
+                Properties.preprocessing[ "workers" ],
                 FileCache,
                 PolymorphPreprocessor.Factory.__loadSharedMemory( FileCache ),
                 PolymorphPreprocessor.Factory.__Simple,

@@ -10,13 +10,13 @@ class PipelineSpec( unittest.TestCase ):
 
     @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
     def test_it_is_a_Pipeline( self, _ ):
-        Pipe = Pipeline.Factory.getInstance( "is_cancer" )
+        Pipe = Pipeline.Factory.getInstance()
         self.assertTrue( isinstance( Pipe, Pipeline ) )
 
     @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
     @patch( 'biomed.pipeline.PropertiesManager' )
     def test_it_initializes_the_properties_manager( self, PM: MagicMock, _ ):
-        Pipeline.Factory.getInstance( "is_cancer" )
+        Pipeline.Factory.getInstance()
         PM.assert_called_once_with()
 
     @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
@@ -41,7 +41,7 @@ class PipelineSpec( unittest.TestCase ):
         PM = MagicMock( spec = PropertiesManager )
         PMF.return_value = PM
 
-        Pipe = Pipeline.Factory.getInstance( "is_cancer" )
+        Pipe = Pipeline.Factory.getInstance()
         Pipe.pipe( Given )
 
         PPF.assert_called_once_with( PM )
@@ -67,32 +67,20 @@ class PipelineSpec( unittest.TestCase ):
         TMM = MagicMock( spec = TextMiningManager )
         TM.return_value = TMM
 
-        Pipe = Pipeline.Factory.getInstance( "is_cancer" )
+        Pipe = Pipeline.Factory.getInstance()
         Pipe.pipe( Given )
 
         TMM.setup_for_input_data.assert_called_once_with( Given )
 
     @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
     @patch( 'biomed.pipeline.TextMiningManager' )
-    def test_it_runs_the_text_miner_with_the_given_target_dimension( self, TM: MagicMock, _ ):
-        Given = "is_cancer"
-        TMM = MagicMock( spec = TextMiningManager )
-        TM.return_value = TMM
-
-        Pipe = Pipeline.Factory.getInstance( Given )
-        Pipe.pipe( MagicMock() )
-
-        TMM.setup_for_target_dimension.assert_called_once_with( Given )
-
-    @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
-    @patch( 'biomed.pipeline.TextMiningManager' )
     def test_it_returns_the_computed_predictions( self, TM: MagicMock, _ ):
         Expected = 42
         TMM = MagicMock( spec = TextMiningManager )
-        TMM.get_binary_mlp_predictions.return_value = Expected
+        TMM.get_mlp_predictions.return_value = Expected
         TM.return_value = TMM
 
-        Pipe = Pipeline.Factory.getInstance( "is_cancer" )
+        Pipe = Pipeline.Factory.getInstance()
         self.assertEqual(
             Expected,
             Pipe.pipe( MagicMock() )
@@ -102,11 +90,11 @@ class PipelineSpec( unittest.TestCase ):
     @patch( 'biomed.pipeline.TextMiningManager' )
     @patch( 'biomed.pipeline.PropertiesManager' )
     def test_it_assigns_new_properties( self, PMF: MagicMock, _, __ ):
-        PM = dict()
+        PM = { "classifier": "is_cancer" }
         PMF.return_value = PM
-        Expected = { "workers": 23 }
+        Expected = { "workers": 23, "classifier": "is_cancer" }
 
-        Pipe = Pipeline.Factory.getInstance( "is_cancer" )
+        Pipe = Pipeline.Factory.getInstance()
         Pipe.pipe( MagicMock(), Expected )
 
         self.assertDictEqual(

@@ -1,17 +1,19 @@
-import numpy as np
+import unittest
+from unittest.mock import MagicMock, patch
 from biomed.mlp_manager import MLPManager
 from biomed.properties_manager import PropertiesManager
 
+class MLPManagerSpec( unittest.TestCase ):
+    @patch('biomed.mlp_manager.SimpleFFN.Factory.getInstance')
+    def test_it_initializes_a_simple_model(self, Model: MagicMock):
+        pm = PropertiesManager()
+        pm.model = "s"
+        MLPManager( pm )
+        Model.assert_called_once_with( pm )
 
-def test_train_and_run_binary_mlp(datadir):
-    X_test = np.load(datadir / 'X_test.npy')
-    X_train = np.load(datadir / 'X_train.npy')
-    Y_train = np.load(datadir / 'Y_train.npy')
-    Y_test = np.load(datadir / 'Y_test.npy')
-    input_dim = X_train.shape[1]
-    nb_classes = len(Y_train[0])
-    pm = PropertiesManager()
-    mlpsm = MLPManager(pm)
-    mlpsm.build_mlp_model_1(input_dim, nb_classes)
-    predictions = mlpsm.train_and_run_mlp_model_1(X_train, X_test, Y_train)
-    assert len(predictions) == len(Y_test)
+    @patch('biomed.mlp_manager.SimpleExtendedFFN.Factory.getInstance')
+    def test_it_initializes_a_simple_extended_model(self, Model: MagicMock):
+        pm = PropertiesManager()
+        pm.model = "sx"
+        MLPManager( pm )
+        Model.assert_called_once_with( pm )

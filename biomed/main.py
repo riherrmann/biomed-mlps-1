@@ -24,7 +24,7 @@ if __name__ == '__main__':
     plotter.plot_target_distribution(training_data)
     # exit(0)
 
-    Runner = PipelineRunner.Factory.getInstance('is_cancer')
+    Runner = PipelineRunner.Factory.getInstance()
     preds = Runner.run( [ { "id": "1", "data": training_data } ] )
 
     for key in preds:

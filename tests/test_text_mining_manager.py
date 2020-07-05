@@ -37,7 +37,7 @@ def test_preprocessor(datadir):
     training_data, test_data = sut._data_train_test_split(data)
     training_features, test_features = sut._tfidf_transformation(training_data, test_data)
     assert pp.WasCalled == True
-    assert pp.LastFlags == pm.preprocessor_variant
+    assert pp.LastFlags == pm.preprocessing[ "variant" ]
 
 
 def test_tfidf_transformation(datadir):
@@ -102,11 +102,11 @@ def test_map_doid_values_to_nonsequential(datadir):
     pp = StubbedPreprocessor()
     pm = PropertiesManager()
     mlp = MagicMock( spec = MLPManager )
-    mlp.train_and_run_mlp_model_1.return_value = [0, 1, 2, 3, 0]
+    mlp.train_and_run_mlp_model.return_value = [0, 1, 2, 3, 0]
 
     sut = TextMiningManager(pm, pp)
     sut.doid_unique = [-1, 1234, 789, 42]
     sut.mlpsm = mlp
 
-    output_y_data = sut.get_binary_mlp_predictions()
+    output_y_data = sut.get_mlp_predictions()
     assert output_y_data[ 1 ] == [-1, 1234, 789, 42, -1]

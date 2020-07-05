@@ -6,19 +6,11 @@ from biomed.text_mining_manager import TextMiningManager
 class Pipeline:
     class Factory:
         @staticmethod
-        def getInstance( target_dimension: str ):
-            return Pipeline(
-                PropertiesManager(),
-                target_dimension
-            )
+        def getInstance():
+            return Pipeline( PropertiesManager() )
 
-    def __init__(
-        self,
-        Properties: PropertiesManager,
-        Target: str
-    ):
+    def __init__( self, Properties: PropertiesManager ):
         self.__Properties = Properties
-        self.__Target = Target
 
     def __startTextminer( self ):
         self.__TextMining = TextMiningManager(
@@ -32,10 +24,10 @@ class Pipeline:
 
         print( 'Setup for input data')
         self.__TextMining.setup_for_input_data( training_data )
-        print( 'Setup for target dimension', self.__Target )
-        self.__TextMining.setup_for_target_dimension( self.__Target )
+        print( 'Setup for target dimension', self.__Properties[ "classifier" ] )
+        self.__TextMining.setup_for_target_dimension( self.__Properties[ "classifier" ] )
         print( 'Build MLP and get predictions' )
-        return self.__TextMining.get_binary_mlp_predictions()
+        return self.__TextMining.get_mlp_predictions()
 
     def __reassign( self, New: dict ):
         if not New:
