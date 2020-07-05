@@ -22,6 +22,8 @@ class SimpleFFN( MLP ):
             Dense(
                 units=10,
                 input_dim = input_dim,
+                activation = "relu",
+                activity_regularizer = l1(0.0001)
             )
         )
         #hidden layer
@@ -31,7 +33,6 @@ class SimpleFFN( MLP ):
                 kernel_initializer = "random_uniform",
                 bias_initializer = "zeros",
                 activation = "relu",
-
             )
         )
         #output layer
