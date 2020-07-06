@@ -18,12 +18,12 @@ class Pipeline:
             PolymorphPreprocessor.Factory.getInstance( self.__Properties )
         )
 
-    def pipe( self, training_data: DataFrame, properties: dict = None ):
+    def pipe( self, training_data: DataFrame, test_data: DataFrame, properties: dict = None ):
         self.__reassign( properties )
         self.__startTextminer()
 
         print( 'Setup for input data')
-        self.__TextMining.setup_for_input_data( training_data )
+        self.__TextMining.setup_for_input_data( training_data, test_data )
         print( 'Setup for target dimension', self.__Properties[ "classifier" ] )
         self.__TextMining.setup_for_target_dimension( self.__Properties[ "classifier" ] )
         print( 'Build MLP and get predictions' )

@@ -68,4 +68,8 @@ class PipelineRunner:
     def __runPipeline( self, Permutations: list ):
         Pipe = Pipeline.Factory.getInstance()
         for Configuration in Permutations:
-            self.__Output[ Configuration[ "id" ] ] = Pipe.pipe( Configuration[ "data" ], Configuration )
+            self.__Output[ Configuration[ "id" ] ] = Pipe.pipe(
+                Configuration[ "training" ],
+                Configuration[ "test" ],
+                Configuration
+            )
