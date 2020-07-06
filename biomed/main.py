@@ -3,12 +3,11 @@ import os as OS
 import sys as Sys
 from datetime import datetime
 
-from biomed.properties_manager import PropertiesManager
-
 AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..' ) )
 if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
+from biomed.properties_manager import PropertiesManager
 from biomed.file_handler import FileHandler
 from biomed.pipeline_runner import PipelineRunner
 from biomed.plotter import Plotter
