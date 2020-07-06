@@ -58,10 +58,14 @@ class TextMiningManager:
             self.properties_manager.preprocessing[ "variant" ]
         )
 
-    def _prepare_input_data(self, data):
-        self.training_data, self.test_data = self._data_train_test_split(data)
+    def _prepare_input_data( self, trainings_data, test_data ):
+        #self.training_data, self.test_data = self._data_train_test_split(data)
+        self.training_data = trainings_data
+        self.test_data = test_data
+
         print("test_data shape", self.test_data.shape)
-        self.doid_unique = data['doid'].unique()
+        #self.doid_unique = data['doid'].unique()
+        self.doid_unique = trainings_data['doid'].unique()
         self.doid_unique.sort()
         self.training_features, self.test_features = self._tfidf_transformation(self.training_data, self.test_data)
         self.X_train = self.training_features.toarray()
@@ -87,8 +91,8 @@ class TextMiningManager:
         self.X_train -= mean
         self.X_test -= mean
 
-    def setup_for_input_data(self, data):
-        self._prepare_input_data(data)
+    def setup_for_input_data( self, trainings_data, test_data ):
+        self._prepare_input_data( trainings_data, test_data )
         self._normalize_input_data()
         self.input_dim = self.X_train.shape[1]
 

@@ -5,7 +5,7 @@ from biomed.pipeline_runner import PipelineRunner
 from biomed.pipeline import Pipeline
 from multiprocessing import Process
 
-def reflectId( Data: DataFrame, Config: dict ):
+def reflectId( Train: DataFrame, Test: DataFrame, Config: dict ):
     return Config[ "id" ]
 
 class PipelineRunnerSpec( unittest.TestCase ):
@@ -31,7 +31,7 @@ class PipelineRunnerSpec( unittest.TestCase ):
 
     @patch( 'biomed.pipeline_runner.Pipeline.Factory.getInstance' )
     def test_it_runs_the_pipeline_with_given_permutations( self, PMF: MagicMock ):
-        TestData = {
+        TrainingsData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
             'doid': [ 23 ],
@@ -39,14 +39,25 @@ class PipelineRunnerSpec( unittest.TestCase ):
             'text': [ "My little cute poney is a poney" ]
         }
 
-        Data = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        TestData = {
+            'pmid': [ 23 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 42 ],
+            'is_cancer': [ False ],
+            'text': [ "My little cute poney is a poney" ]
+        }
+
+        Train = DataFrame( TrainingsData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Test = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         Permutations = [ {
             "id": 1,
-            "data": Data,
+            "training": Train,
+            "test": Test,
             "workers": 23
         }, {
             "id": 2,
-            "data": Data,
+            "training": Train,
+            "test": Test,
             "workers": 42
         } ]
 
@@ -57,12 +68,12 @@ class PipelineRunnerSpec( unittest.TestCase ):
         Runner = PipelineRunner.Factory.getInstance()
         Runner.run( Permutations )
 
-        P.pipe.assert_any_call( Data, Permutations[ 0 ] )
-        P.pipe.assert_any_call( Data, Permutations[ 1 ] )
+        P.pipe.assert_any_call( Train, Test, Permutations[ 0 ] )
+        P.pipe.assert_any_call( Train, Test, Permutations[ 1 ] )
 
     @patch( 'biomed.pipeline_runner.Pipeline.Factory.getInstance' )
     def test_it_gathers_and_returns_the_output_of_the_pipeline( self, PMF: MagicMock ):
-        TestData = {
+        TrainingsData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
             'doid': [ 23 ],
@@ -70,14 +81,26 @@ class PipelineRunnerSpec( unittest.TestCase ):
             'text': [ "My little cute poney is a poney" ]
         }
 
-        Data = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        TestData = {
+            'pmid': [ 23 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 42 ],
+            'is_cancer': [ False ],
+            'text': [ "My little cute poney is a poney" ]
+        }
+
+        Train = DataFrame( TrainingsData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Test = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+
         Permutations = [ {
             "id": 1,
-            "data": Data,
+            "training": Train,
+            "test": Test,
             "workers": 23
         }, {
             "id": 2,
-            "data": Data,
+            "training": Train,
+            "test": Test,
             "workers": 42
         } ]
 
@@ -167,7 +190,7 @@ class PipelineRunnerSpec( unittest.TestCase ):
 
     @patch( 'biomed.pipeline_runner.Pipeline.Factory.getInstance' )
     def test_it_gathers_and_returns_the_output_of_the_pipeline_in_for_all_subprocesses( self, PMF: MagicMock ):
-        TestData = {
+        TrainingsData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
             'doid': [ 23 ],
@@ -175,11 +198,21 @@ class PipelineRunnerSpec( unittest.TestCase ):
             'text': [ "My little cute poney is a poney" ]
         }
 
-        Data = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        TestData = {
+            'pmid': [ 23 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 42 ],
+            'is_cancer': [ False ],
+            'text': [ "My little cute poney is a poney" ]
+        }
+
+        Train = DataFrame( TrainingsData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Test = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+
         Permutations = [
-            { "id": 1, "workers": 32, "data": Data },
-            { "id": 2, "workers": 2, "data": Data },
-            { "id": 3, "workers": 42, "data": Data }
+            { "id": 1, "workers": 32, "training": Train, "test": Test },
+            { "id": 2, "workers": 2, "training": Train, "test": Test },
+            { "id": 3, "workers": 42, "training": Train, "test": Test }
         ]
 
         Workers = 2

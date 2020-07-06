@@ -1,6 +1,7 @@
 import collections
 import os as OS
 import sys as Sys
+import argparse as Args
 from datetime import datetime
 
 AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..' ) )
@@ -45,19 +46,35 @@ def printResults( Predictions ):
             file.write(output_predictions)
 
 if __name__ == '__main__':
-    training_data_location = training_data_location = OS.path.abspath(
+    Parser = Args.ArgumentParser( description = 'FeedForword NN' )
+    Parser.add_argument(
+        "-t",
+        "--test_data",
+        type=str,
+        required=True,
+        description = "Path to the test data"
+    )
+
+    TestData = Parser.parse_args().test_data
+
+    training_data_location = OS.path.abspath(
         OS.path.join(
             OS.path.dirname( __file__ ), "..", "training_data", "train.tsv"
         )
     )
 
     fh = FileHandler()
-    training_data = fh.read_tsv_pandas_data_structure(training_data_location)
+    training_data = fh.read_tsv_pandas_data_structure( training_data_location )
+    TestData = fh.read_tsv_pandas_data_structure( TestData )
 
     plotter = Plotter()
     plotter.plot_target_distribution(training_data)
     # exit(0)
 
     Runner = PipelineRunner.Factory.getInstance()
-    Results = Runner.run( [ { "id": "1", "data": training_data } ] )
+    Results = Runner.run( [ {
+        "id": "1",
+        "training": training_data,
+        "test": TestData,
+    } ] )
     printResults( Results )
