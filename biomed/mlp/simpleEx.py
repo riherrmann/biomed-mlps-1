@@ -43,7 +43,7 @@ class SimpleExtendedFFN( MLP ):
         Decay = Rate / self._Properties.training_properties[ 'epochs' ]
         Momentum = 0.8
 
-        Sgd = SGD(lr = Rate, momentum = Momentum, decay = Decay, nesterov = False )
+        Sgd = SGD( lr = Rate, momentum = Momentum, decay = Decay, nesterov = False )
 
         Model.compile(
             loss='mean_squared_error',

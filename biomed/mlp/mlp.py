@@ -48,22 +48,24 @@ class MLP( ABC ):
                 self.__predict( X_test ),
                 axis = -1
             )
+
+            Scores = {}
         else:
             Predictions = self._Model.predict_classes(
                 X_test,
                 batch_size = self._Properties.training_properties['batch_size'],
             )
 
-        #see: https://keras.io/api/models/model/#evaluate & https://keras.io/api/models/model_training_apis/
-        Scores = self._Model.evaluate(
-            X_test,
-            Y_test,
-            batch_size = self._Properties.training_properties['batch_size'],
-            workers = self._Properties.training_properties['workers'],
-            use_multiprocessing = self.__isMultiprocessing(),
-            verbose = 0,
-            return_dict = True
-        )
+            #see: https://keras.io/api/models/model/#evaluate & https://keras.io/api/models/model_training_apis/
+            Scores = self._Model.evaluate(
+                X_test,
+                Y_test,
+                batch_size = self._Properties.training_properties['batch_size'],
+                workers = self._Properties.training_properties['workers'],
+                use_multiprocessing = self.__isMultiprocessing(),
+                verbose = 0,
+                return_dict = True
+            )
 
         return ( Predictions, Scores )
 
