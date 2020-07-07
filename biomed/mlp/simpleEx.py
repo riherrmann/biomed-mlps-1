@@ -1,6 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense
-from keras.optimizers import SGD
+from keras.layers import Dense, Dropout
 from keras.regularizers import l1
 from biomed.properties_manager import PropertiesManager
 from biomed.mlp.mlp import MLP
@@ -28,6 +27,7 @@ class SimpleExtendedFFN( MLP ):
             )
         )
         #hidden layer
+        Model.add( Dropout( 0.25 ) )
         Model.add(
             Dense(
                 units = 5,
@@ -37,17 +37,12 @@ class SimpleExtendedFFN( MLP ):
             )
         )
         #output layer
+        Model.add( Dropout( 0.1 ) )
         Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
-
-        Rate = 0.1
-        Decay = Rate / self._Properties.training_properties[ 'epochs' ]
-        Momentum = 0.8
-
-        Sgd = SGD( lr = Rate, momentum = Momentum, decay = Decay, nesterov = False )
 
         Model.compile(
             loss='mean_squared_error',
-            optimizer=Sgd,
+            optimizer="sgd",
             metrics=['accuracy']
         )
 

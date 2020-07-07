@@ -1,6 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense
-from keras.optimizers import SGD
+from keras.layers import Dense, Dropout
 from keras.regularizers import l1
 from keras.losses import BinaryCrossentropy
 from biomed.properties_manager import PropertiesManager
@@ -29,6 +28,7 @@ class SimpleBExtendedFFN( MLP ):
             )
         )
         #hidden layer
+        Model.add( Dropout( 0.25 ) )
         Model.add(
             Dense(
                 units = 5,
@@ -38,17 +38,12 @@ class SimpleBExtendedFFN( MLP ):
             )
         )
         #output layer
+        Model.add( Dropout( 0.1 ) )
         Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
-
-        Rate = 0.1
-        Decay = Rate / self._Properties.training_properties[ 'epochs' ]
-        Momentum = 0.8
-
-        Sgd = SGD(lr = Rate, momentum = Momentum, decay = Decay, nesterov = False )
 
         Model.compile(
             loss="binary_crossentropy",
-            optimizer=Sgd,
+            optimizer="sgd",
             metrics=['accuracy']
         )
 
