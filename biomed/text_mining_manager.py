@@ -75,11 +75,9 @@ class TextMiningManager:
 
     def _prepare_target_data(self, test_data, training_data, target_dimension: str):
         y_train = np.array(training_data[target_dimension])
-        y_test = np.array(test_data[target_dimension])
 
         if target_dimension == 'doid':
             y_train = self.__map_doid_values_to_sequential(y_train)
-            self.Y_test = self.__map_doid_values_to_sequential(y_test)
 
         self.Y_train = tensorflow.keras.utils.to_categorical(y_train, self.nb_classes)
 
@@ -109,17 +107,15 @@ class TextMiningManager:
             nb_classes=self.nb_classes
         )
 
-        predictions, scores = self.mlpsm.train_and_run_mlp_model(
+        predictions = self.mlpsm.train_and_run_mlp_model(
             X_train=self.X_train,
             X_test=self.X_test,
-            Y_train=self.Y_train,
-            Y_test=self.Y_test
+            Y_train=self.Y_train
         )
 
         return (
             predictions,
             self.__map_doid_values_to_nonsequential( predictions ),
-            scores,
             self.test_data,
         )
 

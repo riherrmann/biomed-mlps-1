@@ -4,6 +4,7 @@ class PropertiesManager:
     def __init__(self):
         self.classifier = "is_cancer"
         self.model = "sxb"
+        self.is_blind = False
         self.tfidf_transformation_properties = dict(
             min_df=2,
             max_df=0.95,

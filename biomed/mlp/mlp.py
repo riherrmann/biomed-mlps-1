@@ -29,7 +29,7 @@ class MLP( ABC ):
             use_multiprocessing = self.__isMultiprocessing()
         )
 
-    def train_and_run_mlp_model(self, X_train, X_test, Y_train, Y_test):
+    def train_and_run_mlp_model( self, X_train, X_test, Y_train ):
         print("Training...")
         self._Model.fit(
             x = X_train,
@@ -48,15 +48,13 @@ class MLP( ABC ):
                 self.__predict( X_test ),
                 axis = -1
             )
-
-            Scores = {}
         else:
             Predictions = self._Model.predict_classes(
                 X_test,
                 batch_size = self._Properties.training_properties['batch_size'],
             )
 
-        return ( Predictions, Scores )
+        return Predictions
 
 class MLPFactory:
     @abstractstatic

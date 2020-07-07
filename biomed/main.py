@@ -22,10 +22,7 @@ def printResults( Predictions ):
             output_predictions += f"{prediction[ 3 ][ 'pmid' ].iloc[ index ]},{prediction[ 1 ][ index ]}\n"
             if prediction[ 0 ][ index ] != 0:
                 found_targets.append( prediction[ 1 ][ index ] )
-                found_pmids.append( prediction[ 3 ][ 'pmid' ].iloc[ index ] )
-
-        print("scores:")
-        print( prediction[ 2 ] )
+                found_pmids.append( prediction[ 2 ][ 'pmid' ].iloc[ index ] )
 
         print('number of cancer predictions found_targets:', len(found_targets))
         counter = collections.Counter(found_targets)
@@ -53,19 +50,13 @@ if __name__ == '__main__':
         type=str,
         required=True,
         help='Path to the trainings data'
-    )                                           )
+    )
     Parser.add_argument(
         "-t",
         "--test_data",
         type=str,
         required=True,
         help='Path to the test data'
-    )
-    Parser.add_argument(
-        "-b",
-        "--blind",
-        action='store_true',
-        help='Use blind test',
     )
 
     Parsed = Parser.parse_args()
