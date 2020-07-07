@@ -15,7 +15,7 @@ from biomed.plotter import Plotter
 
 def printResults( Predictions ):
     def outputResults( prediction: list ):
-        output_predictions = f"pmid,{ PropertiesManager().classifier }\n"
+        output_predictions = f"pmid,{ pm.classifier }\n"
         found_targets = list()
         found_pmids = list()
         for index in range( 0, len( prediction[ 0 ] ) ):
@@ -30,13 +30,14 @@ def printResults( Predictions ):
         print('cancer found in articles with PMID:', found_pmids)
         return output_predictions
 
+    pm = PropertiesManager()
     for key in Predictions:
         print( "Configuration ID ", key )
         output_predictions = outputResults( Predictions[ key ] )
         path = OS.path.abspath(
             OS.path.join(
                 OS.path.dirname( __file__ ), "..", "results",
-                f"{ datetime.now().strftime('%Y-%m-%d_%H-%M-%S') }_{ key }.csv "
+                f"{'binary' if pm.classifier == 'is_cancer' else 'multi'}_{pm.model}_{pm.preprocessing.variant}_{ datetime.now().strftime('%Y-%m-%d_%H-%M-%S') }_{ key }.csv "
             )
         )
         with open(path, "w") as file:
