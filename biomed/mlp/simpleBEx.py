@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dopout
+from keras.layers import Dense, Dropout
 from keras.regularizers import l1
 from keras.losses import BinaryCrossentropy
 from biomed.properties_manager import PropertiesManager
@@ -28,7 +28,7 @@ class SimpleBExtendedFFN( MLP ):
             )
         )
         #hidden layer
-        Model.add( Dopout( 0.25 ) )
+        Model.add( Dropout( 0.25 ) )
         Model.add(
             Dense(
                 units = 5,
@@ -38,7 +38,7 @@ class SimpleBExtendedFFN( MLP ):
             )
         )
         #output layer
-        Model.add( Dopout( 0.1 ) )
+        Model.add( Dropout( 0.1 ) )
         Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
 
         Model.compile(

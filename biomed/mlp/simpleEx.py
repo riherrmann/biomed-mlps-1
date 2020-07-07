@@ -27,7 +27,7 @@ class SimpleExtendedFFN( MLP ):
             )
         )
         #hidden layer
-        Model.add( Dopout( 0.25 ) )
+        Model.add( Dropout( 0.25 ) )
         Model.add(
             Dense(
                 units = 5,
