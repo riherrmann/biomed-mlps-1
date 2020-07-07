@@ -19,7 +19,7 @@ def printResults( Predictions ):
         found_targets = list()
         found_pmids = list()
         for index in range( 0, len( prediction[ 0 ] ) ):
-            output_predictions += f"{prediction[ 3 ][ 'pmid' ].iloc[ index ]},{prediction[ 1 ][ index ]}\n"
+            output_predictions += f"{prediction[ 2 ][ 'pmid' ].iloc[ index ]},{prediction[ 1 ][ index ]}\n"
             if prediction[ 0 ][ index ] != 0:
                 found_targets.append( prediction[ 1 ][ index ] )
                 found_pmids.append( prediction[ 2 ][ 'pmid' ].iloc[ index ] )
