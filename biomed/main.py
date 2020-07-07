@@ -48,19 +48,30 @@ def printResults( Predictions ):
 if __name__ == '__main__':
     Parser = Args.ArgumentParser( description = 'FeedForword NN' )
     Parser.add_argument(
+        "-a",
+        "--train_data",
+        type=str,
+        required=True,
+        help='Path to the trainings data'
+    )                                           )
+    Parser.add_argument(
         "-t",
         "--test_data",
         type=str,
         required=True,
+        help='Path to the test data'
+    )
+    Parser.add_argument(
+        "-b",
+        "--blind",
+        action='store_true',
+        help='Use blind test',
     )
 
-    TestData = Parser.parse_args().test_data
+    Parsed = Parser.parse_args()
 
-    training_data_location = OS.path.abspath(
-        OS.path.join(
-            OS.path.dirname( __file__ ), "..", "training_data", "train.tsv"
-        )
-    )
+    TestData = Parsed.test_data
+    training_data_location = Parsed.train_data
 
     fh = FileHandler()
     training_data = fh.read_tsv_pandas_data_structure( training_data_location )
