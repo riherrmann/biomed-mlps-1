@@ -16,7 +16,7 @@ class PropertiesManager:
         self.test_split_size = 0.3
         self.training_properties = dict(
             epochs = 150,
-            batch_size = 10,
+            batch_size = 5,
             validation_split = 0.1,
             workers = 90,
         )
