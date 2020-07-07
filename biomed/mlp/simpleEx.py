@@ -20,10 +20,10 @@ class SimpleExtendedFFN( MLP ):
         #input layer
         Model.add(
             Dense(
-                units = 10,
-                activity_regularizer= l1( 0.0001 ),
+                units=10,
                 input_dim = input_dim,
                 activation = "relu",
+                activity_regularizer = l1(0.0001)
             )
         )
         #hidden layer
@@ -33,7 +33,7 @@ class SimpleExtendedFFN( MLP ):
                 units = 5,
                 kernel_initializer = "random_uniform",
                 bias_initializer = "zeros",
-                activation = "relu"
+                activation = "relu",
             )
         )
         #output layer
@@ -42,7 +42,7 @@ class SimpleExtendedFFN( MLP ):
 
         Model.compile(
             loss='mean_squared_error',
-            optimizer="sgd",
+            optimizer='sgd',
             metrics=['accuracy']
         )
 
