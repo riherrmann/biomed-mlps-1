@@ -52,7 +52,6 @@ if __name__ == '__main__':
         "--test_data",
         type=str,
         required=True,
-        description = "Path to the test data"
     )
 
     TestData = Parser.parse_args().test_data
