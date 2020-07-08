@@ -37,7 +37,7 @@ def printResults( Predictions ):
         path = OS.path.abspath(
             OS.path.join(
                 OS.path.dirname( __file__ ), "..", "results",
-                f"{'binary' if pm.classifier == 'is_cancer' else 'multi'}_{pm.model}_{pm.preprocessing['variant']}_{ datetime.now().strftime('%Y-%m-%d_%H-%M-%S') }_{ key }.csv "
+                f"{'blind_' if pm.is_blind else ''}{'binary' if pm.classifier == 'is_cancer' else 'multi'}_{pm.model}_{pm.preprocessing['variant']}_{ datetime.now().strftime('%Y-%m-%d_%H-%M-%S') }_{ key }.csv "
             )
         )
         with open(path, "w") as file:
