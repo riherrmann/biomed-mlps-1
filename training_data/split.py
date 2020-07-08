@@ -3,7 +3,7 @@ import numpy as np
 
 input_data = list()
 
-with open('train.tsv', 'r') as file:
+with open('train_75.tsv', 'r') as file:
     read_tsv = csv.reader(file, delimiter='\t')
     for row in read_tsv:
         input_data.append(row)
@@ -16,9 +16,10 @@ with open('train.tsv', 'r') as file:
         processed_pmids.append(row[0])
         y_test_doid.append(row[2])
         y_test_binary.append(row[3])
-    print(y_test_binary)
     np.save('Y_test_75_multi.npy', y_test_doid)
+    print(y_test_doid)
     np.save('Y_test_75_binary.npy', y_test_binary)
+    print(y_test_binary)
 
 # with open('train_25.tsv', "w", newline='') as file:
 #     tsvwriter = csv.writer(file, delimiter='\t')
