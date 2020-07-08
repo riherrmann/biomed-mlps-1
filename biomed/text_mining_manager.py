@@ -58,10 +58,14 @@ class TextMiningManager:
             self.properties_manager.preprocessing[ "variant" ]
         )
 
-    def _prepare_input_data(self, data):
-        self.training_data, self.test_data = self._data_train_test_split(data)
+    def _prepare_input_data( self, trainings_data, test_data ):
+        #self.training_data, self.test_data = self._data_train_test_split(data)
+        self.training_data = trainings_data
+        self.test_data = test_data
+
         print("test_data shape", self.test_data.shape)
-        self.doid_unique = data['doid'].unique()
+        #self.doid_unique = data['doid'].unique()
+        self.doid_unique = trainings_data['doid'].unique()
         self.doid_unique.sort()
         self.training_features, self.test_features = self._tfidf_transformation(self.training_data, self.test_data)
         self.X_train = self.training_features.toarray()
@@ -71,11 +75,9 @@ class TextMiningManager:
 
     def _prepare_target_data(self, test_data, training_data, target_dimension: str):
         y_train = np.array(training_data[target_dimension])
-        y_test = np.array(test_data[target_dimension])
 
         if target_dimension == 'doid':
             y_train = self.__map_doid_values_to_sequential(y_train)
-            self.Y_test = self.__map_doid_values_to_sequential(y_test)
 
         self.Y_train = tensorflow.keras.utils.to_categorical(y_train, self.nb_classes)
 
@@ -87,8 +89,8 @@ class TextMiningManager:
         self.X_train -= mean
         self.X_test -= mean
 
-    def setup_for_input_data(self, data):
-        self._prepare_input_data(data)
+    def setup_for_input_data( self, trainings_data, test_data ):
+        self._prepare_input_data( trainings_data, test_data )
         self._normalize_input_data()
         self.input_dim = self.X_train.shape[1]
 
@@ -105,17 +107,15 @@ class TextMiningManager:
             nb_classes=self.nb_classes
         )
 
-        predictions, scores = self.mlpsm.train_and_run_mlp_model(
+        predictions = self.mlpsm.train_and_run_mlp_model(
             X_train=self.X_train,
             X_test=self.X_test,
-            Y_train=self.Y_train,
-            Y_test=self.Y_test
+            Y_train=self.Y_train
         )
 
         return (
             predictions,
             self.__map_doid_values_to_nonsequential( predictions ),
-            scores,
             self.test_data,
         )
 

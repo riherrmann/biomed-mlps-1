@@ -28,6 +28,13 @@ class PipelineSpec( unittest.TestCase ):
         PMF: MagicMock,
         PPF: MagicMock
     ):
+        TrainData = {
+            'pmid': [ 23 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 42 ],
+            'is_cancer': [ False ],
+            'text': [ "My little cute poney is a poney" ]
+        }
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -36,13 +43,14 @@ class PipelineSpec( unittest.TestCase ):
             'text': [ "My little cute poney is a poney" ]
         }
 
-        Given = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Train = DataFrame( TrainData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Test = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
 
         PM = MagicMock( spec = PropertiesManager )
         PMF.return_value = PM
 
         Pipe = Pipeline.Factory.getInstance()
-        Pipe.pipe( Given )
+        Pipe.pipe( Train, Test )
 
         PPF.assert_called_once_with( PM )
 
@@ -54,6 +62,13 @@ class PipelineSpec( unittest.TestCase ):
     @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
     @patch( 'biomed.pipeline.TextMiningManager' )
     def test_it_runs_the_text_miner_with_the_given_data( self, TM: MagicMock, _ ):
+        TrainData = {
+            'pmid': [ 23 ],
+            'cancer_type': [ -1 ],
+            'doid': [ 42 ],
+            'is_cancer': [ False ],
+            'text': [ "My little cute poney is a poney" ]
+        }
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -62,15 +77,16 @@ class PipelineSpec( unittest.TestCase ):
             'text': [ "My little cute poney is a poney" ]
         }
 
-        Given = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Train = DataFrame( TrainData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        Test = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
 
         TMM = MagicMock( spec = TextMiningManager )
         TM.return_value = TMM
 
         Pipe = Pipeline.Factory.getInstance()
-        Pipe.pipe( Given )
+        Pipe.pipe( Train, Test )
 
-        TMM.setup_for_input_data.assert_called_once_with( Given )
+        TMM.setup_for_input_data.assert_called_once_with( Train, Test )
 
     @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
     @patch( 'biomed.pipeline.TextMiningManager' )
@@ -83,7 +99,7 @@ class PipelineSpec( unittest.TestCase ):
         Pipe = Pipeline.Factory.getInstance()
         self.assertEqual(
             Expected,
-            Pipe.pipe( MagicMock() )
+            Pipe.pipe( MagicMock(), MagicMock() )
         )
 
     @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
@@ -95,7 +111,7 @@ class PipelineSpec( unittest.TestCase ):
         Expected = { "workers": 23, "classifier": "is_cancer" }
 
         Pipe = Pipeline.Factory.getInstance()
-        Pipe.pipe( MagicMock(), Expected )
+        Pipe.pipe( MagicMock(), MagicMock(),Expected )
 
         self.assertDictEqual(
             Expected,
