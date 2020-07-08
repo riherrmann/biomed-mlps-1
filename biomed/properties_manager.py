@@ -16,7 +16,7 @@ class PropertiesManager:
         self.test_split_size = 0.3
         self.training_properties = dict(
             epochs = 150,
-            batch_size = 1,
+            batch_size = 10,
             validation_split = 0.1,
             workers = 90,
         )
@@ -25,7 +25,7 @@ class PropertiesManager:
         )
         self.preprocessing = dict(
             workers = 90,
-            variant = "lavn",
+            variant = "lanv",
         )
         self.cache_dir = OS.path.abspath(
             OS.path.join(
