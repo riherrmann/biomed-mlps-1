@@ -2,8 +2,8 @@ import os as OS
 
 class PropertiesManager:
     def __init__(self):
-        self.classifier = "doid"
-        self.model = "msb"
+        self.classifier = "is_cancer"
+        self.model = "c"
         self.is_blind = False
         self.tfidf_transformation_properties = dict(
             min_df=2,
@@ -16,7 +16,7 @@ class PropertiesManager:
         self.test_split_size = 0.3
         self.training_properties = dict(
             epochs = 150,
-            batch_size = 5,
+            batch_size = 1,
             validation_split = 0.1,
             workers = 90,
         )

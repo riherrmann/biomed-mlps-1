@@ -1,7 +1,8 @@
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
-from biomed.properties_manager import PropertiesManager
 from keras.regularizers import l1
+from keras.losses import BinaryCrossentropy
+from biomed.properties_manager import PropertiesManager
 from biomed.mlp.mlp import MLP
 from biomed.mlp.mlp import MLPFactory
 
@@ -18,103 +19,41 @@ class ComplexFFN( MLP ):
     def build_mlp_model(self, input_dim, nb_classes):
         Model = Sequential()
         #input layer
-        #hidden layers
         Model.add(
             Dense(
-                units=2048,
+                units = 10,
                 input_dim = input_dim,
+                activity_regularizer= l1( 0.0001 ),
                 activation = "relu",
-                activity_regularizer = l1(0.0001)
             )
         )
-        #hidden layers
+        #hidden layer
+        Model.add( Dropout( 0.30 ) )
         Model.add(
             Dense(
-                units=1024,
+                units = 20,
                 kernel_initializer = "random_uniform",
                 bias_initializer = "zeros",
-                activation = "relu",
+                activation = "relu"
             )
         )
-        Model.add( Dropout( 0.5 ) )
+        #hidden layer
+        Model.add( Dropout( 0.20 ) )
         Model.add(
             Dense(
-                units = 512,
+                units = 20,
                 kernel_initializer = "random_uniform",
                 bias_initializer = "zeros",
-                activation = "relu",
+                activation = "relu"
             )
         )
-        Model.add( Dropout( 0.45 ) )
-        Model.add(
-            Dense(
-                units = 256,
-                kernel_initializer = "random_uniform",
-                bias_initializer = "zeros",
-                activation = "relu",
-            )
-        )
-        Model.add( Dropout( 0.4 ) )
-        Model.add(
-            Dense(
-                units = 128,
-                kernel_initializer = "random_uniform",
-                bias_initializer = "zeros",
-                activation = "relu",
-            )
-        )
-        Model.add( Dropout( 0.35 ) )
-        Model.add(
-            Dense(
-                units = 64,
-                kernel_initializer = "random_uniform",
-                bias_initializer = "zeros",
-                activation = "relu",
-            )
-        )
-        Model.add( Dropout( 0.3 ) )
-        Model.add(
-            Dense(
-                units = 32,
-                kernel_initializer = "random_uniform",
-                bias_initializer = "zeros",
-                activation = "relu",
-            )
-        )
-        Model.add( Dropout( 0.25 ) )
-        Model.add(
-            Dense(
-                units = 16,
-                kernel_initializer = "random_uniform",
-                bias_initializer = "zeros",
-                activation = "relu",
-            )
-        )
-        Model.add( Dropout( 0.2 ) )
-        Model.add(
-            Dense(
-                units = 8,
-                kernel_initializer = "random_uniform",
-                bias_initializer = "zeros",
-                activation = "relu",
-            )
-        )
-        Model.add( Dropout( 0.15 ) )
-        Model.add(
-            Dense(
-                units = 4,
-                kernel_initializer = "random_uniform",
-                bias_initializer = "zeros",
-                activation = "relu",
-            )
-        )
-        Model.add( Dropout( 0.1 ) )
         #output layer
+        Model.add( Dropout( 0.1 ) )
         Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
 
         Model.compile(
-            loss='binary_crossentropy',
-            optimizer='sgd',
+            loss="binary_crossentropy",
+            optimizer="sgd",
             metrics=['accuracy']
         )
 
