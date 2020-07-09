@@ -17,15 +17,18 @@ class MultiSimpleBFFN( MLP ):
 
     def build_mlp_model(self, input_dim, nb_classes):
         Model = Sequential()
-        Model.add(Dense(64, input_dim=input_dim, activation='relu', activity_regularizer=l1_l2(0.001, 0.01)))
-        Model.add(Dropout(0.25))
+        Model.add(Dense(64, input_dim=input_dim, activation='relu', activity_regularizer=l1_l2(0.001, 0.001)))
+#        Model.add(Dropout(0.25))
         Model.add(Dense(32, activation='relu', kernel_initializer='random_uniform', bias_initializer='zero'))
-        Model.add(Dropout(0.1))
+#        Model.add(Dropout(0.2))
+        Model.add(Dense(32, activation='relu', kernel_initializer='random_uniform', bias_initializer='zero'))
+#        Model.add(Dropout(0.1))
+
         Model.add(Dense(nb_classes, activation='softmax'))
 
         Model.compile(
             loss='categorical_crossentropy',
-            optimizer='rmsprop',
+            optimizer='sgd',
             metrics=['accuracy']
         )
 
