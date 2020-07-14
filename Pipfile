@@ -15,10 +15,9 @@ pandas = "*"
 numpy = "*"
 keras = "*"
 tensorflow = "*"
-stanza = "*"
 nltk = "*"
 matplotlib = "*"
 seaborn = "*"
 
 [requires]
-python_version = "3.8.3"
+python_version = "3.8.4"
