@@ -1,0 +1,224 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.72'
+    id "nebula.lint" version "16.8.1"
+    id 'org.owasp.dependencycheck' version '5.3.2.1'
+    id 'jacoco'
+    id 'info.solidsoft.pitest' version '1.5.1'
+    id 'org.jetbrains.dokka' version '0.10.1'
+}
+
+group 'de.huberlin'
+version '1.0.0'
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+ext {
+    kotlin_version = "1.3.72"
+    argparser_version = "1.4"
+    junit_version = "5.6.2"
+    jlauncher_version = "1.6.2"
+    j4unit_version = "4.13"
+    ktest_version = "1.1.51"
+    mockito_version = "3.3.3"
+    powermock_version = "2.0.7"
+    jacoco_version = "0.8.4"
+    nlp_core = "4.0.0"
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: "${kotlin_version}"
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-common', version:  "${kotlin_version}"
+    //nlp pipe
+    implementation group: 'edu.stanford.nlp', name: 'stanford-corenlp', version: "${ nlp_core }"
+    implementation group: 'edu.stanford.nlp', name: 'stanford-corenlp', classifier: "models", version: "${ nlp_core }"
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
+    //Arg Parser
+    implementation group: 'commons-cli', name: 'commons-cli', version: "${argparser_version}"
+    //JUnit
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${jlauncher_version}")
+    testImplementation group: 'org.junit.platform', name: 'junit-platform-runner', version: "${jlauncher_version}"
+    testRuntimeOnly group: 'org.junit.platform', name: 'junit-platform-runner', version: "${jlauncher_version}"
+    testCompileOnly "junit:junit:${j4unit_version}"
+    //KTest
+    testImplementation group: 'org.jetbrains.kotlin', name: 'kotlin-test', version: "${ktest_version}"
+    // Powermock
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: "${mockito_version}"
+    testImplementation "org.powermock:powermock-core:${powermock_version}"
+    testImplementation "org.powermock:powermock-api-mockito2:${powermock_version}"
+    testImplementation "org.powermock:powermock-module-junit4-rule:${powermock_version}"
+    testImplementation "org.powermock:powermock-module-junit4:${powermock_version}"
+    testImplementation "org.powermock:powermock-classloading-xstream:${powermock_version}"
+}
+
+configurations {
+    maybeCreate("pitest")
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+gradleLint.rules = [ 'all-wrapper' ]
+
+test {
+    if( JavaVersion.current() != JavaVersion.VERSION_1_8 ){
+        throw new GradleException( "This build must be run with java 8" )
+    }
+
+    useJUnit()
+    maxHeapSize = '1G'
+
+    jacoco {
+        destinationFile = file( "${buildDir}/jacoco/test.exec" )
+        classDumpDir = file("$buildDir/jacoco/classpathdumps")
+    }
+}
+
+jacocoTestReport {
+    dependsOn test
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            enabled = true
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = 1
+            }
+        }
+        rule {
+            enabled = true
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = 0.97
+            }
+        }
+        rule {
+            enabled = true
+            limit {
+                counter = "CLASS"
+                value = "MISSEDCOUNT"
+                maximum = 0
+            }
+        }
+        rule {
+            enabled = true
+            limit {
+                counter = "INSTRUCTION"
+                value = "COVEREDRATIO"
+                minimum = 1
+            }
+        }
+        rule {
+            enabled = true
+            limit {
+                counter = "METHOD"
+                value = "MISSEDCOUNT"
+                maximum = 0
+            }
+        }
+    }
+}
+
+// fixed && taken from: https://discuss.gradle.org/t/jacoco-offline-instrumentation-in-gradle/9996/2
+//Additional SourceSets can be added to the jacocoOfflineSourceSets as needed by
+project.ext.jacocoOfflineSourceSets = [ 'main' ]
+task doJacocoOfflineInstrumentation( dependsOn: [ classes, project.configurations.jacocoAnt ]) {
+    inputs.files classes.outputs.files
+    File outputDir = new File(project.buildDir, 'instrumentedClasses' )
+    outputs.dir outputDir
+    doFirst {
+        project.delete( outputDir )
+        ant.taskdef(
+                resource: 'org/jacoco/ant/antlib.xml',
+                classpath: project.configurations.jacocoAnt.asPath,
+                uri: 'jacoco'
+        )
+
+        def instrumented = false
+        jacocoOfflineSourceSets.forEach { sourceSetName ->
+            sourceSets["main"].output.classesDirs.forEach { dir ->
+                if ( file( dir ).exists() ) {
+                    def instrumentedClassedDir = "${outputDir}/${sourceSetName}"
+
+                    ant.'jacoco:instrument'( destdir: instrumentedClassedDir ) {
+                        fileset( dir: dir , includes: '**/*.class' )
+                    }
+                    //Replace the classes dir in the test classpath with the instrumented one
+                    sourceSets.test.runtimeClasspath -= files( dir )
+                    sourceSets.test.runtimeClasspath += files( instrumentedClassedDir )
+                    instrumented = true
+                }
+            }
+        }
+
+        if (instrumented) {
+            //Disable class verification based on https://github.com/jayway/powermock/issues/375
+            test.jvmArgs += '-noverify'
+        }
+    }
+}
+
+test.dependsOn doJacocoOfflineInstrumentation
+
+pitest {
+    targetClasses = [ 'de.huberlin.biomed.*' ]
+    threads = 3
+    outputFormats = ['XML', 'HTML']
+    timestampedReports = true
+    jvmArgs = []
+    useClasspathFile = true
+    verbose = true
+    avoidCallsTo = [ 'kotlin', 'java' ]
+    excludedClasses = []
+    excludedTestClasses = []
+    excludedMethods = []
+    //coverageThreshold = 99
+   // mutationThreshold = 90
+}
+
+dokka {
+    outputFormat = "html"
+    outputDirectory = "$buildDir/doc/javadoc"
+
+    configuration {
+        includeNonPublic = true
+    }
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
+
+    manifest {
+        attributes(
+                'Built-By'       : System.properties['user.name'],
+                'Build-Timestamp': new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+                'Created-By'     : "Gradle ${gradle.gradleVersion}",
+                'Build-Jdk'      : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+                'Build-OS'       : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}",
+                'Main-Class'     : "de.huberlin.biomed.MainKt"
+        )
+    }
+
+    from {
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+build.dependsOn 'jacocoTestCoverageVerification'
