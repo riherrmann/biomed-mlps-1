@@ -73,9 +73,9 @@ compileTestKotlin {
 gradleLint.rules = [ 'all-wrapper' ]
 
 test {
-    if( JavaVersion.current() != JavaVersion.VERSION_1_8 ){
+    /*if( JavaVersion.current() != JavaVersion.VERSION_1_8 ){
         throw new GradleException( "This build must be run with java 8" )
-    }
+    }*/
 
     useJUnit()
     maxHeapSize = '1G'
@@ -188,8 +188,8 @@ pitest {
     excludedClasses = []
     excludedTestClasses = []
     excludedMethods = []
-    //coverageThreshold = 99
-   // mutationThreshold = 90
+    coverageThreshold = 96
+   	mutationThreshold = 95
 }
 
 dokka {
