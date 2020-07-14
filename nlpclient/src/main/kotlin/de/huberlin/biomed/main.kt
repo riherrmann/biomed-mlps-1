@@ -4,7 +4,10 @@ import de.huberlin.biomed.io.BiomedInteractor
 
 fun main( args: Array<String> )
 {
-	BiomedComplex.getInstance(
-		BiomedInteractor.getInstance( args )
-	).run()
+	try
+	{
+		BiomedComplex.getInstance(
+			BiomedInteractor.getInstance( args )
+		).run()
+	} catch ( E: Exception )	{ System.err.println( E.message ) }
 }
