@@ -69,10 +69,6 @@ if __name__ == '__main__':
     training_data = fh.read_tsv_pandas_data_structure( training_data_location )
     TestData = fh.read_tsv_pandas_data_structure( TestData )
 
-    plotter = Plotter()
-    plotter.plot_target_distribution(training_data)
-    # exit(0)
-
     Runner = PipelineRunner.Factory.getInstance()
     Results = Runner.run( [ {
         "id": "1",
