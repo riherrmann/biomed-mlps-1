@@ -16,7 +16,7 @@ from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.properties_manager import PropertiesManager
 import numpy
 from pandas import DataFrame
-from multiprocessing import Manager, Lock
+from multiprocessing import Manager
 
 class StubbedFacilityManager( FacilityManager ):
     def __init__( self ):
@@ -438,6 +438,109 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             Saved[ "42l" ],
             Results[ 0 ]
         )
+
+    def test_it_keeps_the_order_of_datasets( self ):
+        OrderOfThings = [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ]
+        OrderOfDocs = [
+            "My 1 little cute Poney is a Poney",
+            "My 2 little farm is cute.",
+            "My 3 little programm is a application and runs and runs and runs.",
+            "My 4 little farm is cute.",
+            "My 5 little cute Poney is a Poney",
+            "My 6 little farm is cute.",
+            "My 7 little programm is a application and runs and runs and runs.",
+            "My 8 little cute Poney is a Poney",
+            "My 9 little farm is cute.",
+            "My 10 little programm is a application and runs and runs and runs.",
+            "My 11 little farm is cute.",
+            "My 12 little cute Poney is a Poney"
+        ]
+
+        TestData = {
+            'pmid': OrderOfThings,
+            'text': OrderOfDocs,
+        }
+
+        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        self.__initPreprocessorDependencies()
+        self.__FakeCache = Manager().dict()
+        self.__Shared = StubbedCache( self.__FakeCache )
+
+        self.__Prepro = PolymorphPreprocessor(
+            self.__FM,
+            1,
+            self.__FileCache,
+            self.__Shared,
+            self.__Simple,
+            self.__SimpleFlags,
+            self.__Complex,
+            self.__ComplexFlags,
+            MagicMock( spec=StubbedLock )
+        )
+
+        PDocs = self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
+        self.assertEqual(
+            len( PDocs ),
+            len( OrderOfDocs )
+        )
+
+        for Index in range( 0, len( PDocs ) ):
+            self.assertEqual(
+                PDocs[ Index ],
+                OrderOfDocs[ Index ]
+            )
+
+    def test_it_keeps_the_order_of_datasets_in_paralell( self ):
+        OrderOfThings = [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ]
+        OrderOfDocs = [
+            "My 1 little cute Poney is a Poney",
+            "My 2 little farm is cute.",
+            "My 3 little programm is a application and runs and runs and runs.",
+            "My 4 little farm is cute.",
+            "My 5 little cute Poney is a Poney",
+            "My 6 little farm is cute.",
+            "My 7 little programm is a application and runs and runs and runs.",
+            "My 8 little cute Poney is a Poney",
+            "My 9 little farm is cute.",
+            "My 10 little programm is a application and runs and runs and runs.",
+            "My 11 little farm is cute.",
+            "My 12 little cute Poney is a Poney"
+        ]
+
+        TestData = {
+            'pmid': OrderOfThings,
+            'text': OrderOfDocs,
+        }
+
+        MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
+        self.__initPreprocessorDependencies()
+        self.__FakeCache = Manager().dict()
+        self.__Shared = StubbedCache( self.__FakeCache )
+
+        self.__Prepro = PolymorphPreprocessor(
+            self.__FM,
+            3,
+            self.__FileCache,
+            self.__Shared,
+            self.__Simple,
+            self.__SimpleFlags,
+            self.__Complex,
+            self.__ComplexFlags,
+            MagicMock( spec=StubbedLock )
+        )
+
+        PDocs = self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
+        self.assertEqual(
+            len( PDocs ),
+            len( OrderOfDocs )
+        )
+
+        for Index in range( 0, len( PDocs ) ):
+            self.assertEqual(
+                PDocs[ Index ],
+                OrderOfDocs[ Index ]
+            )
+
 
     def tearDown( self ):
         Path = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), 'testTmp' ) )

@@ -90,14 +90,18 @@ class PolymorphPreprocessor( PreProcessor ):
 
     def __runInParallel( self, PmIds: list, Documents: list, Flags: str ) -> list:
         print( "Gathering already computed" )
-        ToDo, AlreadDone = self.__filterAlreadyComputed( PmIds, Documents, Flags )
+        Ids, Documents = self.__filterAlreadyComputed( PmIds, Documents, Flags )
 
         print( "prepare documents" )
-        self.__excuteRun( ToDo[ 0 ], ToDo[ 1 ], Flags )
+        self.__excuteRun(
+            Ids,
+            Documents,
+            Flags
+        )
 
         self.__saveOnDone()
         print( "Gathering output" )
-        return self.__returnFromCache( ToDo[ 0 ] + AlreadDone )
+        return self.__returnFromCache( PmIds, Flags )
 
     def __excuteRun( self, CacheIds: list, Documents: list, Flags: str ):
         if not CacheIds:
@@ -163,46 +167,47 @@ class PolymorphPreprocessor( PreProcessor ):
 
     def __extractDocument( self, PmIds: list, Documents: list, Flags: str ) -> list:
         print( "Gathering already computed" )
-        ToDo, AlreadDone = self.__filterAlreadyComputed( PmIds, Documents, Flags )
+        Ids, Documents = self.__filterAlreadyComputed( PmIds, Documents, Flags )
 
         print( "Prepare documents" )
         self.__computeAndWriteToCache(
-            ToDo[ 0 ],
-            ToDo[ 1 ],
+            Ids,
+            Documents,
             Flags,
             0
         )
 
         self.__saveOnDone()
         print( "Gathering output" )
-        return self.__returnFromCache( ToDo[ 0 ] + AlreadDone )
+        return self.__returnFromCache( PmIds, Flags )
 
     def __saveOnDone( self ):
         if self.__SharedMemory.get( "Dirty" ):
             self.__SharedMemory.set( "Dirty", False )
             self.__save()
 
-    def __returnFromCache( self, CacheIds: list ):
+    def __returnFromCache( self, Ids: list, Flags: str ):
         ParsedDocuments = list()
-        for Id in CacheIds:
-            ParsedDocuments.append( self.__SharedMemory.get( Id ) )
+        for Id in Ids:
+            ParsedDocuments.append(
+                self.__SharedMemory.get(
+                    self.__createCacheKey( Id, Flags )
+                )
+            )
 
         return ParsedDocuments
 
     def __filterAlreadyComputed( self, PmIds: list, Documents: list,  Flags: str ) -> tuple:
         SubsetOfIds = list()
         SubsetOfDocuments = list()
-        AlreadyCached = list()
         for Index in range( 0, len( PmIds ) ):
             CacheId = self.__createCacheKey( PmIds[ Index ], Flags )
             if not self.__SharedMemory.has( CacheId ):
                 self.__SharedMemory.set( "Dirty", True )
                 SubsetOfIds.append( CacheId )
                 SubsetOfDocuments.append( Documents[ Index ] )
-            else:
-                AlreadyCached.append( CacheId )
 
-        return ( ( SubsetOfIds, SubsetOfDocuments ), AlreadyCached )
+        return ( SubsetOfIds, SubsetOfDocuments )
 
     def __computeAndWriteToCache( self, CacheIds: list, Documents: list, Flags: str, Worker: int ):
         if not CacheIds:
