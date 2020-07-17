@@ -29,7 +29,7 @@ class MLP( ABC ):
             use_multiprocessing = self.__isMultiprocessing()
         )
 
-    def train_and_run_mlp_model( self, X_train, X_test, Y_train ):
+    def train_and_run_mlp_model( self, X_train, X_test, Y_train ) -> np.array:
         print("Training...")
         self._Model.fit(
             x = X_train,

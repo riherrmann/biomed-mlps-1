@@ -1,14 +1,10 @@
-from biomed.preprocessor.pre_processor import PreProcessor
-from biomed.preprocessor.pre_processor import PreProcessorFactory
+from biomed.preprocessor.preprocessor import PreProcessor
+from biomed.preprocessor.preprocessor import PreProcessorFactory
 from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
-from biomed.preprocessor.normalizer.simpleNormalizer import SimpleNormalizer
-from biomed.preprocessor.normalizer.complexNormalizer import ComplexNormalizer
 from biomed.preprocessor.cache.cache import Cache
-from biomed.preprocessor.cache.sharedMemoryCache import SharedMemoryCache
-from biomed.preprocessor.cache.numpyArrayFileCache import NumpyArrayFileCache
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
-from biomed.preprocessor.facilitymanager.mFacilityManager import MariosFacilityManager
 from biomed.properties_manager import PropertiesManager
+import biomed.services as Services
 from pandas import DataFrame
 from multiprocessing import Process, Lock, Manager
 from time import sleep
@@ -22,9 +18,7 @@ class PolymorphPreprocessor( PreProcessor ):
         AlreadyProcessed: Cache,
         Shared: Cache,
         Simple: NormalizerFactory,
-        SimpleFlags: list,
         Complex: NormalizerFactory,
-        ComplexFlags: list,
         Lock: Lock
     ):
         self.__FM = FM
@@ -34,8 +28,8 @@ class PolymorphPreprocessor( PreProcessor ):
         self.__ForkIt = False if Workers == 1 else True
         self.__Workers = Workers
         self.__Cache = Cache
-        self.__SimpleFlags = SimpleFlags
-        self.__ComplexFlags = ComplexFlags
+        self.__SimpleFlags = Simple.getApplicableFlags()
+        self.__ComplexFlags = Complex.getApplicableFlags()
         self.__prepareNormalizers( Simple, Complex, Workers )
         self.__Lock = Lock
 
@@ -51,7 +45,7 @@ class PolymorphPreprocessor( PreProcessor ):
             self.__Simple.append( SimpleFactory.getInstance() )
             self.__Complex.append( ComplexFactory.getInstance() )
 
-    def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
+    def preprocessCorpus( self, frame: DataFrame, flags: str ) -> list:
         self.__SharedMemory.set( "Dirty", False )
         PmIds, Documents = self.__cleanUpData(
             list( frame[ "pmid" ] ),
@@ -268,33 +262,23 @@ class PolymorphPreprocessor( PreProcessor ):
             self.__AlreadyProcessed.set( "hardId42", self.__SharedMemory.toDict() )
 
     class Factory( PreProcessorFactory ):
-        __FacilityManager = MariosFacilityManager.Factory.getInstance()
-        __Simple = SimpleNormalizer.Factory
-        __SimpleFlags = [ "s", "l", "w" ]
-        __Complex = ComplexNormalizer.Factory
-        __ComplexFlags = [ "n", "v", "a", "u", "y" ]
-
         @staticmethod
-        def getInstance( Properties: PropertiesManager ) -> PreProcessor:
-            FileCache = NumpyArrayFileCache.Factory.getInstance(
-                Properties.cache_dir
-            )
+        def getInstance() -> PreProcessor:
+            FileCache = Services.getService( "preprocessor.cache.persistent", Cache )
 
             return PolymorphPreprocessor(
-                PolymorphPreprocessor.Factory.__FacilityManager,
-                Properties.preprocessing[ "workers" ],
+                Services.getService( "preprocessor.facilitymanager", FacilityManager ),
+                Services.getService( "properties", PropertiesManager ).preprocessing[ "workers" ],
                 FileCache,
                 PolymorphPreprocessor.Factory.__loadSharedMemory( FileCache ),
-                PolymorphPreprocessor.Factory.__Simple,
-                PolymorphPreprocessor.Factory.__SimpleFlags,
-                PolymorphPreprocessor.Factory.__Complex,
-                PolymorphPreprocessor.Factory.__ComplexFlags,
+                Services.getService( "preprocessor.normalizer.simple", NormalizerFactory ),
+                Services.getService( "preprocessor.normalizer.complex", NormalizerFactory ),
                 Manager().Lock(),
             )
 
         @staticmethod
         def __loadSharedMemory( FileCache: Cache ) -> Cache:
-            SharedMemory = SharedMemoryCache.Factory.getInstance()
+            SharedMemory = Services.getService( "preprocessor.cache.shared", Cache )
 
             if FileCache.has( "hardId42" ):
                 PolymorphPreprocessor.Factory.__loadIntoSharedMemory( FileCache, SharedMemory )

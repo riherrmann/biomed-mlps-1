@@ -11,10 +11,10 @@ class abstractstatic(staticmethod):
 
 class PreProcessor(ABC):
     @abstractmethod
-    def preprocess_text_corpus( self, frame: DataFrame, flags: str ) -> list:
+    def preprocessCorpus( self, frame: DataFrame, flags: str ) -> list:
         pass
 
 class PreProcessorFactory( ABC ):
     @abstractstatic
-    def getInstance( Properties: PropertiesManager ) -> PreProcessor:
+    def getInstance() -> PreProcessor:
         pass

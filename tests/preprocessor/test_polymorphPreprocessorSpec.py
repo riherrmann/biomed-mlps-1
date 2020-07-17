@@ -6,12 +6,12 @@ if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from biomed.preprocessor.normalizer.normalizer import Normalizer
 from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
-from biomed.preprocessor.pre_processor import PreProcessor
+from biomed.preprocessor.preprocessor import PreProcessor
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.properties_manager import PropertiesManager
 import numpy
@@ -41,9 +41,13 @@ class StubbedNormalizer( Normalizer ):
         return Text
 
 class StubbedNormalizerFactory( NormalizerFactory ):
-    def __init__( self ):
+    def __init__( self, GivenFlags: list ):
         self.CallCounter = 0
         self.LastNormalizers = list()
+        self.__Flags = GivenFlags
+
+    def getApplicableFlags( self ):
+        return self.__Flags
 
     def getInstance( self ):
         self.CallCounter += 1
@@ -81,40 +85,63 @@ class StubbedLock:
 class PolymorphPreprocessorSpec( unittest.TestCase ):
 
     def __initPreprocessorDependencies( self ):
+        self.__PM = PropertiesManager()
         self.__FM = StubbedFacilityManager()
         self.__FakeCache = {}
         self.__FakeCache2 = {}
-        self.__Complex = StubbedNormalizerFactory()
-        self.__Simple = StubbedNormalizerFactory()
-        self.__SimpleFlags = [ "s", "l", "w" ]
-        self.__ComplexFlags = [ "n", "v", "a" ]
+        self.__Complex = StubbedNormalizerFactory( [ "n", "v", "a" ] )
+        self.__Simple = StubbedNormalizerFactory( [ "s", "l", "w" ] )
         self.__Shared = StubbedCache( self.__FakeCache )
         self.__FileCache = StubbedCache( self.__FakeCache2 )
+
+        self.__PM.preprocessing[ "workers" ] = 1
 
     def setUp( self ):
         self.__initPreprocessorDependencies()
 
-        self.__Prepro = PolymorphPreprocessor(
-            self.__FM,
-            1,
-            self.__FileCache,
-            self.__Shared,
-            self.__Simple,
-            self.__SimpleFlags,
-            self.__Complex,
-            self.__ComplexFlags,
-            MagicMock( spec=StubbedLock )
-       )
+    def fakeLocator( self, ServiceKey: str, _ ):
+        Assigment = {
+            "properties": self.__PM,
+            "preprocessor.facilitymanager": self.__FM,
+            "preprocessor.normalizer.simple": self.__Simple,
+            "preprocessor.normalizer.complex": self.__Complex,
+            "preprocessor.cache.persistent": self.__FileCache,
+            "preprocessor.cache.shared": self.__Shared
+        }
 
-    def test_it_is_a_PreProcessor( self ):
-        Path = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), 'testTmp' ) )
-        OS.mkdir( Path, 0o777 )
-        PM = PropertiesManager()
-        PM.cache_dir = Path
-        MyProc = PolymorphPreprocessor.Factory.getInstance( PM )
+        return Assigment[ ServiceKey ]
+
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_is_a_PreProcessor( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
+
+        MyProc = PolymorphPreprocessor.Factory.getInstance()
         self.assertTrue( isinstance( MyProc, PreProcessor ) )
 
-    def test_it_does_not_alter_the_source( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_gets_dependencies( self, ServiceGetter: MagicMock ):
+        def fakeGetter( ServiceKey: str, ExpectedType ):
+             Assigment = {
+                 "properties": ( self.__PM, PropertiesManager ),
+                 "preprocessor.facilitymanager": ( self.__FM, FacilityManager ),
+                 "preprocessor.normalizer.simple": ( self.__Simple, NormalizerFactory ),
+                 "preprocessor.normalizer.complex": ( self.__Complex, NormalizerFactory ),
+                 "preprocessor.cache.persistent": ( self.__FileCache, Cache ),
+                 "preprocessor.cache.shared": ( self.__Shared, Cache )
+             }
+
+             if ExpectedType != Assigment[ ServiceKey ][ 1 ]:
+                 raise RuntimeError( "Unexpected Depenendcie Type" )
+
+             return Assigment[ ServiceKey ][ 0 ]
+
+        ServiceGetter.side_effect = fakeGetter
+        MyProc = PolymorphPreprocessor.Factory.getInstance()
+        self.assertTrue( isinstance( MyProc, PreProcessor ) )
+
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_does_not_alter_the_source( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -131,14 +158,18 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "" )
+
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "" )
 
         self.assertDictEqual(
             TestData,
             Source
         )
 
-    def test_it_ignores_unknown_flags( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_ignores_unknown_flags( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -148,12 +179,16 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "opc" )
+
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "opc" )
 
         self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    def test_it_uses_simple_normalizer( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_uses_simple_normalizer( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -163,12 +198,16 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
+
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "l" )
 
         self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    def test_it_uses_complex_normalizer( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_uses_complex_normalizer( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -178,12 +217,16 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "n" )
+
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "n" )
 
         self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    def test_it_uses_both_normalizers( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_uses_both_normalizers( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -192,12 +235,16 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             'text': [ "My little cute Poney is a Poney" ]
         }
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "nl" )
+
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "nl" )
 
         self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    def test_it_iterates_over_all_given_texts( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_iterates_over_all_given_texts( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
         TestData = {
             'pmid': [ 42, 41, 40 ],
             'cancer_type': [ -1, -1, -1 ],
@@ -211,7 +258,9 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "nl" )
+
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "nl" )
 
         self.assertEqual(
             1,
@@ -224,7 +273,9 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         )
 
 
-    def test_it_uses_a_cache_to_determine_if_the_value_was_already_processed( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_uses_a_cache_to_determine_if_the_value_was_already_processed( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -236,7 +287,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__FakeCache[ "42a" ] =  TestData[ "text"][ 0 ].lower()
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        Result = self.__Prepro.preprocess_text_corpus( MyFrame, "a" )
+
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        Result = PP.preprocessCorpus( MyFrame, "a" )
+
         self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
         self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertEqual(
@@ -244,7 +298,9 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
              self.__FakeCache[ "42a" ]
          )
 
-    def test_it_caches_new_text_variants( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_caches_new_text_variants( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -255,7 +311,9 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
 
-        self.__Prepro.preprocess_text_corpus( MyFrame, "a" )
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "a" )
+
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( "42a" in self.__FakeCache )
         self.assertEqual(
@@ -263,7 +321,11 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__FakeCache[ "42a" ]
         )
 
-    def test_it_does_not_run_in_parallel_if_only_one_worker_is_given( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_does_not_run_in_parallel_if_only_one_worker_is_given( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
+
+        self.__PM.preprocessing[ "workers" ] = 1
         TestData = {
             'pmid': [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ],
             'text': [
@@ -283,20 +345,9 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__initPreprocessorDependencies()
-        self.__Prepro = PolymorphPreprocessor(
-            self.__FM,
-            1,
-            self.__FileCache,
-            self.__Shared,
-            self.__Simple,
-            self.__SimpleFlags,
-            self.__Complex,
-            self.__ComplexFlags,
-            MagicMock( spec=StubbedLock )
-        )
 
-        self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "al" )
 
         self.assertEqual(
             1,
@@ -313,7 +364,14 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__Simple.LastNormalizers[ 0 ].CallCounter
         )
 
-    def test_it_runs_in_parallel( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_runs_in_parallel( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
+
+        self.__PM.preprocessing[ "workers" ] = 3
+        self.__FakeCache = Manager().dict()
+        self.__Shared = StubbedCache( self.__FakeCache )
+
         TestData = {
             'pmid': [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ],
             'text': [
@@ -333,23 +391,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__initPreprocessorDependencies()
-        self.__FakeCache = Manager().dict()
-        self.__Shared = StubbedCache( self.__FakeCache )
 
-        self.__Prepro = PolymorphPreprocessor(
-            self.__FM,
-            3,
-            self.__FileCache,
-            self.__Shared,
-            self.__Simple,
-            self.__SimpleFlags,
-            self.__Complex,
-            self.__ComplexFlags,
-            MagicMock( spec=StubbedLock )
-        )
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "al" )
 
-        self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
         self.assertEqual(
             3,
             len( self.__Complex.LastNormalizers )
@@ -368,7 +413,9 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         for Text in MyFrame[ "text" ]:
             self.assertTrue( Text in Parsed )
 
-    def test_it_clean_up_the_data( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_clean_up_the_data( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -378,11 +425,17 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
+
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "l" )
 
         self.assertTrue( self.__FM.WasCalled )
 
-    def test_it_fails_on_empty_dataset( self ):
+
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_fails_on_empty_dataset( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
+
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -393,10 +446,15 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
         self.__FM.ReturnEmptySet = True
-        with self.assertRaises( RuntimeError ):
-            self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
 
-    def test_it_saves_the_shared_memory_on_a_cache_miss_after_the_computing_stage( self ):
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        with self.assertRaises( RuntimeError ):
+            PP.preprocessCorpus( MyFrame, "l" )
+
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_saves_the_shared_memory_on_a_cache_miss_after_the_computing_stage( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
+
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -406,19 +464,19 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__Prepro.preprocess_text_corpus( MyFrame, "l" )
+
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP.preprocessCorpus( MyFrame, "l" )
 
         self.assertDictEqual(
             self.__FakeCache,
             self.__FakeCache2[ "hardId42" ]
         )
 
-    def test_it_loads_shared_memory_on_init( self ):
-        Path = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), 'testTmp' ) )
-        File = OS.path.join( Path, "hardId42.npy" )
-        Saved = { "42l": "stop words" }
-        OS.mkdir( Path, 0o777 )
-        numpy.save( File, Saved )
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_fills_the_shared_memory_with_the_persistent_memeory_on_init( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
+
         TestData = {
             'pmid': [ 42 ],
             'cancer_type': [ -1 ],
@@ -427,19 +485,20 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
         }
 
-        PM = PropertiesManager()
-        PM.cache_dir = Path
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        MyProc = PolymorphPreprocessor.Factory.getInstance( PM )
-        Results = MyProc.preprocess_text_corpus( MyFrame, "l" )
-        del MyProc
+        self.__FakeCache2[ "hardId42" ] = { "42a": "abc" }
+
+        PolymorphPreprocessor.Factory.getInstance()
 
         self.assertEqual(
-            Saved[ "42l" ],
-            Results[ 0 ]
+            self.__FakeCache,
+            self.__FakeCache2[ "hardId42" ]
         )
 
-    def test_it_keeps_the_order_of_datasets( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_keeps_the_order_of_datasets( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
+
         OrderOfThings = [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ]
         OrderOfDocs = [
             "My 1 little cute Poney is a Poney",
@@ -462,23 +521,13 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__initPreprocessorDependencies()
+
         self.__FakeCache = Manager().dict()
         self.__Shared = StubbedCache( self.__FakeCache )
 
-        self.__Prepro = PolymorphPreprocessor(
-            self.__FM,
-            1,
-            self.__FileCache,
-            self.__Shared,
-            self.__Simple,
-            self.__SimpleFlags,
-            self.__Complex,
-            self.__ComplexFlags,
-            MagicMock( spec=StubbedLock )
-        )
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PDocs = PP.preprocessCorpus( MyFrame, "al" )
 
-        PDocs = self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
         self.assertEqual(
             len( PDocs ),
             len( OrderOfDocs )
@@ -490,7 +539,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
                 OrderOfDocs[ Index ]
             )
 
-    def test_it_keeps_the_order_of_datasets_in_paralell( self ):
+    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
+    def test_it_keeps_the_order_of_datasets_in_paralell( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.fakeLocator
+
         OrderOfThings = [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ]
         OrderOfDocs = [
             "My 1 little cute Poney is a Poney",
@@ -513,23 +565,12 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         }
 
         MyFrame = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        self.__initPreprocessorDependencies()
+
         self.__FakeCache = Manager().dict()
         self.__Shared = StubbedCache( self.__FakeCache )
 
-        self.__Prepro = PolymorphPreprocessor(
-            self.__FM,
-            3,
-            self.__FileCache,
-            self.__Shared,
-            self.__Simple,
-            self.__SimpleFlags,
-            self.__Complex,
-            self.__ComplexFlags,
-            MagicMock( spec=StubbedLock )
-        )
-
-        PDocs = self.__Prepro.preprocess_text_corpus( MyFrame, "al" )
+        PP = PolymorphPreprocessor.Factory.getInstance()
+        PDocs = PP.preprocessCorpus( MyFrame, "al" )
         self.assertEqual(
             len( PDocs ),
             len( OrderOfDocs )
@@ -540,13 +581,3 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
                 PDocs[ Index ],
                 OrderOfDocs[ Index ]
             )
-
-
-    def tearDown( self ):
-        Path = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), 'testTmp' ) )
-        File = OS.path.join( Path, "hardId42.npy" )
-        if OS.path.isfile( File ):
-            OS.remove( File )
-
-        if OS.path.isdir( Path ):
-            OS.rmdir( Path )

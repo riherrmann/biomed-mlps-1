@@ -1,6 +1,8 @@
 import os as OS
 from biomed.preprocessor.cache.cache import Cache
-from biomed.preprocessor.cache.cache import FileCacheFactory
+from biomed.preprocessor.cache.cache import CacheFactory
+import biomed.services as Services
+from biomed.properties_manager import PropertiesManager
 from multiprocessing import Manager, Lock
 import numpy
 
@@ -38,7 +40,7 @@ class NumpyArrayFileCache( Cache ):
     def toDict( self ):
         raise NotImplementedError()
 
-    class Factory( FileCacheFactory ):
+    class Factory( CacheFactory ):
         @staticmethod
         def __checkDir( Dir, Readable=True, Writeable=True ):
             if OS.path.isdir( Dir ) is False:
@@ -66,7 +68,9 @@ class NumpyArrayFileCache( Cache ):
                 return Path
 
         @staticmethod
-        def getInstance( PathToCacheDir: str ) -> Cache:
+        def getInstance() -> Cache:
+            PathToCacheDir = Services.getService( "properties", PropertiesManager ).cache_dir
+
             NumpyArrayFileCache.Factory.__checkDir(
                 NumpyArrayFileCache.Factory.__toAbsPath( PathToCacheDir )
             )
