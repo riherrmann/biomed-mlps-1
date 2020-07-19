@@ -2,20 +2,13 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.regularizers import l1
 from biomed.properties_manager import PropertiesManager
-from biomed.mlp.mlp import MLP
-from biomed.mlp.mlp import MLPFactory
+from biomed.mlp.model_base import ModelBase
 
-class SimpleExtendedFFN( MLP ):
-    class Factory( MLPFactory ):
-        @staticmethod
-        def getInstance( Properties: PropertiesManager ):
-            return SimpleExtendedFFN( Properties )
-
+class SimpleExtendedFFN( ModelBase ):
     def __init__( self, Properties: PropertiesManager ):
         super( SimpleExtendedFFN, self ).__init__( Properties )
 
-
-    def build_mlp_model(self, input_dim, nb_classes):
+    def buildModel( self, input_dim, nb_classes ) -> str:
         Model = Sequential()
         #input layer
         Model.add(
@@ -46,5 +39,5 @@ class SimpleExtendedFFN( MLP ):
             metrics=['accuracy']
         )
 
-        Model.summary()
         self._Model = Model
+        return self._summarize()

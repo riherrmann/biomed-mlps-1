@@ -7,6 +7,7 @@ from biomed.properties_manager import PropertiesManager
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.preprocessor import PreProcessor
+from biomed.mlp.mlp import MLPFactory
 
 class ServicesSpec( unittest.TestCase ):
     def __fullfillDepenendcies( self, Locator: MagicMock ):
@@ -136,6 +137,21 @@ class ServicesSpec( unittest.TestCase ):
                 "preprocessor.cache.persistent",
                 "preprocessor.cache.shared"
             ]
+        )
+
+    @patch( 'biomed.services.MLP.MLPManager.Factory' )
+    @patch( 'biomed.services.__Services', spec = ServiceLocator )
+    def test_it_initilizes_the_mlp_manager_factory( self, Locator: MagicMock, MLPF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        MLP = MagicMock( spec = MLPFactory )
+        MLPF.return_value = MLP
+
+        Services.startServices()
+        MLPF.assert_called_once()
+        Locator.set.assert_any_call(
+            "mlp",
+            MLP,
+            Dependencies = "properties"
         )
 
     @patch( 'biomed.services.__Services', spec = ServiceLocator )

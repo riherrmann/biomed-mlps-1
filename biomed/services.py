@@ -7,6 +7,7 @@ from biomed.preprocessor.facilitymanager.mFacilityManager import MariosFacilityM
 from biomed.preprocessor.cache.sharedMemoryCache import SharedMemoryCache
 import biomed.preprocessor.cache.numpyArrayFileCache as NPC
 import biomed.preprocessor.polymorph_preprocessor  as PP
+import biomed.mlp.mlp_manager as MLP
 
 __Services = ServiceLocator()
 def startServices() -> None:
@@ -54,6 +55,12 @@ def startServices() -> None:
             "preprocessor.cache.persistent",
             "preprocessor.cache.shared"
         ]
+    )
+
+    __Services.set(
+        "mlp",
+        MLP.MLPManager.Factory(),
+        Dependencies = "properties"
     )
 
 T = TypeVar( 'T' )
