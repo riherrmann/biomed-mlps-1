@@ -1,19 +1,25 @@
 from abc import ABC, abstractmethod
+from numpy import array as Array
 from pandas import Series
 
-class abstractstatic(staticmethod):
+class abstractstatic( staticmethod ):
     __slots__ = ()
     def __init__(self, function):
         super(abstractstatic, self).__init__(function)
         function.__isabstractmethod__ = True
+
     __isabstractmethod__ = True
 
-class PreProcessor(ABC):
+class Selector( ABC ):
     @abstractmethod
-    def preprocessCorpus( self, Ids: Series, Corpus: Series, Flags: str ) -> Series:
+    def build( X: Array, Labels: Series ):
         pass
 
-class PreProcessorFactory( ABC ):
-    @abstractstatic
-    def getInstance() -> PreProcessor:
+    @abstractmethod
+    def select( X: Array ) -> Array:
+        pass
+
+class SelectorFactory( ABC ):
+    @abstractmethod
+    def getInstance() -> Selector:
         pass

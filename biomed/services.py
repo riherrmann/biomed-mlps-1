@@ -7,6 +7,8 @@ from biomed.preprocessor.facilitymanager.mFacilityManager import MariosFacilityM
 from biomed.preprocessor.cache.sharedMemoryCache import SharedMemoryCache
 import biomed.preprocessor.cache.numpyArrayFileCache as NPC
 import biomed.preprocessor.polymorph_preprocessor  as PP
+import biomed.vectorizer.selector.selector_manager as SM
+import biomed.vectorizer.std_vectorizer as Vect
 import biomed.mlp.mlp_manager as MLP
 
 __Services = ServiceLocator()
@@ -48,12 +50,26 @@ def startServices() -> None:
         "preprocessor",
         PP.PolymorphPreprocessor.Factory.getInstance(),
         Dependencies = [
-            "properties",
             "preprocessor.facilitymanager",
             "preprocessor.normalizer.simple",
             "preprocessor.normalizer.complex",
             "preprocessor.cache.persistent",
             "preprocessor.cache.shared"
+        ]
+    )
+
+    __Services.set(
+        "vectorizer.selector",
+        SM.SelectorManager.Factory.getInstance(),
+        Dependencies = "properties"
+    )
+
+    __Services.set(
+        "vectorizer",
+        Vect.StdVectorizer.Factory.getInstance(),
+        Dependencies = [
+            "properties",
+            "vectorizer.selector"
         ]
     )
 

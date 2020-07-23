@@ -7,6 +7,8 @@ from biomed.properties_manager import PropertiesManager
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.preprocessor import PreProcessor
+from biomed.vectorizer.selector.selector import Selector
+from biomed.vectorizer.vectorizer import Vectorizer
 from biomed.mlp.mlp import MLPFactory
 
 class ServicesSpec( unittest.TestCase ):
@@ -19,6 +21,7 @@ class ServicesSpec( unittest.TestCase ):
                 "preprocessor.cache.shared": MagicMock( spec = Cache ),
                 "preprocessor.normalizer.simple": MagicMock( spec = NormalizerFactory ),
                 "preprocessor.normalizer.complex": MagicMock( spec = NormalizerFactory ),
+                "vectorizer.selector": MagicMock( spec = Selector ),
             }
 
             return Pair[ ServiceKey ]
@@ -130,7 +133,6 @@ class ServicesSpec( unittest.TestCase ):
             "preprocessor",
             PP,
             Dependencies = [
-                "properties",
                 "preprocessor.facilitymanager",
                 "preprocessor.normalizer.simple",
                 "preprocessor.normalizer.complex",
@@ -138,6 +140,40 @@ class ServicesSpec( unittest.TestCase ):
                 "preprocessor.cache.shared"
             ]
         )
+
+    @patch( 'biomed.services.SM.SelectorManager.Factory.getInstance' )
+    @patch( 'biomed.services.__Services', spec = ServiceLocator )
+    def test_it_initilizes_the_selector_manager_factory( self, Locator: MagicMock, SMF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        SM = MagicMock( spec = Selector )
+        SMF.return_value = SM
+
+        Services.startServices()
+        SMF.assert_called_once()
+        Locator.set.assert_any_call(
+            "vectorizer.selector",
+            SM,
+            Dependencies = "properties"
+        )
+
+    @patch( 'biomed.services.Vect.StdVectorizer.Factory.getInstance' )
+    @patch( 'biomed.services.__Services', spec = ServiceLocator )
+    def test_it_initilizes_the_vectorizer_factory( self, Locator: MagicMock, VF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        V = MagicMock( spec = Vectorizer )
+        VF.return_value = V
+
+        Services.startServices()
+        VF.assert_called_once()
+        Locator.set.assert_any_call(
+            "vectorizer",
+            V,
+            Dependencies = [
+                "properties",
+                "vectorizer.selector",
+            ]
+        )
+
 
     @patch( 'biomed.services.MLP.MLPManager.Factory' )
     @patch( 'biomed.services.__Services', spec = ServiceLocator )

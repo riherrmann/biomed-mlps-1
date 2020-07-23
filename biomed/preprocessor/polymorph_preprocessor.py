@@ -3,9 +3,8 @@ from biomed.preprocessor.preprocessor import PreProcessorFactory
 from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
-from biomed.properties_manager import PropertiesManager
 import biomed.services as Services
-from pandas import DataFrame
+from pandas import Series
 from multiprocessing import Process, Lock, Manager
 from time import sleep
 from math import ceil
@@ -14,7 +13,6 @@ class PolymorphPreprocessor( PreProcessor ):
     def __init__(
         self,
         FM: FacilityManager,
-        Workers: int,
         AlreadyProcessed: Cache,
         Shared: Cache,
         Simple: NormalizerFactory,
@@ -24,35 +22,34 @@ class PolymorphPreprocessor( PreProcessor ):
         self.__FM = FM
         self.__AlreadyProcessed = AlreadyProcessed
         self.__SharedMemory = Shared
-        Workers = max( Workers, 1 )
-        self.__ForkIt = False if Workers == 1 else True
-        self.__Workers = Workers
         self.__Cache = Cache
+        self.__SimpleFactory = Simple
+        self.__ComplexFactory = Complex
         self.__SimpleFlags = Simple.getApplicableFlags()
         self.__ComplexFlags = Complex.getApplicableFlags()
-        self.__prepareNormalizers( Simple, Complex, Workers )
         self.__Lock = Lock
 
-    def __prepareNormalizers(
+    def preprocessCorpus(
         self,
-        SimpleFactory: NormalizerFactory,
-        ComplexFactory: NormalizerFactory,
-        Amount: int
-    ):
-        self.__Simple = list()
-        self.__Complex = list()
-        for Index in range( 0, Amount ):
-            self.__Simple.append( SimpleFactory.getInstance() )
-            self.__Complex.append( ComplexFactory.getInstance() )
-
-    def preprocessCorpus( self, frame: DataFrame, flags: str ) -> list:
+        Ids: Series,
+        Corpus: Series,
+        Flags: str,
+        Workers = 1
+    ) -> Series:
         self.__SharedMemory.set( "Dirty", False )
         PmIds, Documents = self.__cleanUpData(
-            list( frame[ "pmid" ] ),
-            list( frame[ "text" ] )
+            Ids.tolist(),
+            Corpus.tolist()
         )
 
-        return self.__reflectOrExtract( PmIds, Documents, self.__toSortedString( flags ) )
+        return Series(
+            self.__reflectOrExtract(
+                PmIds,
+                Documents,
+                self.__toSortedString( Flags ),
+                Workers
+            )
+        )
 
     def __cleanUpData( self, PmIds: list, Documents: list ) -> tuple:
         Result = self.__FM.clean( PmIds, Documents )
@@ -61,15 +58,29 @@ class PolymorphPreprocessor( PreProcessor ):
 
         return Result
 
-    def __reflectOrExtract( self, PmIds: list, Document: list, Flags: str ) -> list:
+    def __reflectOrExtract(
+        self,
+        PmIds: list,
+        Document: list,
+        Flags: str,
+        Workers: int
+    ) -> list:
         if not self.__isApplicable( Flags ):
             return Document
         else:
-            return self.__runInParallelOrSequence( PmIds, Document, Flags )
+            return self.__runInParallelOrSequence( PmIds, Document, Flags, Workers )
 
+    def __isParalell( self, Workers: int ) -> bool:
+        return Workers > 1
 
-    def __runInParallelOrSequence( self, PmIds: list, Document: list, Flags: str ) -> list:
-        if not self.__ForkIt:
+    def __runInParallelOrSequence(
+        self,
+        PmIds: list,
+        Document: list,
+        Flags: str,
+        Workers: int
+    ) -> list:
+        if not self.__isParalell( Workers ):
             return self.__extractDocument(
                 PmIds,
                 Document,
@@ -79,10 +90,17 @@ class PolymorphPreprocessor( PreProcessor ):
             return self.__runInParallel(
                 PmIds,
                 Document,
-                Flags
+                Flags,
+                Workers
             )
 
-    def __runInParallel( self, PmIds: list, Documents: list, Flags: str ) -> list:
+    def __runInParallel(
+        self,
+        PmIds: list,
+        Documents: list,
+        Flags: str,
+        Workers: int
+    ) -> list:
         print( "Gathering already computed" )
         Ids, Documents = self.__filterAlreadyComputed( PmIds, Documents, Flags )
 
@@ -90,26 +108,35 @@ class PolymorphPreprocessor( PreProcessor ):
         self.__excuteRun(
             Ids,
             Documents,
-            Flags
+            Flags,
+            Workers
         )
 
         self.__saveOnDone()
         print( "Gathering output" )
         return self.__returnFromCache( PmIds, Flags )
 
-    def __excuteRun( self, CacheIds: list, Documents: list, Flags: str ):
+    def __excuteRun( self, CacheIds: list, Documents: list, Flags: str, Workers ):
         if not CacheIds:
             return
 
         Jobs = list()
-        BagOfCacheIds, BagOfDocuments = self.__splitInputs( CacheIds, Documents, Flags )
+        BagOfCacheIds, BagOfDocuments = self.__splitInputs( CacheIds, Documents, Flags, Workers )
+        self.__prepareNormalizers( Workers )
 
         self.__spawnJobs( Jobs, BagOfCacheIds, BagOfDocuments, Flags )
         sleep( 0 )# aka yield
         self.__waitUntilDone( Jobs )
 
-    def __splitInputs( self, CacheIds: list, Documents: list, Flags: str ) -> tuple:
-        SizeOfChunk = ceil( len( CacheIds ) / self.__Workers )
+    def __prepareNormalizers( self, Amount: int ):
+        self.__Simple = list()
+        self.__Complex = list()
+        for Index in range( 0, Amount ):
+            self.__Simple.append( self.__SimpleFactory.getInstance() )
+            self.__Complex.append( self.__ComplexFactory.getInstance() )
+
+    def __splitInputs( self, CacheIds: list, Documents: list, Flags: str, Workers ) -> tuple:
+        SizeOfChunk = ceil( len( CacheIds ) / Workers )
         SubsetOfIds = list( self.__computeChunk( SizeOfChunk, CacheIds ) )
         SubsetOfDocuments = list( self.__computeChunk( SizeOfChunk, Documents ) )
 
@@ -162,6 +189,7 @@ class PolymorphPreprocessor( PreProcessor ):
     def __extractDocument( self, PmIds: list, Documents: list, Flags: str ) -> list:
         print( "Gathering already computed" )
         Ids, Documents = self.__filterAlreadyComputed( PmIds, Documents, Flags )
+        self.__prepareNormalizers( 1 )
 
         print( "Prepare documents" )
         self.__computeAndWriteToCache(
@@ -268,7 +296,6 @@ class PolymorphPreprocessor( PreProcessor ):
 
             return PolymorphPreprocessor(
                 Services.getService( "preprocessor.facilitymanager", FacilityManager ),
-                Services.getService( "properties", PropertiesManager ).preprocessing[ "workers" ],
                 FileCache,
                 PolymorphPreprocessor.Factory.__loadSharedMemory( FileCache ),
                 Services.getService( "preprocessor.normalizer.simple", NormalizerFactory ),

@@ -23,10 +23,10 @@ class ModelBase( MLP ):
             x = X.Train,
             y = Y.Train,
             shuffle = True,
-            epochs = self._Properties.training_properties[ 'epochs' ],
-            batch_size = self._Properties.training_properties['batch_size'],
+            epochs = self._Properties.training[ 'epochs' ],
+            batch_size = self._Properties.training['batch_size'],
             validation_data = ( X.Val, Y.Val ),
-            workers = self._Properties.training_properties['workers'],
+            workers = self._Properties.training['workers'],
             use_multiprocessing = self.__isMultiprocessing()
         )
 
@@ -44,13 +44,13 @@ class ModelBase( MLP ):
         return self.__Dim > 2
 
     def __isMultiprocessing( self ):
-        return True if self._Properties.training_properties[ "workers" ] > 1 else False
+        return True if self._Properties.training[ "workers" ] > 1 else False
 
     def __predict( self, ToPredict: tuple ) -> NP.array:
         return self._Model.predict(
             ToPredict,
-            batch_size = self._Properties.training_properties['batch_size'],
-            workers = self._Properties.training_properties[ "workers" ],
+            batch_size = self._Properties.training['batch_size'],
+            workers = self._Properties.training[ 'workers' ],
             use_multiprocessing = self.__isMultiprocessing()
         )
 

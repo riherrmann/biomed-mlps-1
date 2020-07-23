@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from numpy import array as Array
 from pandas import Series
 
 class abstractstatic(staticmethod):
@@ -6,14 +7,20 @@ class abstractstatic(staticmethod):
     def __init__(self, function):
         super(abstractstatic, self).__init__(function)
         function.__isabstractmethod__ = True
+
     __isabstractmethod__ = True
 
-class PreProcessor(ABC):
+
+class Vectorizer( ABC ):
     @abstractmethod
-    def preprocessCorpus( self, Ids: Series, Corpus: Series, Flags: str ) -> Series:
+    def featureizeTrain( Train: Series, Labels: Series ) -> Array:
         pass
 
-class PreProcessorFactory( ABC ):
+    @abstractmethod
+    def featureizeTest( Test: Series ) -> Array:
+        pass
+
+class VectorizerFactory( ABC ):
     @abstractstatic
-    def getInstance() -> PreProcessor:
+    def getInstance() -> Vectorizer:
         pass

@@ -22,9 +22,9 @@ class ModelBaseSpec( unittest.TestCase ):
         Y = InputData( MagicMock(), MagicMock(), MagicMock() )
 
         PM = PropertiesManager()
-        PM[ "training_properties" ][ "epochs" ] = 1
-        PM[ "training_properties" ][ "batch_size" ] = 2
-        PM[ "training_properties" ][ "workers" ] = 1
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 1
 
         FFN = ModelBaseSpec.StubbedFFN( PM, Model )
         FFN.train( X, Y )
@@ -33,10 +33,10 @@ class ModelBaseSpec( unittest.TestCase ):
             x = X.Train,
             y = Y.Train,
             shuffle = True,
-            epochs = PM[ "training_properties" ][ "epochs" ],
-            batch_size = PM[ "training_properties" ][ "batch_size" ],
+            epochs = PM[ "training" ][ "epochs" ],
+            batch_size = PM[ "training" ][ "batch_size" ],
             validation_data = ( X.Val, Y.Val ),
-            workers = PM[ "training_properties" ][ "workers" ],
+            workers = PM[ "training" ][ "workers" ],
             use_multiprocessing = False
         )
 
@@ -46,9 +46,9 @@ class ModelBaseSpec( unittest.TestCase ):
         Y = InputData( MagicMock(), MagicMock(), MagicMock() )
 
         PM = PropertiesManager()
-        PM[ "training_properties" ][ "epochs" ] = 1
-        PM[ "training_properties" ][ "batch_size" ] = 2
-        PM[ "training_properties" ][ "workers" ] = 2
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 2
 
         FFN = ModelBaseSpec.StubbedFFN( PM, Model )
         FFN.train( X, Y )
@@ -57,10 +57,10 @@ class ModelBaseSpec( unittest.TestCase ):
             x = X.Train,
             y = Y.Train,
             shuffle = True,
-            epochs = PM[ "training_properties" ][ "epochs" ],
-            batch_size = PM[ "training_properties" ][ "batch_size" ],
+            epochs = PM[ "training" ][ "epochs" ],
+            batch_size = PM[ "training" ][ "batch_size" ],
             validation_data = ( X.Val, Y.Val ),
-            workers = PM[ "training_properties" ][ "workers" ],
+            workers = PM[ "training" ][ "workers" ],
             use_multiprocessing = True
         )
 
@@ -70,9 +70,9 @@ class ModelBaseSpec( unittest.TestCase ):
         Model.fit.return_value = Hist
 
         PM = PropertiesManager()
-        PM[ "training_properties" ][ "epochs" ] = 1
-        PM[ "training_properties" ][ "batch_size" ] = 2
-        PM[ "training_properties" ][ "workers" ] = 2
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 2
 
         FFN = ModelBaseSpec.StubbedFFN( PM, Model )
         self.assertEqual(
@@ -130,9 +130,9 @@ class ModelBaseSpec( unittest.TestCase ):
         ToPredict = MagicMock()
 
         PM = PropertiesManager()
-        PM[ "training_properties" ][ "epochs" ] = 1
-        PM[ "training_properties" ][ "batch_size" ] = 2
-        PM[ "training_properties" ][ "workers" ] = 1
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 1
 
 
         X = InputData( MagicMock(), MagicMock(), MagicMock() )
@@ -144,8 +144,8 @@ class ModelBaseSpec( unittest.TestCase ):
 
         Model.predict.assert_called_once_with(
             ToPredict,
-            batch_size = PM.training_properties['batch_size'],
-            workers = PM.training_properties[ "workers" ],
+            batch_size = PM.training['batch_size'],
+            workers = PM.training[ "workers" ],
             use_multiprocessing = False
         )
 
@@ -154,9 +154,9 @@ class ModelBaseSpec( unittest.TestCase ):
         ToPredict = MagicMock()
 
         PM = PropertiesManager()
-        PM[ "training_properties" ][ "epochs" ] = 1
-        PM[ "training_properties" ][ "batch_size" ] = 2
-        PM[ "training_properties" ][ "workers" ] = 2
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 2
 
         X = InputData( MagicMock(), MagicMock(), MagicMock() )
         Y = InputData( NP.zeros( ( 2, 3 ) ), MagicMock(), MagicMock() )
@@ -167,8 +167,8 @@ class ModelBaseSpec( unittest.TestCase ):
 
         Model.predict.assert_called_once_with(
             ToPredict,
-            batch_size = PM.training_properties['batch_size'],
-            workers = PM.training_properties[ "workers" ],
+            batch_size = PM.training['batch_size'],
+            workers = PM.training[ "workers" ],
             use_multiprocessing = True
         )
 
@@ -177,9 +177,9 @@ class ModelBaseSpec( unittest.TestCase ):
         ToPredict = MagicMock()
 
         PM = PropertiesManager()
-        PM[ "training_properties" ][ "epochs" ] = 1
-        PM[ "training_properties" ][ "batch_size" ] = 2
-        PM[ "training_properties" ][ "workers" ] = 1
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 1
 
         X = InputData( MagicMock(), MagicMock(), MagicMock() )
         Y = InputData( NP.zeros( ( 2, 2 ) ), MagicMock(), MagicMock() )
@@ -198,9 +198,9 @@ class ModelBaseSpec( unittest.TestCase ):
         ToPredict = MagicMock()
 
         PM = PropertiesManager()
-        PM[ "training_properties" ][ "epochs" ] = 1
-        PM[ "training_properties" ][ "batch_size" ] = 2
-        PM[ "training_properties" ][ "workers" ] = 1
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 1
 
         X = InputData( MagicMock(), MagicMock(), MagicMock() )
         Y = InputData( NP.zeros( ( 4, 4 ) ), MagicMock(), MagicMock() )
