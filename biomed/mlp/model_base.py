@@ -1,7 +1,6 @@
 from biomed.properties_manager import PropertiesManager
 from biomed.mlp.mlp import MLP
 from biomed.mlp.input_data import InputData
-from tensorflow.keras.callbacks import History
 import numpy as NP
 
 class ModelBase( MLP ):
@@ -15,7 +14,7 @@ class ModelBase( MLP ):
         self._Model.summary( print_fn = lambda X: Summery.append( X ) )
         return "\n".join( Summery )
 
-    def train( self, X: InputData, Y: InputData ) -> History:
+    def train( self, X: InputData, Y: InputData ) -> dict:
         self.__Dim = len( Y.Train[0] )
 
         print("Training...")

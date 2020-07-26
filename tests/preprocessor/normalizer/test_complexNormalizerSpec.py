@@ -19,7 +19,7 @@ class ComplexNormalizerSpec( unittest.TestCase ):
     ]
 
     def test_it_is_a_normalizer( self ):
-        MyNormal = ComplexNormalizer.Factory.getInstance()
+        MyNormal = ComplexNormalizer.Factory().getInstance()
         self.assertTrue( isinstance( MyNormal, Normalizer ) )
 
     @patch( 'biomed.preprocessor.normalizer.complexNormalizer.Process' )
@@ -31,7 +31,7 @@ class ComplexNormalizerSpec( unittest.TestCase ):
         NP.return_value = Impl
         Impl.communicate.return_value = ( "".encode( 'UTF-8' ), "".encode( 'UTF-8' ) )
 
-        MyNormal = ComplexNormalizer.Factory.getInstance()
+        MyNormal = ComplexNormalizer.Factory().getInstance()
         MyNormal.apply(
             ComplexNormalizerSpec.__Documents,
             Flags
@@ -68,7 +68,7 @@ class ComplexNormalizerSpec( unittest.TestCase ):
             "I\nam\ntext3\n"
         ]
 
-        MyNormal = ComplexNormalizer.Factory.getInstance()
+        MyNormal = ComplexNormalizer.Factory().getInstance()
         MyNormal.apply(
             Documents,
             "na"
@@ -90,7 +90,7 @@ class ComplexNormalizerSpec( unittest.TestCase ):
 
         Impl.communicate.return_value = ( "".encode( 'UTF-8' ), ErrorMsg.encode( 'UTF-8' ) )
 
-        MyNormal = ComplexNormalizer.Factory.getInstance()
+        MyNormal = ComplexNormalizer.Factory().getInstance()
         with self.assertRaises( RuntimeError, msg = ErrorMsg):
             MyNormal.apply(
                 self.__Documents,
@@ -108,7 +108,7 @@ class ComplexNormalizerSpec( unittest.TestCase ):
 
         Impl.communicate.return_value = ( ParsedDocumentes.encode( 'UTF-8' ), "".encode( 'UTF-8' ) )
 
-        MyNormal = ComplexNormalizer.Factory.getInstance()
+        MyNormal = ComplexNormalizer.Factory().getInstance()
         self.assertListEqual(
             MyNormal.apply(
                 self.__Documents,

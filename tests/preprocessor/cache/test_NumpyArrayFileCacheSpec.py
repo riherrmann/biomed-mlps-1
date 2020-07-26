@@ -1,10 +1,4 @@
 import os as OS
-import sys as Sys
-
-AdditionalPath = OS.path.abspath( OS.path.join( OS.path.dirname( __file__ ), '..', '..', '..' ) )
-if AdditionalPath not in Sys.path:
-    Sys.path.append( AdditionalPath )
-
 import unittest
 from unittest.mock import MagicMock, patch
 import numpy
@@ -18,6 +12,8 @@ class NumpyArrayFileCacheSpec( unittest.TestCase ):
     def setUp( self ):
         OS.mkdir( self.__Path, 0o777 )
         self.__Files = list()
+        self.__checkDirM = patch( 'biomed.preprocessor.cache.numpyArrayFileCache.checkDir' )
+        self.__checkDir = self.__checkDirM.start()
 
     def __remove( self ):
         if self.__Files:
@@ -37,6 +33,7 @@ class NumpyArrayFileCacheSpec( unittest.TestCase ):
 
     def tearDown( self ):
         self.__remove()
+        self.__checkDirM.stop()
 
     def fakeLocator( self, _, __ ):
         PM = PropertiesManager()
@@ -45,31 +42,11 @@ class NumpyArrayFileCacheSpec( unittest.TestCase ):
         return PM
 
     @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_fails_if_the_cache_dir_does_not_exists( self, ServiceGetter: MagicMock ):
-        self.__remove()
-
+    def test_it_checks_a_the_dir_on_init( self, ServiceGetter: MagicMock ):
         ServiceGetter.side_effect = self.fakeLocator
 
-        with self.assertRaises( RuntimeError ):
-            NumpyArrayFileCache.Factory.getInstance()
-
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_fails_if_the_cache_dir_is_not_readable( self, ServiceGetter: MagicMock ):
-        OS.chmod( self.__Path, 0o100 )
-
-        ServiceGetter.side_effect = self.fakeLocator
-
-        with self.assertRaises( RuntimeError ):
-            NumpyArrayFileCache.Factory.getInstance()
-
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_fails_if_the_cache_dir_is_not_writeable( self, ServiceGetter: MagicMock ):
-        OS.chmod( self.__Path, 0o440 )
-
-        ServiceGetter.side_effect = self.fakeLocator
-
-        with self.assertRaises( RuntimeError ):
-            NumpyArrayFileCache.Factory.getInstance()
+        NumpyArrayFileCache.Factory.getInstance()
+        self.__checkDir.assert_called_once()
 
     @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
     def test_it_is_a_Cache( self, ServiceGetter: MagicMock ):

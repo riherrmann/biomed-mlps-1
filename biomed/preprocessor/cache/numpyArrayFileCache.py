@@ -3,6 +3,7 @@ from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.cache.cache import CacheFactory
 import biomed.services as Services
 from biomed.properties_manager import PropertiesManager
+from biomed.utils.dir_checker import checkDir, toAbsPath
 from multiprocessing import Manager, Lock
 import numpy
 
@@ -42,38 +43,10 @@ class NumpyArrayFileCache( Cache ):
 
     class Factory( CacheFactory ):
         @staticmethod
-        def __checkDir( Dir, Readable=True, Writeable=True ):
-            if OS.path.isdir( Dir ) is False:
-                raise RuntimeError( "{} not found.".format( Dir ) )
-
-            return NumpyArrayFileCache.Factory.__checkAccess(
-                Dir,
-                Readable,
-                Writeable
-            )
-
-        @staticmethod
-        def __checkAccess( Path, Readable, Writeable ):
-            if True is Readable and OS.access( Path, OS.R_OK ) is False:
-                raise RuntimeError( "{} is not readable".format( Path ) )
-
-            if True is Writeable and OS.access( Path, OS.W_OK ) is False:
-                raise RuntimeError( "{} is not writeable".format( Path ) )
-
-        @staticmethod
-        def __toAbsPath( Path: str ) -> str:
-            if OS.path.isabs( Path ):
-                return OS.path.abspath( Path )
-            else:
-                return Path
-
-        @staticmethod
         def getInstance() -> Cache:
             PathToCacheDir = Services.getService( "properties", PropertiesManager ).cache_dir
 
-            NumpyArrayFileCache.Factory.__checkDir(
-                NumpyArrayFileCache.Factory.__toAbsPath( PathToCacheDir )
-            )
+            checkDir( toAbsPath( PathToCacheDir ) )
 
             return NumpyArrayFileCache(
                 PathToCacheDir,

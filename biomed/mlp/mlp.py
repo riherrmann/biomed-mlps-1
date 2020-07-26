@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from tensorflow.keras.callbacks import History
 from biomed.mlp.input_data import InputData
 import numpy as NP
 
@@ -9,7 +8,7 @@ class MLP( ABC ):
         pass
 
     @abstractmethod
-    def train( self, X: InputData, Y: InputData ) -> History:
+    def train( self, X: InputData, Y: InputData ) -> dict:
         pass
 
     @abstractmethod

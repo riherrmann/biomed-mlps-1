@@ -2,7 +2,6 @@ from biomed.mlp.mlp import MLP
 from biomed.mlp.mlp import MLPFactory
 from biomed.mlp.input_data import InputData
 import biomed.services as Services
-from tensorflow.keras.callbacks import History
 from biomed.mlp.multiSimple import MultiSimpleFFN
 from biomed.mlp.multiSimpleB import MultiSimpleBFFN
 from biomed.mlp.simple import SimpleFFN
@@ -34,7 +33,7 @@ class MLPManager( MLP ):
     def buildModel( self, input_dim, nb_classes ) -> str:
         return self.__Model.buildModel( input_dim, nb_classes )
 
-    def train( self, X: InputData, Y: InputData ) -> History:
+    def train( self, X: InputData, Y: InputData ) -> dict:
         return self.__Model.train( X, Y )
 
     def getTrainingScore( self, X: InputData, Y: InputData ) -> dict:
