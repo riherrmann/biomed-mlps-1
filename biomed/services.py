@@ -10,6 +10,10 @@ import biomed.preprocessor.polymorph_preprocessor  as PP
 import biomed.vectorizer.selector.selector_manager as SM
 import biomed.vectorizer.std_vectorizer as Vect
 import biomed.mlp.mlp_manager as MLP
+from biomed.utils.simple_file_writer import SimpleFileWriter
+from biomed.utils.json_file_writer import JSONFileWriter
+from biomed.utils.csv_file_writer import CSVFileWriter
+import biomed.evaluator.std_evaluator as Eval
 
 __Services = ServiceLocator()
 def startServices() -> None:
@@ -37,6 +41,21 @@ def startServices() -> None:
     __Services.set(
         "preprocessor.cache.shared",
         SharedMemoryCache.Factory.getInstance()
+    )
+
+    __Services.set(
+        "evaluator.simple",
+        SimpleFileWriter.Factory.getInstance()
+    )
+
+    __Services.set(
+        "evaluator.json",
+        JSONFileWriter.Factory.getInstance()
+    )
+
+    __Services.set(
+        "evaluator.csv",
+        CSVFileWriter.Factory.getInstance()
     )
 
     #dependend services
@@ -77,6 +96,17 @@ def startServices() -> None:
         "mlp",
         MLP.MLPManager.Factory(),
         Dependencies = "properties"
+    )
+
+    __Services.set(
+        "evaluator",
+        Eval.StdEvaluator.Factory.getInstance(),
+        Dependencies = [
+            "properties",
+            "evaluator.simple",
+            "evaluator.json",
+            "evaluator.csv"
+        ]
     )
 
 T = TypeVar( 'T' )

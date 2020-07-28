@@ -47,13 +47,26 @@ class PropertiesManager:
             )
         )
 
-    def __setitem__(self, field, value):
+        self.result_dir = OS.path.abspath(
+            OS.path.join(
+                OS.path.dirname( __file__ ), "..", "results"
+            )
+        )
+
+    def toDict( self ) -> dict:
+        ShallowCopy = dict()
+        for Key in self.__dict__.keys():
+            ShallowCopy[ Key ] = self[ Key ]
+
+        return ShallowCopy
+
+    def __setitem__( self, field, value ):
         if not hasattr( self, field ):
             return
 
-        self.__setattr__(field, value)
+        self.__setattr__( field, value )
 
-    def __getitem__(self, field):
+    def __getitem__( self, field ):
         if not hasattr( self, field ):
             return None
         else:

@@ -10,6 +10,8 @@ from biomed.preprocessor.preprocessor import PreProcessor
 from biomed.vectorizer.selector.selector import Selector
 from biomed.vectorizer.vectorizer import Vectorizer
 from biomed.mlp.mlp import MLPFactory
+from biomed.utils.file_writer import FileWriter
+from biomed.evaluator.evaluator import Evaluator
 
 class ServicesSpec( unittest.TestCase ):
     def __fullfillDepenendcies( self, Locator: MagicMock ):
@@ -22,6 +24,9 @@ class ServicesSpec( unittest.TestCase ):
                 "preprocessor.normalizer.simple": MagicMock( spec = NormalizerFactory ),
                 "preprocessor.normalizer.complex": MagicMock( spec = NormalizerFactory ),
                 "vectorizer.selector": MagicMock( spec = Selector ),
+                "evaluator.simple": MagicMock( spec = FileWriter ),
+                "evaluator.json": MagicMock( spec = FileWriter ),
+                "evaluator.csv": MagicMock( spec = FileWriter ),
             }
 
             return Pair[ ServiceKey ]
@@ -188,6 +193,73 @@ class ServicesSpec( unittest.TestCase ):
             "mlp",
             MLP,
             Dependencies = "properties"
+        )
+
+    @patch( 'biomed.services.SimpleFileWriter.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.__Services' )
+    def test_it_initilizes_the_simple_file_writer( self, Locator: MagicMock, SFF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        Writer = MagicMock( spec = FileWriter )
+        SFF.return_value = Writer
+
+        Services.startServices()
+
+        SFF.assert_called_once()
+        Locator.set.assert_any_call(
+            "evaluator.simple",
+            Writer
+        )
+
+
+    @patch( 'biomed.services.JSONFileWriter.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.__Services' )
+    def test_it_initilizes_the_json_file_writer( self, Locator: MagicMock, JFF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        Writer = MagicMock( spec = FileWriter )
+        JFF.return_value = Writer
+
+        Services.startServices()
+
+        JFF.assert_called_once()
+        Locator.set.assert_any_call(
+            "evaluator.json",
+            Writer
+        )
+
+    @patch( 'biomed.services.CSVFileWriter.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.__Services' )
+    def test_it_initilizes_the_csv_file_writer( self, Locator: MagicMock, CFF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        Writer = MagicMock( spec = FileWriter )
+        CFF.return_value = Writer
+
+        Services.startServices()
+
+        CFF.assert_called_once()
+        Locator.set.assert_any_call(
+            "evaluator.csv",
+            Writer
+        )
+
+    @patch( 'biomed.services.Eval.StdEvaluator.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.__Services' )
+    def test_it_initilizes_the_evaluator( self, Locator: MagicMock, EF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        Eval = MagicMock( spec = Evaluator )
+        EF.return_value = Eval
+
+        Services.startServices()
+
+        EF.assert_called_once()
+        Locator.set.assert_any_call(
+            "evaluator",
+            Eval,
+            Dependencies = [
+                "properties",
+                "evaluator.simple",
+                "evaluator.json",
+                "evaluator.csv"
+            ]
         )
 
     @patch( 'biomed.services.__Services', spec = ServiceLocator )
