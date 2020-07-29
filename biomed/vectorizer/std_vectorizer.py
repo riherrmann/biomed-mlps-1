@@ -34,13 +34,21 @@ class StdVectorizer( Vectorizer ):
         self.__Selector.build( Features, Labels )
         return self.__Selector.select( Features )
 
-    def featureizeTest( self, Test: Series ) -> Array:
+    def __checkVectorizer( self ):
         if not self.__Vectorizer:
             raise RuntimeError( "You must extract trainings feature, before" )
-        else:
-            return self.__Selector.select(
-                self.__Vectorizer.transform( Test )
-            )
+
+    def featureizeTest( self, Test: Series ) -> Array:
+        self.__checkVectorizer()
+        return self.__Selector.select(
+            self.__Vectorizer.transform( Test )
+        )
+
+    def getSupportedFeatures( self ) -> list:
+        self.__checkVectorizer()
+        return self.__Selector.getSupportedFeatures(
+            self.__Vectorizer.get_feature_names()
+        )
 
     class Factory( VectorizerFactory ):
         @staticmethod

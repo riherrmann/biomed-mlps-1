@@ -51,3 +51,20 @@ class SelectorManagerSpec( unittest.TestCase ):
             Expected,
             MySelector.select( Expected )
         )
+
+    @patch( 'biomed.vectorizer.selector.selector_manager.Services.getService' )
+    def test_it_reflects_the_given_features_labels_if_no_selector_was_selected( self, ServiceGetter: MagicMock ):
+        def fakeLocator( _, __ ):
+            PM = PropertiesManager()
+            PM.selection[ 'type' ] = None
+            return PM
+
+        ServiceGetter.side_effect = fakeLocator
+        Expected = MagicMock()
+
+        MySelector = SelectorManager.Factory.getInstance()
+        MySelector.build( MagicMock(), MagicMock() )
+        self.assertEqual(
+            Expected,
+            MySelector.getSupportedFeatures( Expected )
+        )

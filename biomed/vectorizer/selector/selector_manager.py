@@ -17,6 +17,10 @@ class SelectorManager( Selector ):
         if not self.__Selector:
             return X
 
+    def getSupportedFeatures( self, Labels: list ) -> list:
+        if not self.__Selector:
+            return Labels
+
     class Factory( SelectorFactory ):
         @staticmethod
         def getInstance() -> Selector:

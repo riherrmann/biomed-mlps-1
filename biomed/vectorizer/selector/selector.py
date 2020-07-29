@@ -12,12 +12,17 @@ class abstractstatic( staticmethod ):
 
 class Selector( ABC ):
     @abstractmethod
-    def build( X: Array, Labels: Series ):
+    def build( self, X: Array, Labels: Series ):
         pass
 
     @abstractmethod
-    def select( X: Array ) -> Array:
+    def select( self, X: Array ) -> Array:
         pass
+
+    @abstractmethod
+    def getSupportedFeatures( self, Labels: list ) -> list:
+        pass
+
 
 class SelectorFactory( ABC ):
     @abstractmethod

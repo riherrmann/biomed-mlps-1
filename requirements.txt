@@ -1,0 +1,13 @@
+pytest
+pytest-randomly
+pytest-mock
+pytest-datadir
+coverage
+scikit-learn
+pandas
+numpy
+keras
+tensorflow
+nltk
+matplotlib
+seaborn

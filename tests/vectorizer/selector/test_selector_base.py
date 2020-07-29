@@ -12,6 +12,9 @@ class SelectorBaseSpec( unittest.TestCase ):
         def _assembleSelector( self ):
             self._Selector = self.__GivenSelector
 
+        def getSupportedFeatures( self, Labels: list ) -> list:
+            pass
+
     def test_it_builds_a_selector( self ):
         GivenSelectorModel = MagicMock()
         X = MagicMock()

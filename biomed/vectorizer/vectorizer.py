@@ -13,11 +13,15 @@ class abstractstatic(staticmethod):
 
 class Vectorizer( ABC ):
     @abstractmethod
-    def featureizeTrain( Train: Series, Labels: Series ) -> Array:
+    def featureizeTrain( self, Train: Series, Labels: Series ) -> Array:
         pass
 
     @abstractmethod
-    def featureizeTest( Test: Series ) -> Array:
+    def featureizeTest( self, Test: Series ) -> Array:
+        pass
+
+    @abstractmethod
+    def getSupportedFeatures( self ) -> list:
         pass
 
 class VectorizerFactory( ABC ):
