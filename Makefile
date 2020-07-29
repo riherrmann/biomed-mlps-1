@@ -1,19 +1,15 @@
+setup:
+	pip3 install --requirement=requirements.txt
+	python3 setup.py
 main:
-	pipenv run python -m biomed.main
+	python3 -m biomed.main
 
 testAll:
-	pipenv run python -m pytest tests
+	python3 -m pytest tests
 
 test:
-	pipenv run python -m pytest $(ARGS)
+	python3 -m pytest $(ARGS)
 
-deps/clean:
-	@pipenv --rm
-
-deps:
-	@pipenv install
-	pipenv run python -m setup
-
-deps/dev:
-	@pipenv install --dev
-	pipenv run python -m setup
+cov:
+	coverage run -m pytest tests
+	coverage report -m
