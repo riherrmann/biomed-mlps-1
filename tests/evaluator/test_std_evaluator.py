@@ -6,9 +6,7 @@ from biomed.properties_manager import PropertiesManager
 from biomed.utils.file_writer import FileWriter
 from datetime import datetime
 from pandas import Series, DataFrame
-import asyncio
 import os as OS
-from time import sleep
 
 class StdEvaluatorSpec( unittest.TestCase ):
     def setUp( self ):
@@ -127,7 +125,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         MyEval = StdEvaluator.Factory.getInstance()
         MyEval.start( ShortName, Description )
 
-        self.__Simple.write.assert_called_once_with(
+        self.__Simple.write.assert_any_call(
             OS.path.join( Path, 'descr.txt' ),
             [ Description ]
         )
@@ -656,7 +654,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
     @patch( 'biomed.evaluator.std_evaluator.F1' )
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
     @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_waits_for_results_while_finalizing( self, ServiceGetter: MagicMock, DF: MagicMock, _, __ ):
+    def test_it_waits_for_various_results_while_finalizing( self, ServiceGetter: MagicMock, DF: MagicMock, _, __ ):
         ServiceGetter.side_effect = self.__fakeLocator
         ShortName = "Test"
 
@@ -710,4 +708,136 @@ class StdEvaluatorSpec( unittest.TestCase ):
         self.__CSV.write.assert_any_call(
             OS.path.join( Path, 'classReport.csv' ),
             ANY
+        )
+
+    @patch( 'biomed.evaluator.std_evaluator.Reporter' )
+    @patch( 'biomed.evaluator.std_evaluator.F1' )
+    @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
+    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
+    def test_it_return_a_dict_with_given_results( self, ServiceGetter: MagicMock, DF: MagicMock, F1: MagicMock, Reporter: MagicMock ):
+        ServiceGetter.side_effect = self.__fakeLocator
+        ShortName = "Test"
+
+        Model = MagicMock()
+        Score = MagicMock()
+        Report = MagicMock()
+
+        Frame = MagicMock( spec = DataFrame )
+        DF.return_value = Frame
+        F1.return_value = Score
+        Reporter.return_value = Report
+
+        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval.start( ShortName, "test run" )
+        MyEval.captureData( MagicMock(), MagicMock() )
+        MyEval.capturePreprocessedData( MagicMock(), MagicMock() )
+        MyEval.captureFeatures( MagicMock(), MagicMock(), MagicMock() )
+        MyEval.captureModel( Model )
+        MyEval.captureTrainingHistory( MagicMock() )
+        MyEval.captureEvaluationScore( MagicMock() )
+        MyEval.capturePredictions( MagicMock(), MagicMock() )
+        MyEval.score( MagicMock(), MagicMock(), MagicMock() )
+        self.assertDictEqual(
+            MyEval.finalize(),
+            {
+                'model': Model,
+                'score': [ Score, Score, Score ],
+                'report': Report,
+            }
+        )
+
+    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
+    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_model( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.__fakeLocator
+
+        MyEval = StdEvaluator.Factory.getInstance()
+        with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
+            MyEval.captureModel( MagicMock() )
+            MyEval.finalize()
+
+
+    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
+    def test_it_captures_the_model( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.__fakeLocator
+        ShortName = "test"
+        Model = "I will be the model str\nmulitlined\n"
+
+        Path = OS.path.join(
+            self.__PM.result_dir,
+            '{}-{}'.format( ShortName, self.__TimeValue ),
+        )
+
+        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval.start( ShortName, "ANY" )
+        MyEval.captureModel( Model )
+        MyEval.finalize()
+
+        self.__Simple.write.assert_any_call(
+            OS.path.join( Path, 'model.txt' ),
+            Model.strip().splitlines()
+        )
+
+    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
+    def test_it_fails_if_the_evaluator_is_not_started_while_setting_a_fold( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.__fakeLocator
+
+        MyEval = StdEvaluator.Factory.getInstance()
+        with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
+            MyEval.setFold( 1 )
+
+    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
+    def test_it_makes_a_sub_dir_for_each_fold( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.__fakeLocator
+
+        ShortName = "test"
+        Fold = 1
+
+        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval.start( ShortName, "test of the module" )
+        MyEval.setFold( Fold )
+
+        self.__mkdir.assert_any_call(
+            OS.path.join(
+                self.__PM.result_dir,
+                '{}-{}'.format( ShortName, self.__TimeValue ),
+                str( Fold )
+            )
+        )
+
+        Fold = 2
+
+        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval.start( ShortName, "test of the module" )
+        MyEval.setFold( Fold )
+
+        self.__mkdir.assert_any_call(
+            OS.path.join(
+                self.__PM.result_dir,
+                '{}-{}'.format( ShortName, self.__TimeValue ),
+                str( Fold )
+            )
+        )
+
+    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
+    def test_it_writes_data_in_fold_dir( self, ServiceGetter: MagicMock ):
+        ServiceGetter.side_effect = self.__fakeLocator
+        ShortName = "test"
+        Model = "I will be the model str\nmulitlined\n"
+
+        Fold = 1
+        Path = OS.path.join(
+            self.__PM.result_dir,
+            '{}-{}'.format( ShortName, self.__TimeValue ),
+            str( Fold )
+        )
+
+        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval.start( ShortName, "ANY" )
+        MyEval.setFold( Fold )
+        MyEval.captureModel( Model )
+        MyEval.finalize()
+
+        self.__Simple.write.assert_any_call(
+            OS.path.join( Path, 'model.txt' ),
+            Model.strip().splitlines()
         )

@@ -17,6 +17,10 @@ class Evaluator( ABC ):
         pass
 
     @abstractmethod
+    def setFold( self, Fold ):
+        pass
+
+    @abstractmethod
     def finalize( self ) -> dict:
         pass
 
@@ -55,6 +59,10 @@ class Evaluator( ABC ):
         TestFeatures: tuple,
         BagOfWords: list
     ):
+        pass
+
+    @abstractmethod
+    def captureModel( self, Model: str ):
         pass
 
     @abstractmethod

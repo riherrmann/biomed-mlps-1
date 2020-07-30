@@ -14,6 +14,7 @@ from biomed.utils.simple_file_writer import SimpleFileWriter
 from biomed.utils.json_file_writer import JSONFileWriter
 from biomed.utils.csv_file_writer import CSVFileWriter
 import biomed.evaluator.std_evaluator as Eval
+import biomed.splitter.std_splitter as Split
 
 __Services = ServiceLocator()
 def startServices() -> None:
@@ -107,6 +108,12 @@ def startServices() -> None:
             "evaluator.json",
             "evaluator.csv"
         ]
+    )
+
+    __Services.set(
+        "splitter",
+        Split.StdSplitter.Factory.getInstance(),
+        Dependencies = "properties"
     )
 
 T = TypeVar( 'T' )

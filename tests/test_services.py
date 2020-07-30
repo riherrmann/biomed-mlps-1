@@ -12,6 +12,7 @@ from biomed.vectorizer.vectorizer import Vectorizer
 from biomed.mlp.mlp import MLPFactory
 from biomed.utils.file_writer import FileWriter
 from biomed.evaluator.evaluator import Evaluator
+from biomed.splitter.splitter import Splitter
 
 class ServicesSpec( unittest.TestCase ):
     def __fullfillDepenendcies( self, Locator: MagicMock ):
@@ -260,6 +261,22 @@ class ServicesSpec( unittest.TestCase ):
                 "evaluator.json",
                 "evaluator.csv"
             ]
+        )
+
+    @patch( 'biomed.services.Split.StdSplitter.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.__Services' )
+    def test_it_initilizes_the_splitter( self, Locator: MagicMock, SpF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        Split = MagicMock( spec = Splitter )
+        SpF.return_value = Split
+
+        Services.startServices()
+
+        SpF.assert_called_once()
+        Locator.set.assert_any_call(
+            "splitter",
+            Split,
+            Dependencies = "properties"
         )
 
     @patch( 'biomed.services.__Services', spec = ServiceLocator )

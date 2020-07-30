@@ -7,6 +7,13 @@ class PropertiesManager:
         self.model = "c"
         self.is_blind = False
 
+        self.splitting = dict(
+            folds = 1,
+            test = 0.2,
+            validation = 0.2,
+            seed = 1
+        )
+
         self.preprocessing = dict(
             workers = 90,
             variant = "lanv",
@@ -33,7 +40,6 @@ class PropertiesManager:
         self.training = dict(
             epochs = 150,
             batch_size = 10,
-            validation_split = 0.1,
             workers = 90,
         )
 

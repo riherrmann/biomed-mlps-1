@@ -30,6 +30,7 @@ class StdEvaluator( Evaluator ):
         self.__Time = dict()
         self.__LastScore = None
         self.__LastReport = None
+        self.__Model = None
         self.__Steps = []
 
     def __setPath( self, ShortName: str ):
@@ -59,12 +60,38 @@ class StdEvaluator( Evaluator ):
             Content
         )
 
+    def __makeFrameAndSave(
+        self,
+        FileName: str,
+        Data,
+        Columns: list,
+        Rows: list = None
+    ):
+        if not Rows:
+            DF = DataFrame(
+                Data,
+                columns = Columns
+            )
+        else:
+            DF = DataFrame(
+                Data,
+                columns = Columns,
+                index = Rows
+            )
+
+        DF.to_csv( self.__makePathForFile( FileName ) )
+
     def start( self, ShortName: str, Desription ):
         checkDir( toAbsPath( self.__Properties.result_dir ) )
         self.__setPath( ShortName )
         mkdir( self.__Path )
         self.__writeJSON( 'config.json', self.__Properties.toDict() )
         self.__writeFile( 'descr.txt', [ Desription ] )
+
+    def setFold( self, Fold ):
+        self.__checkIfIsStarted()
+        self.__Path = OS.path.join( self.__Path, str( Fold ) )
+        mkdir( self.__Path )
 
     def __checkIfIsStarted( self ):
         if not self.__Path:
@@ -107,27 +134,6 @@ class StdEvaluator( Evaluator ):
     def capturePreprocessedData( self, TrainDocs: Series, TestDocs: Series ):
         self.__enqueueStep( self.__capturePreprocessedData( TrainDocs, TestDocs ) )
 
-    def __makeFrameAndSave(
-        self,
-        FileName: str,
-        Data,
-        Columns: list,
-        Rows: list = None
-    ):
-        if not Rows:
-            DF = DataFrame(
-                Data,
-                columns = Columns
-            )
-        else:
-            DF = DataFrame(
-                Data,
-                columns = Columns,
-                index = Rows
-            )
-
-        DF.to_csv( FileName )
-
     async def __captureFeatures(
         self,
         TrainFeatures: tuple,
@@ -135,14 +141,14 @@ class StdEvaluator( Evaluator ):
         BagOfWords: list
     ):
         self.__makeFrameAndSave(
-            self.__makePathForFile( 'trainingFeatures.csv' ),
+            'trainingFeatures.csv',
             TrainFeatures[ 1 ],
             BagOfWords,
             TrainFeatures[ 0 ]
         )
 
         self.__makeFrameAndSave(
-            self.__makePathForFile( 'testFeatures.csv' ),
+            'testFeatures.csv',
             TestFeatures[ 1 ],
             BagOfWords,
             TestFeatures[ 0 ]
@@ -154,11 +160,23 @@ class StdEvaluator( Evaluator ):
         TestFeatures: tuple,
         BagOfWords: list
     ):
-        self.__enqueueStep( self.__captureFeatures( TrainFeatures, TestFeatures, BagOfWords ) )
+        self.__enqueueStep(
+            self.__captureFeatures( TrainFeatures, TestFeatures, BagOfWords )
+        )
+
+    async def __captureModel( self, Model: str ):
+        self.__writeFile(
+            'model.txt',
+            Model.strip().splitlines()
+        )
+
+    def captureModel( self, Model: str ):
+        self.__Model = Model
+        self.__enqueueStep( self.__captureModel( Model ) )
 
     async def __captureTrainingHistory( self, History: dict ):
         self.__writeCSV(
-            self.__makePathForFile( 'trainingHistory.csv' ),
+            'trainingHistory.csv',
             History
         )
 
@@ -167,7 +185,7 @@ class StdEvaluator( Evaluator ):
 
     async def __captureEvaluationScore( self, Score: dict ):
         self.__writeCSV(
-            self.__makePathForFile( 'evalScore.csv' ),
+            'evalScore.csv',
             Score
         )
 
@@ -176,14 +194,14 @@ class StdEvaluator( Evaluator ):
 
     def __justSavePredictions( self, Predictions: Array, PMIds: list ):
         self.__makeFrameAndSave(
-            self.__makePathForFile( 'predictions.csv' ),
+            'predictions.csv',
             [ PMIds, list( Predictions ) ],
             [ 'pmid', self.__Properties.classifier ]
         )
 
     def __saveLabeledPredictions( self, Predictions: Array, PMIds: list, Labels: list ):
         self.__makeFrameAndSave(
-            self.__makePathForFile( 'predictions.csv' ),
+            'predictions.csv',
             [ list( Predictions ), Labels ],
             [ 'predicted', 'actual' ],
             PMIds
@@ -195,8 +213,15 @@ class StdEvaluator( Evaluator ):
         else:
             self.__saveLabeledPredictions( Predictions, PMIds, Actual )
 
-    def capturePredictions( self, Predictions: Array, PMIds: list, Actual: list = None ):
-        self.__enqueueStep( self.__capturePredictions( Predictions, PMIds, Actual ) )
+    def capturePredictions(
+        self,
+        Predictions: Array,
+        PMIds: list,
+        Actual: list = None
+    ):
+        self.__enqueueStep(
+            self.__capturePredictions( Predictions, PMIds, Actual )
+        )
 
     def __getMacroAndMicroScore( self, Predicted: Array, Actual: list ) -> tuple:
         return (
@@ -225,7 +250,7 @@ class StdEvaluator( Evaluator ):
         ]
 
         self.__makeFrameAndSave(
-            self.__makePathForFile( 'f1.csv' ),
+            'f1.csv',
             Score,
             [ 'macro', 'micro', 'binary' ],
         )
@@ -245,7 +270,7 @@ class StdEvaluator( Evaluator ):
         ]
 
         self.__makeFrameAndSave(
-            self.__makePathForFile( 'f1.csv' ),
+            'f1.csv',
             Score,
             [ 'macro', 'micro', 'samples' ],
         )
@@ -263,7 +288,7 @@ class StdEvaluator( Evaluator ):
             )
         )
 
-        return  Reporter(
+        return Reporter(
             y_pred = Predicted,
             y_true = Actual,
             labels = Labels,
@@ -290,10 +315,28 @@ class StdEvaluator( Evaluator ):
         while self.__Steps:
             await self.__Steps.pop()
 
+    def __renderResults( self ) -> dict:
+        Results = {}
+
+        if self.__Model:
+            Results[ 'model' ] = self.__Model
+
+        if self.__LastScore:
+            Results[ 'score' ] = self.__LastScore
+
+        if self.__LastReport:
+            Results[ 'report' ] = self.__LastReport
+
+        if self.__Time:
+            Results[ 'time' ] = self.__Time
+
+        return Results
+
     def finalize( self ) -> dict:
         self.__checkIfIsStarted()
         self.__writeCSV( 'time.csv', self.__Time )
         asyncio.get_event_loop().run_until_complete( self.__waitForSteps() )
+        return self.__renderResults()
 
     class Factory( EvaluatorFactory ):
         @staticmethod
