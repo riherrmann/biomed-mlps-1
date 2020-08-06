@@ -41,14 +41,14 @@ class StdSplitterSpec( unittest.TestCase ):
         split: MagicMock
     ):
         ServiceGetter.side_effect = self.__fakeLocator
-        Expected = MagicMock()
+        Expected = [ MagicMock(), MagicMock() ]
         X = MagicMock( spec = Series )
         Y = MagicMock( spec = Series )
         split.return_value = Expected
 
         MySplitter = StdSplitter.Factory.getInstance()
         self.assertListEqual(
-            [ Expected ],
+            [ tuple( Expected ) ],
             MySplitter.trainingSplit( X, Y )
         )
 
@@ -116,14 +116,14 @@ class StdSplitterSpec( unittest.TestCase ):
         split: MagicMock
     ):
         ServiceGetter.side_effect = self.__fakeLocator
-        Expected = MagicMock()
+        Expected = [ MagicMock(), MagicMock() ]
         X = MagicMock( spec = Series )
         Y = MagicMock( spec = Series )
         split.return_value = Expected
 
         MySplitter = StdSplitter.Factory.getInstance()
         self.assertEqual(
-            Expected,
+            tuple( Expected ),
             MySplitter.validationSplit( X, Y )
         )
 

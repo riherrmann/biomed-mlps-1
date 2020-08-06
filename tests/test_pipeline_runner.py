@@ -1,11 +1,7 @@
 import unittest
-from unittest.mock import MagicMock, patch, ANY
-from pandas import DataFrame
+from unittest.mock import MagicMock, patch
 from biomed.pipeline_runner import PipelineRunner
 from biomed.pipeline import Pipeline
-
-def reflectId( Train: DataFrame, Test: DataFrame, Config: dict ):
-    return Config[ "id" ]
 
 class PipelineRunnerSpec( unittest.TestCase ):
     def test_it_is_a_Pipeline_Runner( self ):
@@ -13,88 +9,86 @@ class PipelineRunnerSpec( unittest.TestCase ):
         self.assertTrue( isinstance( Runner, PipelineRunner ) )
 
     @patch( 'biomed.pipeline_runner.Pipeline.Factory.getInstance' )
-    def test_it_runs_the_pipeline_with_given_permutations( self, PMF: MagicMock ):
-        TrainingsData = {
-            'pmid': [ 42 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 23 ],
-            'is_cancer': [ False ],
-            'text': [ "My little cute poney is a poney" ]
-        }
-
-        TestData = {
-            'pmid': [ 23 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 42 ],
-            'is_cancer': [ False ],
-            'text': [ "My little cute poney is a poney" ]
-        }
-
-        Train = DataFrame( TrainingsData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        Test = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        Permutations = [ {
-            "id": 1,
-            "training": Train,
-            "test": Test,
-            "workers": 23
-        }, {
-            "id": 2,
-            "training": Train,
-            "test": Test,
-            "workers": 42
-        } ]
-
-        P = MagicMock( spec = Pipeline )
-        P.pipe.side_effect = reflectId
-        PMF.return_value = P
-
+    def test_it_initalizes_a_pipeline( self, PLF: MagicMock ):
         Runner = PipelineRunner.Factory.getInstance()
-        Runner.run( Permutations )
+        Runner.run( MagicMock() )
 
-        P.pipe.assert_any_call( Train, Test, Permutations[ 0 ] )
-        P.pipe.assert_any_call( Train, Test, Permutations[ 1 ] )
+        PLF.assert_called_once()
 
     @patch( 'biomed.pipeline_runner.Pipeline.Factory.getInstance' )
-    def test_it_gathers_and_returns_the_output_of_the_pipeline( self, PMF: MagicMock ):
-        TrainingsData = {
-            'pmid': [ 42 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 23 ],
-            'is_cancer': [ False ],
-            'text': [ "My little cute poney is a poney" ]
+    def test_it_runs_a_singel_configuration( self, PLF: MagicMock ):
+        Data = MagicMock()
+        TestData = MagicMock()
+        ShortName = MagicMock()
+        Description = MagicMock()
+        Config = {
+            "trainings_data": Data,
+            "test_data": TestData,
+            "shortname": ShortName,
+            "description": Description
         }
 
-        TestData = {
-            'pmid': [ 23 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 42 ],
-            'is_cancer': [ False ],
-            'text': [ "My little cute poney is a poney" ]
-        }
+        Pipe = MagicMock( spec = Pipeline )
+        PLF.return_value = Pipe
 
-        Train = DataFrame( TrainingsData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        Test = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-
-        Permutations = [ {
-            "id": 1,
-            "training": Train,
-            "test": Test,
-            "workers": 23
-        }, {
-            "id": 2,
-            "training": Train,
-            "test": Test,
-            "workers": 42
-        } ]
-
-        P = MagicMock( spec = Pipeline )
-        P.pipe.side_effect = reflectId
-        PMF.return_value = P
-
-        ExpectedOutput = { 1: 1 , 2: 2 }
         Runner = PipelineRunner.Factory.getInstance()
+        Runner.run( [ Config ] )
 
-        self.assertDictEqual(
-            ExpectedOutput,
-            Runner.run( Permutations )
+        Pipe.pipe.assert_called_once_with(
+            Data = Data,
+            TestData = TestData,
+            ShortName = ShortName,
+            Description = Description,
+            Properties = Config
+        )
+
+    @patch( 'biomed.pipeline_runner.Pipeline.Factory.getInstance' )
+    def test_it_runs_multiple_configurations( self, PLF: MagicMock ):
+        Data1 = MagicMock()
+        TestData1 = MagicMock()
+        ShortName1 = MagicMock()
+        Description1 = MagicMock()
+        Config1 = {
+            "trainings_data": Data1,
+            "test_data": TestData1,
+            "shortname": ShortName1,
+            "description": Description1
+        }
+
+        Data2 = MagicMock()
+        TestData2 = MagicMock()
+        ShortName2 = MagicMock()
+        Description2 = MagicMock()
+        Config2 = {
+            "trainings_data": Data2,
+            "test_data": TestData2,
+            "shortname": ShortName2,
+            "description": Description2
+        }
+
+        Pipe = MagicMock( spec = Pipeline )
+        PLF.return_value = Pipe
+
+        Runner = PipelineRunner.Factory.getInstance()
+        Runner.run( [ Config1, Config2 ] )
+
+        self.assertEqual(
+            2,
+            Pipe.pipe.call_count
+        )
+
+        Pipe.pipe.assert_any_call(
+            Data = Data1,
+            TestData = TestData1,
+            ShortName = ShortName1,
+            Description = Description1,
+            Properties = Config1
+        )
+
+        Pipe.pipe.assert_any_call(
+            Data = Data2,
+            TestData = TestData2,
+            ShortName = ShortName2,
+            Description = Description2,
+            Properties = Config2
         )

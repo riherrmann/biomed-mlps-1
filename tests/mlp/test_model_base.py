@@ -30,12 +30,12 @@ class ModelBaseSpec( unittest.TestCase ):
         FFN.train( X, Y )
 
         Model.fit.assert_called_once_with(
-            x = X.Train,
-            y = Y.Train,
+            x = X.Training,
+            y = Y.Training,
             shuffle = True,
             epochs = PM[ "training" ][ "epochs" ],
             batch_size = PM[ "training" ][ "batch_size" ],
-            validation_data = ( X.Val, Y.Val ),
+            validation_data = ( X.Validation, Y.Validation ),
             workers = PM[ "training" ][ "workers" ],
             use_multiprocessing = False
         )
@@ -54,12 +54,12 @@ class ModelBaseSpec( unittest.TestCase ):
         FFN.train( X, Y )
 
         Model.fit.assert_called_once_with(
-            x = X.Train,
-            y = Y.Train,
+            x = X.Training,
+            y = Y.Training,
             shuffle = True,
             epochs = PM[ "training" ][ "epochs" ],
             batch_size = PM[ "training" ][ "batch_size" ],
-            validation_data = ( X.Val, Y.Val ),
+            validation_data = ( X.Validation, Y.Validation ),
             workers = PM[ "training" ][ "workers" ],
             use_multiprocessing = True
         )
@@ -128,12 +128,12 @@ class ModelBaseSpec( unittest.TestCase ):
     def test_it_predicts( self ):
         Model = MagicMock( spec = Sequential )
         ToPredict = MagicMock()
+        Model.predict.return_value = NP.array( [] )
 
         PM = PropertiesManager()
         PM[ "training" ][ "epochs" ] = 1
         PM[ "training" ][ "batch_size" ] = 2
         PM[ "training" ][ "workers" ] = 1
-
 
         X = InputData( MagicMock(), MagicMock(), MagicMock() )
         Y = InputData( NP.zeros( ( 2, 3 ) ), MagicMock(), MagicMock() )
@@ -152,6 +152,7 @@ class ModelBaseSpec( unittest.TestCase ):
     def test_it_predicts_with_mulitprocessing( self ):
         Model = MagicMock( spec = Sequential )
         ToPredict = MagicMock()
+        Model.predict.return_value = NP.array( [] )
 
         PM = PropertiesManager()
         PM[ "training" ][ "epochs" ] = 1
@@ -201,6 +202,7 @@ class ModelBaseSpec( unittest.TestCase ):
         PM[ "training" ][ "epochs" ] = 1
         PM[ "training" ][ "batch_size" ] = 2
         PM[ "training" ][ "workers" ] = 1
+        PM.classifier = 'doid'
 
         X = InputData( MagicMock(), MagicMock(), MagicMock() )
         Y = InputData( NP.zeros( ( 4, 4 ) ), MagicMock(), MagicMock() )

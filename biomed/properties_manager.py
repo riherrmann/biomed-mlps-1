@@ -1,11 +1,9 @@
 import os as OS
-from numpy import float64
 
 class PropertiesManager:
     def __init__(self):
         self.classifier = "is_cancer"
         self.model = "c"
-        self.is_blind = False
 
         self.splitting = dict(
             folds = 1,
@@ -30,11 +28,10 @@ class PropertiesManager:
             analyzer = 'word', #{‘word’, ‘char’, ‘char_wb’}
             use_idf = True,
             smooth_idf = True,
-            dtype = float64
         )
 
         self.selection = dict(
-            type = None,
+            type = False,
         )
 
         self.training = dict(

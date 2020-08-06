@@ -4,12 +4,9 @@ setup:
 main:
 	python3 -m biomed.main
 
-testAll:
-	python3 -m pytest tests
-
 test:
 	python3 -m pytest $(ARGS)
 
-cov:
-	coverage run -m pytest tests
+coverage:
+	coverage run --source=./biomed -m pytest tests
 	coverage report -m

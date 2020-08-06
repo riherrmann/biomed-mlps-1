@@ -7,7 +7,7 @@ class ModelBase( MLP ):
     def __init__( self, Properties: PropertiesManager ):
         self._Properties = Properties
         self._Model = None
-        self.__Dim = 0
+        self.__Trained = False
 
     def _summarize( self ):
         Summery = []
@@ -15,8 +15,6 @@ class ModelBase( MLP ):
         return "\n".join( Summery )
 
     def train( self, X: InputData, Y: InputData ) -> dict:
-        self.__Dim = len( Y.Train[0] )
-
         print("Training...")
         Hist = self._Model.fit(
             x = X.Training,
@@ -29,10 +27,12 @@ class ModelBase( MLP ):
             use_multiprocessing = self.__isMultiprocessing()
         )
 
+        self.__Trained = True
+
         return Hist
 
     def __verifyTraining( self ):
-        if not self.__Dim:
+        if not self.__Trained:
             raise RuntimeError( "The model has not be trained" )
 
     def getTrainingScore( self, X: InputData, Y: InputData ) -> dict:
@@ -40,7 +40,7 @@ class ModelBase( MLP ):
         return self._Model.evaluate( X.Test, Y.Test, verbose = 0 )
 
     def __isMultiClass( self ) -> bool:
-        return self.__Dim > 2
+        return self._Properties.classifier == 'doid'
 
     def __isMultiprocessing( self ):
         return True if self._Properties.training[ "workers" ] > 1 else False

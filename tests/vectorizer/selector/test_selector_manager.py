@@ -44,6 +44,7 @@ class SelectorManagerSpec( unittest.TestCase ):
 
         ServiceGetter.side_effect = fakeLocator
         Expected = MagicMock()
+        Expected.toarray.return_value = Expected
 
         MySelector = SelectorManager.Factory.getInstance()
         MySelector.build( MagicMock(), MagicMock() )
