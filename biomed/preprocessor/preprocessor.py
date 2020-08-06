@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pandas import Series
+from biomed.services_getter import ServiceGetter
 
 class abstractstatic(staticmethod):
     __slots__ = ()
@@ -15,5 +16,5 @@ class Preprocessor(ABC):
 
 class PreprocessorFactory( ABC ):
     @abstractstatic
-    def getInstance() -> Preprocessor:
+    def getInstance( getService: ServiceGetter ) -> Preprocessor:
         pass

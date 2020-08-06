@@ -1,6 +1,6 @@
 import os as OS
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch, MagicMock
 import numpy
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.cache.numpyArrayFileCache import NumpyArrayFileCache
@@ -35,76 +35,60 @@ class NumpyArrayFileCacheSpec( unittest.TestCase ):
         self.__remove()
         self.__checkDirM.stop()
 
-    def fakeLocator( self, _, __ ):
+    def __fakeLocator( self, _, __ ):
         PM = PropertiesManager()
         PM.cache_dir = NumpyArrayFileCacheSpec.__Path
 
         return PM
 
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_checks_a_the_dir_on_init( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
-        NumpyArrayFileCache.Factory.getInstance()
+    def test_it_checks_a_the_dir_on_init( self ):
+        NumpyArrayFileCache.Factory.getInstance( self.__fakeLocator )
         self.__checkDir.assert_called_once()
 
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_is_a_Cache( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
-        MyCache = NumpyArrayFileCache.Factory.getInstance()
+    def test_it_is_a_Cache( self ):
+        MyCache = NumpyArrayFileCache.Factory.getInstance( self.__fakeLocator )
         self.assertTrue( isinstance( MyCache, Cache ) )
 
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_depends_on_the_properties_mananger( self, ServiceGetter: MagicMock ):
+    def test_it_depends_on_the_properties_mananger( self ):
         def fakeLocator( ServiceKey: str, ExpectedType ):
             if ServiceKey != "properties" or ExpectedType != PropertiesManager:
                 raise RuntimeError( "Unexpected Service" )
             return PropertiesManager()
 
+        ServiceGetter = MagicMock()
         ServiceGetter.side_effect = fakeLocator
 
-        NumpyArrayFileCache.Factory.getInstance()
+        NumpyArrayFileCache.Factory.getInstance( ServiceGetter )
+        ServiceGetter.assert_called_once()
 
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_tells_if_contains_a_id( self, ServiceGetter: MagicMock ):
+    def test_it_tells_if_contains_a_id( self ):
         self.__createTestFile( [ 1, 2, 3 ], "1.npy" )
 
-        ServiceGetter.side_effect = self.fakeLocator
-
-        MyCache = NumpyArrayFileCache.Factory.getInstance()
+        MyCache = NumpyArrayFileCache.Factory.getInstance( self.__fakeLocator )
         self.assertTrue( MyCache.has( "1" ) )
         self.assertFalse( MyCache.has( "2" ) )
 
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_returns_a_stored_value( self, ServiceGetter: MagicMock ):
+    def test_it_returns_a_stored_value( self ):
         Stored = { "a": [ 1, 2, 3 ] }
         self.__createTestFile( Stored, "1.npy" )
 
-        ServiceGetter.side_effect = self.fakeLocator
-
-        MyCache = NumpyArrayFileCache.Factory.getInstance()
+        MyCache = NumpyArrayFileCache.Factory.getInstance( self.__fakeLocator )
         self.assertDictEqual(
             Stored,
             MyCache.get( "1" )
         )
 
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_returns_none_if_the_key_does_not_exists( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
-        MyCache = NumpyArrayFileCache.Factory.getInstance()
+    def test_it_returns_none_if_the_key_does_not_exists( self ):
+        MyCache = NumpyArrayFileCache.Factory.getInstance( self.__fakeLocator )
         self.assertEqual(
             None,
             MyCache.get( "23" )
         )
 
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_stores_given_data( self, ServiceGetter: MagicMock ):
+    def test_it_stores_given_data( self ):
         ToStore = [ 1, 2, 3 ]
-        ServiceGetter.side_effect = self.fakeLocator
 
-        MyCache = NumpyArrayFileCache.Factory.getInstance()
+        MyCache = NumpyArrayFileCache.Factory.getInstance( self.__fakeLocator )
 
         MyCache.set( "1", ToStore )
         self.assertListEqual(
@@ -114,14 +98,12 @@ class NumpyArrayFileCacheSpec( unittest.TestCase ):
 
         self.__Files.append( OS.path.join( self.__Path, "1.npy"  ) )
 
-    @patch( 'biomed.preprocessor.cache.numpyArrayFileCache.Services.getService' )
-    def test_it_overwrites_stored_data( self, ServiceGetter: MagicMock ):
+    def test_it_overwrites_stored_data( self ):
         ToStore = [ 1, 2, 3 ]
         self.__createTestFile( ToStore, "1.npy" )
-        ServiceGetter.side_effect = self.fakeLocator
 
         ToStore = [ 4, 5, 6 ]
-        MyCache = NumpyArrayFileCache.Factory.getInstance()
+        MyCache = NumpyArrayFileCache.Factory.getInstance( self.__fakeLocator )
         MyCache.set( "1", ToStore )
         self.assertListEqual(
             ToStore,

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from numpy import array as Array
 from pandas import Series
+from biomed.services_getter import ServiceGetter
 
 class abstractstatic(staticmethod):
     __slots__ = ()
@@ -26,5 +27,5 @@ class Vectorizer( ABC ):
 
 class VectorizerFactory( ABC ):
     @abstractstatic
-    def getInstance() -> Vectorizer:
+    def getInstance( getService: ServiceGetter ) -> Vectorizer:
         pass

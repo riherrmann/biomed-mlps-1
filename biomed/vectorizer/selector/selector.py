@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from numpy import array as Array
 from pandas import Series
+from biomed.services_getter import ServiceGetter
 
 class abstractstatic( staticmethod ):
     __slots__ = ()
@@ -25,6 +26,9 @@ class Selector( ABC ):
 
 
 class SelectorFactory( ABC ):
+    def __init__( self, getService: ServiceGetter ):
+        self._getService = getService
+
     @abstractmethod
-    def getInstance() -> Selector:
+    def getInstance( self ) -> Selector:
         pass

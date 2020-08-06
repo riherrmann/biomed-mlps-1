@@ -42,15 +42,11 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         return Dependencies[ ServiceKey ]
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_is_a_evluator( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_is_a_evluator( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         self.assertTrue( isinstance( MyEval, Evaluator ) )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_depends_on_properties_and_all_FileWriter( self, ServiceGetter: MagicMock ):
+    def test_it_depends_on_properties_and_all_FileWriter( self ):
         Dependencies = {
             'evaluator.simple': FileWriter,
             'evaluator.json': FileWriter,
@@ -67,22 +63,24 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
             return PropertiesManager()
 
+        ServiceGetter = MagicMock()
         ServiceGetter.side_effect = fakeLocator
 
-        StdEvaluator.Factory.getInstance()
+        StdEvaluator.Factory.getInstance( ServiceGetter )
+        self.assertEqual(
+            4,
+            ServiceGetter.call_count
+        )
 
         self.assertEqual(
             len( Dependencies.keys() ),
             ServiceGetter.call_count
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_makes_a_dir_to_store_the_data( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_makes_a_dir_to_store_the_data( self ):
         ShortName = "test"
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test of the module" )
 
         self.__mkdir.assert_called_once_with(
@@ -92,17 +90,14 @@ class StdEvaluatorSpec( unittest.TestCase ):
             )
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_writes_the_config_into_a_json( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_writes_the_config_into_a_json( self ):
         ShortName = "test"
         Path = OS.path.join(
             self.__PM.result_dir,
             '{}-{}'.format( ShortName, self.__TimeValue )
         )
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test of the module" )
 
         self.__JSON.write.assert_called_once_with(
@@ -110,10 +105,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             self.__PM.toDict()
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_writes_the_description_into_a_txt( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_writes_the_description_into_a_txt( self ):
         ShortName = "test"
         Description = "test of the module\n"
 
@@ -122,7 +114,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             '{}-{}'.format( ShortName, self.__TimeValue ),
         )
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, Description )
 
         self.__Simple.write.assert_any_call(
@@ -133,7 +125,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         self.__Simple.reset_mock()
 
         Description = "test2 of the module\nwith multilines"
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, Description )
 
         self.__Simple.write.assert_any_call(
@@ -141,20 +133,13 @@ class StdEvaluatorSpec( unittest.TestCase ):
             [ 'test2 of the module', 'with multilines' ]
         )
 
-
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_splitted_data( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_splitted_data( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.captureData( MagicMock(), MagicMock() )
             MyEval.finalize()
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_captures_the_pmids_of_trainings_and_test_data( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_captures_the_pmids_of_trainings_and_test_data( self ):
         ShortName = "test"
         Train = Series( [ 12, 123, 423, 21 ] )
         Test = Series( [ 32, 42, 23 ] )
@@ -164,7 +149,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             '{}-{}'.format( ShortName, self.__TimeValue )
         )
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.captureData( Train, Test )
         MyEval.finalize()
@@ -178,23 +163,17 @@ class StdEvaluatorSpec( unittest.TestCase ):
             { 'pmid': list( Test ) }
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_processed_data( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_processed_data( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.capturePreprocessedData( MagicMock(), MagicMock() )
             MyEval.finalize()
 
     @patch( 'biomed.evaluator.std_evaluator.memSize' )
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
     def test_it_caputures_the_size_of_the_documents_before_and_after_preprocessing(
-        self, ServiceGetter: MagicMock,
+        self,
         memSize: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
         ShortName = "Test"
         Org = Series( [ "abca", "bacac" ] )
         Pro = Series( [ "asd", "awqwe" ] )
@@ -217,7 +196,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             '{}-{}'.format( ShortName, self.__TimeValue )
         )
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.capturePreprocessedData( Pro, Org )
         MyEval.finalize()
@@ -228,24 +207,18 @@ class StdEvaluatorSpec( unittest.TestCase ):
         )
 
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
     def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_features(
         self,
-        ServiceGetter: MagicMock,
         DF: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.captureFeatures( MagicMock(), MagicMock(), MagicMock() )
             MyEval.finalize()
 
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
     def test_it_captures_the_trainings_and_test_features(
         self,
-        ServiceGetter: MagicMock,
         DF: MagicMock
     ):
         TrainIds = [ 123, 3, 53343 ]
@@ -257,8 +230,6 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         ShortName = "Test"
 
-        ServiceGetter.side_effect = self.__fakeLocator
-
         Frame = MagicMock( spec = DataFrame )
         DF.return_value = Frame
 
@@ -267,7 +238,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             '{}-{}'.format( ShortName, self.__TimeValue )
         )
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.captureFeatures(
             ( Series( TrainIds ), TrainingsFeatures ),
@@ -292,18 +263,13 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         Frame.to_csv.assert_any_call( OS.path.join( Path, 'testFeatures.csv' ) )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_training_history( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_training_history( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.captureTrainingHistory( MagicMock() )
             MyEval.finalize()
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_caputures_the_training_history( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_caputures_the_training_history( self ):
         History = { 'accuracy': [ 0 ], 'loss': [ 1 ] }
         ShortName = "Test"
 
@@ -312,7 +278,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             '{}-{}'.format( ShortName, self.__TimeValue )
         )
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.captureTrainingHistory( History )
         MyEval.finalize()
@@ -322,18 +288,13 @@ class StdEvaluatorSpec( unittest.TestCase ):
             History
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_evaluation_score( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_evaluation_score( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.captureEvaluationScore( MagicMock() )
             MyEval.finalize()
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_caputures_the_evaluation_score( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_caputures_the_evaluation_score( self ):
         Score = { 'accuracy': 0, 'loss': 1 }
         ShortName = "Test"
 
@@ -342,7 +303,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             '{}-{}'.format( ShortName, self.__TimeValue )
         )
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.captureEvaluationScore( Score )
         MyEval.finalize()
@@ -352,23 +313,17 @@ class StdEvaluatorSpec( unittest.TestCase ):
             Score
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_predictions( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_predictions( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.capturePredictions( MagicMock(), MagicMock(), MagicMock() )
             MyEval.finalize()
 
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
     def test_it_saves_the_predictions_and_eventually_their_corresponding_labels(
         self,
-        ServiceGetter: MagicMock,
         DF: DataFrame
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         ShortName = "Test"
 
         Frame = MagicMock( spec = DataFrame )
@@ -385,7 +340,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         self.__PM.classifier = 'is_cancer'
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.capturePredictions( Predicted, Ids )
         MyEval.finalize()
@@ -421,11 +376,8 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         Frame.to_csv.assert_any_call( OS.path.join( Path, 'predictions.csv' ) )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_fails_if_the_evaluator_is_not_started_while_scoring( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_fails_if_the_evaluator_is_not_started_while_scoring( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.score( MagicMock(), MagicMock(), MagicMock() )
             MyEval.finalize()
@@ -434,15 +386,12 @@ class StdEvaluatorSpec( unittest.TestCase ):
     @patch( 'biomed.evaluator.std_evaluator.Reporter' )
     @patch( 'biomed.evaluator.std_evaluator.F1' )
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
     def test_it_scores_and_saves_the_predictions_for_binary(
         self,
-        ServiceGetter: MagicMock,
         DF: MagicMock,
         Scorer: MagicMock,
         _
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         ShortName = "Test"
 
         Frame = MagicMock( spec = DataFrame )
@@ -470,7 +419,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         Scorer.side_effect = fakeScore
         DF.return_value = Frame
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.score( Predicted, Series( Actual ), Series( Labels ) )
         MyEval.finalize()
@@ -503,15 +452,12 @@ class StdEvaluatorSpec( unittest.TestCase ):
     @patch( 'biomed.evaluator.std_evaluator.Reporter' )
     @patch( 'biomed.evaluator.std_evaluator.F1' )
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
     def test_it_scores_and_saves_the_predictions_for_multi_class(
         self,
-        ServiceGetter: MagicMock,
         DF: MagicMock,
         Scorer: MagicMock,
         _
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         ShortName = "Test"
 
         Frame = MagicMock( spec = DataFrame )
@@ -539,7 +485,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         Scorer.side_effect = fakeScore
         DF.return_value = Frame
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.score( Predicted, Series( Actual ), Series( Labels ) )
         MyEval.finalize()
@@ -573,15 +519,12 @@ class StdEvaluatorSpec( unittest.TestCase ):
     @patch( 'biomed.evaluator.std_evaluator.Reporter' )
     @patch( 'biomed.evaluator.std_evaluator.F1' )
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
     def test_it_saves_the_classification_report(
         self,
-        ServiceGetter: MagicMock,
         _,
         __,
         Reporter: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         ShortName = "Test"
 
         Predicted = [ 1, 2, 0, 0 ] #this should be a array
@@ -597,7 +540,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         Reporter.return_value = Report
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.score( Predicted, Series( Actual ), Series( Labels ) )
         MyEval.finalize()
@@ -621,17 +564,12 @@ class StdEvaluatorSpec( unittest.TestCase ):
             Report
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_fails_if_the_evaluator_is_not_started_while_finializing( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_fails_if_the_evaluator_is_not_started_while_finializing( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.finalize()
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_writes_the_time_metrix_while_finalizing( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_writes_the_time_metrix_while_finalizing( self ):
         Times = [ self.__TimeValue, '1', '2', '3', '4', '5' ]
         TimeIndex = [ -1 ]
         ShortName = "Test"
@@ -647,7 +585,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         self.__TimeObj.strftime.side_effect = fakeTimes
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.captureStartTime()
         MyEval.capturePreprocessingTime()
@@ -664,9 +602,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
     @patch( 'biomed.evaluator.std_evaluator.Reporter' )
     @patch( 'biomed.evaluator.std_evaluator.F1' )
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_waits_for_various_results_while_finalizing( self, ServiceGetter: MagicMock, DF: MagicMock, _, __ ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_waits_for_various_results_while_finalizing( self, DF: MagicMock, _, __ ):
         ShortName = "Test"
 
         Path = OS.path.join(
@@ -677,7 +613,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         Frame = MagicMock( spec = DataFrame )
         DF.return_value = Frame
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.captureData( MagicMock(), MagicMock() )
         MyEval.capturePreprocessedData( MagicMock(), MagicMock() )
@@ -724,9 +660,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
     @patch( 'biomed.evaluator.std_evaluator.Reporter' )
     @patch( 'biomed.evaluator.std_evaluator.F1' )
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_return_a_dict_with_given_results( self, ServiceGetter: MagicMock, DF: MagicMock, F1: MagicMock, Reporter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_return_a_dict_with_given_results( self, DF: MagicMock, F1: MagicMock, Reporter: MagicMock ):
         ShortName = "Test"
 
         Model = MagicMock()
@@ -738,7 +672,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         F1.return_value = Score
         Reporter.return_value = Report
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.captureData( MagicMock(), MagicMock() )
         MyEval.capturePreprocessedData( MagicMock(), MagicMock() )
@@ -757,19 +691,13 @@ class StdEvaluatorSpec( unittest.TestCase ):
             }
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_model( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_model( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.captureModel( MagicMock() )
             MyEval.finalize()
 
-
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_captures_the_model( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_captures_the_model( self ):
         ShortName = "test"
         Model = "I will be the model str\nmulitlined\n"
 
@@ -778,7 +706,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             '{}-{}'.format( ShortName, self.__TimeValue ),
         )
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "ANY" )
         MyEval.captureModel( Model )
         MyEval.finalize()
@@ -788,22 +716,16 @@ class StdEvaluatorSpec( unittest.TestCase ):
             Model.strip().splitlines()
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_fails_if_the_evaluator_is_not_started_while_setting_a_fold( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyEval = StdEvaluator.Factory.getInstance()
+    def test_it_fails_if_the_evaluator_is_not_started_while_setting_a_fold( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.setFold( 1 )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_makes_a_sub_dir_for_each_fold( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_makes_a_sub_dir_for_each_fold( self ):
         ShortName = "test"
         Fold = 1
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test of the module" )
         MyEval.setFold( Fold )
 
@@ -817,7 +739,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         Fold = 2
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test of the module" )
         MyEval.setFold( Fold )
 
@@ -829,9 +751,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             )
         )
 
-    @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
-    def test_it_writes_data_in_fold_dir( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_writes_data_in_fold_dir( self ):
         ShortName = "test"
         Model = "I will be the model str\nmulitlined\n"
 
@@ -842,7 +762,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             str( Fold )
         )
 
-        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "ANY" )
         MyEval.setFold( Fold )
         MyEval.captureModel( Model )

@@ -63,13 +63,13 @@ def startServices() -> None:
     #dependend services
     __Services.set(
         "preprocessor.cache.persistent",
-        NPC.NumpyArrayFileCache.Factory.getInstance(),
+        NPC.NumpyArrayFileCache.Factory.getInstance( getService ),
         Dependencies = "properties"
     )
 
     __Services.set(
         "preprocessor",
-        PP.PolymorphPreprocessor.Factory.getInstance(),
+        PP.PolymorphPreprocessor.Factory.getInstance( getService ),
         Dependencies = [
             "preprocessor.facilitymanager",
             "preprocessor.normalizer.simple",
@@ -81,13 +81,13 @@ def startServices() -> None:
 
     __Services.set(
         "vectorizer.selector",
-        SM.SelectorManager.Factory.getInstance(),
+        SM.SelectorManager.Factory.getInstance( getService ),
         Dependencies = "properties"
     )
 
     __Services.set(
         "vectorizer",
-        Vect.StdVectorizer.Factory.getInstance(),
+        Vect.StdVectorizer.Factory.getInstance( getService ),
         Dependencies = [
             "properties",
             "vectorizer.selector"
@@ -96,13 +96,13 @@ def startServices() -> None:
 
     __Services.set(
         "mlp",
-        MLP.MLPManager.Factory.getInstance(),
+        MLP.MLPManager.Factory.getInstance( getService ),
         Dependencies = "properties"
     )
 
     __Services.set(
         "evaluator",
-        Eval.StdEvaluator.Factory.getInstance(),
+        Eval.StdEvaluator.Factory.getInstance( getService ),
         Dependencies = [
             "properties",
             "evaluator.simple",
@@ -113,13 +113,13 @@ def startServices() -> None:
 
     __Services.set(
         "splitter",
-        Split.StdSplitter.Factory.getInstance(),
+        Split.StdSplitter.Factory.getInstance( getService ),
         Dependencies = "properties"
     )
 
     __Services.set(
         "test.textminer",
-        TMC.TextminingController.Factory.getInstance(),
+        TMC.TextminingController.Factory.getInstance( getService ),
         Dependencies = [
             'properties',
             'splitter',
@@ -131,5 +131,5 @@ def startServices() -> None:
     )
 
 T = TypeVar( 'T' )
-def getService( Key: str, ExpectedType ) -> T:
+def getService( Key: str, ExpectedType: T ) -> T:
     return __Services.get( Key, ExpectedType )

@@ -1,5 +1,4 @@
 from biomed.text_mining.controller import Controller, ControllerFactory
-import biomed.services as Services
 from biomed.properties_manager import PropertiesManager
 from biomed.splitter.splitter import Splitter
 from biomed.preprocessor.preprocessor import Preprocessor
@@ -7,6 +6,7 @@ from biomed.vectorizer.vectorizer import Vectorizer
 from biomed.mlp.mlp import MLP
 from biomed.evaluator.evaluator import Evaluator
 from biomed.mlp.input_data import InputData
+from biomed.services_getter import ServiceGetter
 from pandas import DataFrame, Series
 from tensorflow.keras.utils import to_categorical as hotEncode
 
@@ -231,12 +231,12 @@ class TextminingController( Controller ):
 
     class Factory( ControllerFactory ):
         @staticmethod
-        def getInstance() -> Controller:
+        def getInstance( getService: ServiceGetter ) -> Controller:
             return TextminingController(
-                Services.getService( 'properties', PropertiesManager ),
-                Services.getService( 'splitter', Splitter ),
-                Services.getService( 'preprocessor', Preprocessor ),
-                Services.getService( 'vectorizer', Vectorizer ),
-                Services.getService( 'mlp', MLP ),
-                Services.getService( 'evaluator', Evaluator )
+                getService( 'properties', PropertiesManager ),
+                getService( 'splitter', Splitter ),
+                getService( 'preprocessor', Preprocessor ),
+                getService( 'vectorizer', Vectorizer ),
+                getService( 'mlp', MLP ),
+                getService( 'evaluator', Evaluator )
             )

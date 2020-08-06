@@ -1,7 +1,7 @@
 from biomed.mlp.mlp import MLP
 from biomed.mlp.mlp import MLPFactory
 from biomed.mlp.input_data import InputData
-import biomed.services as Services
+import biomed.services_getter as ServiceGetter
 from biomed.mlp.multiSimple import MultiSimpleFFN
 from biomed.mlp.multiSimpleB import MultiSimpleBFFN
 from biomed.mlp.simple import SimpleFFN
@@ -46,5 +46,5 @@ class MLPManager( MLP ):
 
     class Factory( MLPFactory ):
         @staticmethod
-        def getInstance():
-            return MLPManager( PM = Services.getService( "properties", PropertiesManager ) )
+        def getInstance( getService: ServiceGetter ):
+            return MLPManager( getService( "properties", PropertiesManager ) )

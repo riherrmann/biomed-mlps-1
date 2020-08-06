@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pandas import Series
+from biomed.services_getter import ServiceGetter
 
 class abstractstatic(staticmethod):
     __slots__ = ()
@@ -19,5 +20,5 @@ class Splitter(ABC):
 
 class SplitterFactory( ABC ):
     @abstractstatic
-    def getInstance() -> Splitter:
+    def getInstance( getService: ServiceGetter ) -> Splitter:
         pass

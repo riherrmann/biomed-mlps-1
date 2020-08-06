@@ -3,7 +3,7 @@ from biomed.evaluator.evaluator import EvaluatorFactory
 from biomed.properties_manager import PropertiesManager
 from biomed.utils.dir_checker import checkDir, toAbsPath
 from biomed.utils.file_writer import FileWriter
-import biomed.services as Services
+from biomed.services_getter import ServiceGetter
 from numpy import array as Array
 from pandas import Series, DataFrame
 import os as OS
@@ -343,10 +343,10 @@ class StdEvaluator( Evaluator ):
 
     class Factory( EvaluatorFactory ):
         @staticmethod
-        def getInstance() -> Evaluator:
+        def getInstance( getService: ServiceGetter ) -> Evaluator:
             return StdEvaluator(
-                Properties = Services.getService( 'properties', PropertiesManager ),
-                SimpleWriter = Services.getService( 'evaluator.simple', FileWriter ),
-                JSONWriter = Services.getService( 'evaluator.json', FileWriter ),
-                CSVWriter = Services.getService( 'evaluator.csv', FileWriter ),
+                Properties = getService( 'properties', PropertiesManager ),
+                SimpleWriter = getService( 'evaluator.simple', FileWriter ),
+                JSONWriter = getService( 'evaluator.json', FileWriter ),
+                CSVWriter = getService( 'evaluator.csv', FileWriter ),
             )

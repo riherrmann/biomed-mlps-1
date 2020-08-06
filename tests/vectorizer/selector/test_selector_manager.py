@@ -8,15 +8,11 @@ class SelectorManagerSpec( unittest.TestCase ):
     def __fakeLocator( self, _, __ ):
         return PropertiesManager()
 
-    @patch( 'biomed.vectorizer.selector.selector_manager.Services.getService' )
-    def test_it_is_a_selector( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MySelector = SelectorManager.Factory.getInstance()
+    def test_it_is_a_selector( self ):
+        MySelector = SelectorManager.Factory.getInstance( self.__fakeLocator )
         self.assertTrue( isinstance( MySelector, Selector ) )
 
-    @patch( 'biomed.vectorizer.selector.selector_manager.Services.getService' )
-    def test_it_depends_on_properties( self, ServiceGetter: MagicMock ):
+    def test_it_depends_on_properties( self ):
         def fakeLocator( ServiceKey, Type ):
             if ServiceKey != "properties":
                 raise RuntimeError( "Unexpected ServiceKey" )
@@ -26,44 +22,40 @@ class SelectorManagerSpec( unittest.TestCase ):
 
             return PropertiesManager()
 
+        ServiceGetter = MagicMock()
         ServiceGetter.side_effect = fakeLocator
 
-        SelectorManager.Factory.getInstance()
+        SelectorManager.Factory.getInstance( ServiceGetter )
         ServiceGetter.assert_called_once()
 
-    @patch( 'biomed.vectorizer.selector.selector_manager.Services.getService' )
-    def test_it_uses_the_given_selectors( self, ServiceGetter: MagicMock ):
+    def test_it_uses_the_given_selectors( self ):
         pass
 
-    @patch( 'biomed.vectorizer.selector.selector_manager.Services.getService' )
-    def test_it_reflects_the_given_features_if_no_selector_was_selected( self, ServiceGetter: MagicMock ):
+    def test_it_reflects_the_given_features_if_no_selector_was_selected( self ):
         def fakeLocator( _, __ ):
             PM = PropertiesManager()
             PM.selection[ 'type' ] = None
             return PM
 
-        ServiceGetter.side_effect = fakeLocator
         Expected = MagicMock()
         Expected.toarray.return_value = Expected
 
-        MySelector = SelectorManager.Factory.getInstance()
+        MySelector = SelectorManager.Factory.getInstance( fakeLocator )
         MySelector.build( MagicMock(), MagicMock() )
         self.assertEqual(
             Expected,
             MySelector.select( Expected )
         )
 
-    @patch( 'biomed.vectorizer.selector.selector_manager.Services.getService' )
-    def test_it_reflects_the_given_features_labels_if_no_selector_was_selected( self, ServiceGetter: MagicMock ):
+    def test_it_reflects_the_given_features_labels_if_no_selector_was_selected( self ):
         def fakeLocator( _, __ ):
             PM = PropertiesManager()
             PM.selection[ 'type' ] = None
             return PM
 
-        ServiceGetter.side_effect = fakeLocator
         Expected = MagicMock()
 
-        MySelector = SelectorManager.Factory.getInstance()
+        MySelector = SelectorManager.Factory.getInstance( fakeLocator )
         MySelector.build( MagicMock(), MagicMock() )
         self.assertEqual(
             Expected,

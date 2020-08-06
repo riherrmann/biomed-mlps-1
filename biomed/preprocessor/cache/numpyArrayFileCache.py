@@ -1,9 +1,9 @@
 import os as OS
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.cache.cache import CacheFactory
-import biomed.services as Services
 from biomed.properties_manager import PropertiesManager
 from biomed.utils.dir_checker import checkDir, toAbsPath
+from biomed.services_getter import ServiceGetter
 from multiprocessing import Manager, Lock
 import numpy
 
@@ -43,8 +43,8 @@ class NumpyArrayFileCache( Cache ):
 
     class Factory( CacheFactory ):
         @staticmethod
-        def getInstance() -> Cache:
-            PathToCacheDir = Services.getService( "properties", PropertiesManager ).cache_dir
+        def getInstance( getService: ServiceGetter ) -> Cache:
+            PathToCacheDir = getService( "properties", PropertiesManager ).cache_dir
 
             checkDir( toAbsPath( PathToCacheDir ) )
 

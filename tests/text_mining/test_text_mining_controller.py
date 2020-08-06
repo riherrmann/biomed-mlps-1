@@ -60,14 +60,11 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         return Dependencies[ ServiceKey ]
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_is_a_Controller( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-        MyController = TextminingController.Factory.getInstance()
+    def test_it_is_a_Controller( self ):
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         self.assertTrue( isinstance( MyController, Controller ) )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_depends_on_many_things( self, ServiceGetter: MagicMock ):
+    def test_it_depends_on_many_things( self ):
         def fakeLocator( ServiceKey: str, Type ):
             Dependencies = {
                 'properties': PropertiesManager,
@@ -86,18 +83,20 @@ class TextminingControllerSpec( unittest.TestCase ):
 
             return MagicMock( spec = Dependencies[ ServiceKey ] )
 
+        ServiceGetter = MagicMock()
         ServiceGetter.side_effect = fakeLocator
 
-        TextminingController.Factory.getInstance()
+        TextminingController.Factory.getInstance( ServiceGetter )
+        self.assertEqual(
+            6,
+            ServiceGetter.call_count
+        )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_starts_the_evaluator( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_starts_the_evaluator( self ):
         Name = MagicMock()
         Description = MagicMock()
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -110,12 +109,10 @@ class TextminingControllerSpec( unittest.TestCase ):
             Description
         )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_splits_the_test_data_for_binary( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_splits_the_test_data_for_binary( self ):
         self.__PM.classifier = 'is_cancer'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -128,12 +125,10 @@ class TextminingControllerSpec( unittest.TestCase ):
             self.__Data[ 'is_cancer' ]
         )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_splits_the_test_data_for_mulitclass( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_splits_the_test_data_for_mulitclass( self ):
         self.__PM.classifier = 'doid'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -146,15 +141,13 @@ class TextminingControllerSpec( unittest.TestCase ):
             self.__Data[ 'doid' ]
         )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_caputure_the_ids_of_training_including_the_validation_ids_and_test_sets( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_caputure_the_ids_of_training_including_the_validation_ids_and_test_sets( self ):
         TrainingsIds = MagicMock()
         TestIds = MagicMock()
 
         self.__Splitter.trainingSplit.return_value = [ ( TrainingsIds, TestIds ) ]
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -167,9 +160,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             TestIds
         )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_caputure_the_ids_of_training_including_the_validation_ids_and_test_sets_for_k_folds( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_caputure_the_ids_of_training_including_the_validation_ids_and_test_sets_for_k_folds( self ):
         TrainingsIds1 = MagicMock()
         TestIds1 = MagicMock()
 
@@ -181,7 +172,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             ( TrainingsIds2, TestIds2 )
         ]
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -199,11 +190,8 @@ class TextminingControllerSpec( unittest.TestCase ):
             TestIds2
         )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_caputure_the_start_time( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyController = TextminingController.Factory.getInstance()
+    def test_it_caputure_the_start_time( self ):
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -213,11 +201,8 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Evaluator.captureStartTime.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_preprocesses_the_trainings_data_including_validation_data_and_test_data( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyController = TextminingController.Factory.getInstance()
+    def test_it_preprocesses_the_trainings_data_including_validation_data_and_test_data( self ):
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -230,11 +215,8 @@ class TextminingControllerSpec( unittest.TestCase ):
             self.__Data[ 'text' ]
         )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_preprocessing_time( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyController = TextminingController.Factory.getInstance()
+    def test_it_captures_the_preprocessing_time( self ):
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -244,15 +226,12 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Evaluator.capturePreprocessingTime.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_preprocessed_coprus_in_compare_to_org_corpus( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_captures_the_preprocessed_coprus_in_compare_to_org_corpus( self ):
         ProCorpus = MagicMock()
 
         self.__Preprocessor.preprocessCorpus.return_value = ProCorpus
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -265,10 +244,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             Original = self.__Data[ 'text' ]
         )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_vectorizes_the_trainings_coprus_for_binary( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_vectorizes_the_trainings_coprus_for_binary( self ):
         ProCorpus = Series(
             [
                 "Poney Poney",
@@ -292,7 +268,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
         self.__PM.classifier = 'is_cancer'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -314,10 +290,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Vectorizer.featureizeTrain.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_vectorizes_the_trainings_coprus_for_mulitclass( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_vectorizes_the_trainings_coprus_for_mulitclass( self ):
         ProCorpus = Series(
             [
                 "Poney Poney",
@@ -341,7 +314,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Preprocessor.preprocessCorpus.return_value = ProCorpus
         self.__PM.classifier = 'doid'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -363,10 +336,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Vectorizer.featureizeTrain.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_vectorizes_the_test_coprus( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_vectorizes_the_test_coprus( self ):
         ProCorpus = Series(
             [
                 "Poney Poney",
@@ -386,7 +356,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
         self.__Preprocessor.preprocessCorpus.return_value = ProCorpus
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -403,11 +373,8 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Vectorizer.featureizeTest.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_vectorizing_time( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyController = TextminingController.Factory.getInstance()
+    def test_it_captures_the_vectorizing_time( self ):
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -417,10 +384,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Evaluator.captureVectorizingTime.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_resulting_features_and_their_Labels( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_captures_the_resulting_features_and_their_Labels( self ):
         TrainingIds = MagicMock()
         TrainFeatures = MagicMock()
         TrainFeatures.tolist.return_value = []
@@ -433,7 +397,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTest.return_value = TestFeatures
         self.__Vectorizer.getSupportedFeatures.return_value = BagOfWords
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -447,10 +411,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             BagOfWords
         )
 
-
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_splits_the_validation_data_of_the_trainings_data_for_binary( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_splits_the_validation_data_of_the_trainings_data_for_binary( self ):
         TrainingIds = Series( [ '1a', '3a' ], index = [ 0, 1 ] )
         TestIds = MagicMock()
         TrainingFeatures = Array( [ [ 0., 2. ], [ 0.1, 0.3 ] ] )
@@ -461,7 +422,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Splitter.trainingSplit.return_value = [ ( TrainingIds, TestIds ) ]
         self.__Vectorizer.featureizeTrain.return_value = TrainingFeatures
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -483,9 +444,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Splitter.validationSplit.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_splits_the_validation_data_of_the_trainings_data_for_multiclass( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_splits_the_validation_data_of_the_trainings_data_for_multiclass( self ):
         TrainingIds = Series( [ '1a', '3a' ], index = [ 0, 1 ] )
         TestIds = MagicMock()
         TrainingFeatures = Array( [ [ 0., 2. ], [ 0.1, 0.3 ] ] )
@@ -497,7 +456,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Splitter.trainingSplit.return_value = [ ( TrainingIds, TestIds ) ]
         self.__Vectorizer.featureizeTrain.return_value = TrainingFeatures
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -520,13 +479,10 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Splitter.validationSplit.assert_called_once()
 
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
     def test_it_brings_the_features_into_model_input_format(
         self,
-        ServiceGetter: MagicMock,
         DataBinding: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         TrainingFeatures = Array( [ [ 0., 2. ], [ 0.1, 0.3 ] ] )
         TrainingIds = Series( [ '1a' ] )
         ValidationIds = Series( [ '2a' ] )
@@ -541,7 +497,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTest.return_value = TestFeatures
         self.__PM.classifier = 'is_cancer'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -564,13 +520,10 @@ class TextminingControllerSpec( unittest.TestCase ):
         )
 
     @patch( 'biomed.text_mining.text_mining_controller.hotEncode' )
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
     def test_it_hot_encodes_the_labels_for_binary(
         self,
-        ServiceGetter: MagicMock,
         HotEncoder: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         TrainingFeatures = Array( [ [ 0., 2. ], [ 0.1, 0.3 ] ] )
         TrainingIds = Series( [ '1a' ] )
         ValidationIds = Series( [ '2a' ] )
@@ -585,7 +538,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTest.return_value = TestFeatures
         self.__PM.classifier = 'is_cancer'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -625,13 +578,10 @@ class TextminingControllerSpec( unittest.TestCase ):
         )
 
     @patch( 'biomed.text_mining.text_mining_controller.hotEncode' )
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
     def test_it_hot_encodes_the_labels_for_multiclass(
         self,
-        ServiceGetter: MagicMock,
         HotEncoder: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         TrainingFeatures = Array( [ [ 0., 2. ], [ 0.1, 0.3 ] ] )
         TrainingIds = Series( [ '1a' ] )
         ValidationIds = Series( [ '2a' ] )
@@ -646,7 +596,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTest.return_value = TestFeatures
         self.__PM.classifier = 'doid'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -688,14 +638,11 @@ class TextminingControllerSpec( unittest.TestCase ):
 
     @patch( 'biomed.text_mining.text_mining_controller.hotEncode' )
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
     def test_it_collects_the_input_data_for_labels(
         self,
-        ServiceGetter: MagicMock,
         DataBinding: MagicMock,
         HotEncoder: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         TrainingFeatures = Array( [ [ 0., 2. ], [ 0.1, 0.3 ] ] )
         TrainingIds = Series( [ '1a' ] )
         ValidationIds = Series( [ '2a' ] )
@@ -716,7 +663,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTest.return_value = TestFeatures
         HotEncoder.side_effect = lambda _, __ : Encoded.pop( 0 )
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -740,9 +687,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         )
 
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_builds_a_model( self, ServiceGetter: MagicMock, DataBinding ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_builds_a_model( self, DataBinding: MagicMock ):
         Dimension = 2
         Payload = MagicMock( spec = InputData )
         Payload.Training = MagicMock()
@@ -751,7 +696,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         DataBinding.return_value = Payload
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -761,14 +706,12 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__MLP.buildModel.assert_called_once_with( Dimension )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_saves_the_model_structure( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_saves_the_model_structure( self ):
         Expected = "structure"
 
         self.__MLP.buildModel.return_value = Expected
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -779,16 +722,14 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Evaluator.captureModel.assert_called_once_with( Expected )
 
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_trains_the_model( self, ServiceGetter: MagicMock, DataBinding: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_trains_the_model( self, DataBinding: MagicMock ):
         Features = MagicMock()
         Labels = MagicMock()
         Bindings = [ Features, Labels ]
 
         DataBinding.side_effect = lambda _, __, ___ : Bindings.pop( 0 )
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -798,11 +739,8 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__MLP.train.assert_called_once_with( Features, Labels )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_training_time( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyController = TextminingController.Factory.getInstance()
+    def test_it_captures_the_training_time( self ):
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -812,14 +750,12 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Evaluator.captureTrainingTime.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_saves_the_trainings_history( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_saves_the_trainings_history( self ):
         History = MagicMock()
 
         self.__MLP.train.return_value = History
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -830,16 +766,14 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Evaluator.captureTrainingHistory.assert_called_once_with( History )
 
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_evaluates_the_training( self, ServiceGetter: MagicMock, DataBinding: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_evaluates_the_training( self, DataBinding: MagicMock ):
         Features = MagicMock()
         Labels = MagicMock()
         Bindings = [ Features, Labels ]
 
         DataBinding.side_effect = lambda _, __, ___ : Bindings.pop( 0 )
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -850,14 +784,12 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__MLP.getTrainingScore.assert_called_once_with( Features, Labels )
 
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_saves_the_training_evaluation( self, ServiceGetter: MagicMock, DataBinding: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_saves_the_training_evaluation( self, DataBinding: MagicMock ):
         Evaluation = MagicMock()
 
         self.__MLP.getTrainingScore.return_value = Evaluation
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -868,9 +800,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Evaluator.captureEvaluationScore.assert_called_once_with( Evaluation )
 
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_predicts_on_the_given_test_data( self, ServiceGetter: MagicMock, DataBinding: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_predicts_on_the_given_test_data( self, DataBinding: MagicMock ):
         Features = MagicMock( spec = InputData )
         Test = MagicMock()
         Features.Training = MagicMock()
@@ -882,7 +812,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         DataBinding.side_effect = lambda _, __, ___ : Bindings.pop( 0 )
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -892,11 +822,8 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__MLP.predict.assert_called_once_with( Test )
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_prediction_time( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
-        MyController = TextminingController.Factory.getInstance()
+    def test_it_captures_the_prediction_time( self ):
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -906,9 +833,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Evaluator.caputrePredictingTime.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_predictions_for_binary( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_captures_the_predictions_for_binary( self ):
         TestIds = Series( [ '2a', '4a' ] )
 
         self.__Splitter.trainingSplit.return_value = [ ( MagicMock(), TestIds ) ]
@@ -919,7 +844,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__MLP.predict.return_value = Predictions
         self.__PM.classifier = 'is_cancer'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -946,9 +871,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Evaluator.capturePredictions.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_predictions_for_mulitclass( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_captures_the_predictions_for_mulitclass( self ):
         TestIds = Series( [ '2a', '4a' ] )
 
         self.__Splitter.trainingSplit.return_value = [ ( MagicMock(), TestIds ) ]
@@ -959,7 +882,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__MLP.predict.return_value = Predictions
         self.__PM.classifier = 'doid'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -986,9 +909,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Evaluator.capturePredictions.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_score_of_predictions_for_binary( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_captures_the_score_of_predictions_for_binary( self ):
         TestIds = Series( [ '2a', '4a' ] )
         ClassLabels = [ 0, 1 ]
 
@@ -999,7 +920,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__MLP.predict.return_value = Predictions
         self.__PM.classifier = 'is_cancer'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -1026,9 +947,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Evaluator.score.assert_called_once()
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_captures_the_score_of_predictions_for_multiclass( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
+    def test_it_captures_the_score_of_predictions_for_multiclass( self ):
         TestIds = Series( [ '2a', '4a' ] )
         ClassLabels = [ -1, 1, 2 ]
 
@@ -1039,7 +958,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__MLP.predict.return_value = Predictions
         self.__PM.classifier = 'doid'
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,
@@ -1067,16 +986,13 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Evaluator.score.assert_called_once()
 
 
-    @patch( 'biomed.text_mining.text_mining_controller.Services.getService' )
-    def test_it_finalizes_the_evaluation_for_each_fold( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-
+    def test_it_finalizes_the_evaluation_for_each_fold( self ):
         self.__Splitter.trainingSplit.return_value = [
             ( MagicMock(), MagicMock() ),
             ( MagicMock(), MagicMock() ),
         ]
 
-        MyController = TextminingController.Factory.getInstance()
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
             Data = self.__Data,
             TestData = None,

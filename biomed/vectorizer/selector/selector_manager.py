@@ -1,7 +1,6 @@
 from biomed.vectorizer.selector.selector import Selector
-from biomed.vectorizer.selector.selector import SelectorFactory
 from biomed.properties_manager import PropertiesManager
-import biomed.services as Services
+from biomed.services_getter import ServiceGetter
 from pandas import Series
 from numpy import array as Array
 
@@ -21,9 +20,7 @@ class SelectorManager( Selector ):
         if not self.__Selector:
             return Labels
 
-    class Factory( SelectorFactory ):
+    class Factory:
         @staticmethod
-        def getInstance() -> Selector:
-            return SelectorManager(
-                Services.getService( "properties", PropertiesManager )
-            )
+        def getInstance( getService: ServiceGetter ) -> Selector:
+            return SelectorManager( getService( "properties", PropertiesManager ) )

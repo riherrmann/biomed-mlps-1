@@ -1,5 +1,6 @@
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.cache.cache import CacheFactory
+from biomed.services_getter import ServiceGetter
 from multiprocessing import Manager, Lock
 
 class SharedMemoryCache( Cache ):
@@ -31,7 +32,7 @@ class SharedMemoryCache( Cache ):
 
     class Factory( CacheFactory ):
         @staticmethod
-        def getInstance() -> Cache:
+        def getInstance( getService: ServiceGetter = None ) -> Cache:
             return SharedMemoryCache(
                 Manager().dict(),
                 Manager().Lock()

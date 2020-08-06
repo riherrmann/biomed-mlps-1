@@ -4,7 +4,7 @@ from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.properties_manager import PropertiesManager
-import biomed.services as Services
+from biomed.services_getter import ServiceGetter
 from pandas import Series
 from multiprocessing import Process, Lock, Manager
 from time import sleep
@@ -289,22 +289,22 @@ class PolymorphPreprocessor( Preprocessor ):
 
     class Factory( PreprocessorFactory ):
         @staticmethod
-        def getInstance() -> Preprocessor:
-            FileCache = Services.getService( "preprocessor.cache.persistent", Cache )
+        def getInstance( getService: ServiceGetter ) -> Preprocessor:
+            FileCache = getService( "preprocessor.cache.persistent", Cache )
 
             return PolymorphPreprocessor(
-                Services.getService( "properties", PropertiesManager ),
-                Services.getService( "preprocessor.facilitymanager", FacilityManager ),
+                getService( "properties", PropertiesManager ),
+                getService( "preprocessor.facilitymanager", FacilityManager ),
                 FileCache,
-                PolymorphPreprocessor.Factory.__loadSharedMemory( FileCache ),
-                Services.getService( "preprocessor.normalizer.simple", NormalizerFactory ),
-                Services.getService( "preprocessor.normalizer.complex", NormalizerFactory ),
+                PolymorphPreprocessor.Factory.__loadSharedMemory( getService, FileCache ),
+                getService( "preprocessor.normalizer.simple", NormalizerFactory ),
+                getService( "preprocessor.normalizer.complex", NormalizerFactory ),
                 Manager().Lock(),
             )
 
         @staticmethod
-        def __loadSharedMemory( FileCache: Cache ) -> Cache:
-            SharedMemory = Services.getService( "preprocessor.cache.shared", Cache )
+        def __loadSharedMemory( getService: ServiceGetter, FileCache: Cache ) -> Cache:
+            SharedMemory = getService( "preprocessor.cache.shared", Cache )
 
             if FileCache.has( "hardId42" ):
                 PolymorphPreprocessor.Factory.__loadIntoSharedMemory( FileCache, SharedMemory )

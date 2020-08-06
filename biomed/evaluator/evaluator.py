@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from numpy import array as Array
 from pandas import Series
+from biomed.services_getter import ServiceGetter
 
 class abstractstatic(staticmethod):
     __slots__ = ()
@@ -93,5 +94,5 @@ class Evaluator( ABC ):
 
 class EvaluatorFactory:
     @abstractstatic
-    def getInstance() -> Evaluator:
+    def getInstance( getService: ServiceGetter ) -> Evaluator:
         pass

@@ -124,7 +124,7 @@ class ServicesSpec( unittest.TestCase ):
 
         Services.startServices()
 
-        NPC.assert_called_once()
+        NPC.assert_called_once_with( Services.getService )
         Locator.set.assert_any_call(
             "preprocessor.cache.persistent",
             SM,
@@ -140,7 +140,7 @@ class ServicesSpec( unittest.TestCase ):
 
         Services.startServices()
 
-        PPF.assert_called_once()
+        PPF.assert_called_once_with( Services.getService )
         Locator.set.assert_any_call(
             "preprocessor",
             PP,
@@ -161,7 +161,7 @@ class ServicesSpec( unittest.TestCase ):
         SMF.return_value = SM
 
         Services.startServices()
-        SMF.assert_called_once()
+        SMF.assert_called_once_with( Services.getService )
         Locator.set.assert_any_call(
             "vectorizer.selector",
             SM,
@@ -176,7 +176,7 @@ class ServicesSpec( unittest.TestCase ):
         VF.return_value = V
 
         Services.startServices()
-        VF.assert_called_once()
+        VF.assert_called_once_with( Services.getService )
         Locator.set.assert_any_call(
             "vectorizer",
             V,
@@ -195,7 +195,7 @@ class ServicesSpec( unittest.TestCase ):
         MLPF.return_value = MLPE
 
         Services.startServices()
-        MLPF.assert_called_once()
+        MLPF.assert_called_once_with( Services.getService )
         Locator.set.assert_any_call(
             "mlp",
             MLPE,
@@ -257,7 +257,7 @@ class ServicesSpec( unittest.TestCase ):
 
         Services.startServices()
 
-        EF.assert_called_once()
+        EF.assert_called_once_with( Services.getService )
         Locator.set.assert_any_call(
             "evaluator",
             Eval,
@@ -278,7 +278,7 @@ class ServicesSpec( unittest.TestCase ):
 
         Services.startServices()
 
-        SpF.assert_called_once()
+        SpF.assert_called_once_with( Services.getService )
         Locator.set.assert_any_call(
             "splitter",
             Split,
@@ -294,7 +294,7 @@ class ServicesSpec( unittest.TestCase ):
 
         Services.startServices()
 
-        TMCF.assert_called_once()
+        TMCF.assert_called_once_with( Services.getService )
         Locator.set.assert_any_call(
             "test.textminer",
             TMC,

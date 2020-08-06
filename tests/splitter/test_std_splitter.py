@@ -15,38 +15,34 @@ class StdSplitterSpec( unittest.TestCase ):
     def __fakeLocator( self, _, __ ):
         return self.__PM
 
-    @patch( 'biomed.splitter.std_splitter.Services.getService' )
-    def test_it_is_a_splitter( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.__fakeLocator
-        MySplitter = StdSplitter.Factory.getInstance()
+    def test_it_is_a_splitter( self ):
+        MySplitter = StdSplitter.Factory.getInstance( self.__fakeLocator )
         self.assertTrue( isinstance( MySplitter, Splitter ) )
 
-    @patch( 'biomed.splitter.std_splitter.Services.getService' )
-    def test_it_depends_on_properties( self, ServiceGetter ):
+    def test_it_depends_on_properties( self ):
         def fakeLocator( ServiceKey: str, Type ):
             if ServiceKey != 'properties':
                 raise RuntimeError( 'Unknown ServiceKey' )
             if Type != PropertiesManager:
                 raise RuntimeError( 'Unknown ServiceType' )
 
+        ServiceGetter = MagicMock()
         ServiceGetter.side_effect = fakeLocator
-        StdSplitter.Factory.getInstance()
+
+        StdSplitter.Factory.getInstance( ServiceGetter )
         ServiceGetter.assert_called_once()
 
     @patch( 'biomed.splitter.std_splitter.simpleSplit' )
-    @patch( 'biomed.splitter.std_splitter.Services.getService' )
     def test_it_splits_test_and_trainings_data(
         self,
-        ServiceGetter: MagicMock,
         split: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         Expected = [ MagicMock(), MagicMock() ]
         X = MagicMock( spec = Series )
         Y = MagicMock( spec = Series )
         split.return_value = Expected
 
-        MySplitter = StdSplitter.Factory.getInstance()
+        MySplitter = StdSplitter.Factory.getInstance( self.__fakeLocator )
         self.assertListEqual(
             [ tuple( Expected ) ],
             MySplitter.trainingSplit( X, Y )
@@ -61,13 +57,10 @@ class StdSplitterSpec( unittest.TestCase ):
         )
 
     @patch( 'biomed.splitter.std_splitter.ComplexSplitter' )
-    @patch( 'biomed.splitter.std_splitter.Services.getService' )
     def test_it_makes_a_kfold_split_on_test_and_trainings_data(
         self,
-        ServiceGetter: MagicMock,
         Splitter: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         Expected =[
             ( Series( [ 'a', 'c' ] ), Series( [ 'b', 'd' ] ) ),
             ( Series( [ 'b', 'd' ] ), Series( [ 'a', 'c' ] ) )
@@ -84,7 +77,7 @@ class StdSplitterSpec( unittest.TestCase ):
 
         self.__PM.splitting[ 'folds' ] = 2
 
-        MySplitter = StdSplitter.Factory.getInstance()
+        MySplitter = StdSplitter.Factory.getInstance( self.__fakeLocator )
         Splitted = MySplitter.trainingSplit( X, Y )
         for Index in range( 0, len( Expected ) ):
             self.assertEqual(
@@ -109,19 +102,16 @@ class StdSplitterSpec( unittest.TestCase ):
         )
 
     @patch( 'biomed.splitter.std_splitter.simpleSplit' )
-    @patch( 'biomed.splitter.std_splitter.Services.getService' )
     def test_it_splits_trainings_and_validation_data(
         self,
-        ServiceGetter: MagicMock,
         split: MagicMock
     ):
-        ServiceGetter.side_effect = self.__fakeLocator
         Expected = [ MagicMock(), MagicMock() ]
         X = MagicMock( spec = Series )
         Y = MagicMock( spec = Series )
         split.return_value = Expected
 
-        MySplitter = StdSplitter.Factory.getInstance()
+        MySplitter = StdSplitter.Factory.getInstance( self.__fakeLocator )
         self.assertEqual(
             tuple( Expected ),
             MySplitter.validationSplit( X, Y )

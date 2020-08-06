@@ -40,18 +40,15 @@ class MLPManagerSpec( unittest.TestCase ):
         self.__MSBP.stop()
         self.__CP.stop()
 
-    def fakeLocator( self, _, __ ):
+    def __fakeLocator( self, _, __ ):
         PM = PropertiesManager()
         PM.model = "s"
         return PM
 
-    @patch( 'biomed.mlp.mlp_manager.Services.getService' )
-    def test_it_is_a_mlp_instance( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-        self.assertTrue( isinstance( MLPManager.Factory.getInstance(), MLP ) )
+    def test_it_is_a_mlp_instance( self ):
+        self.assertTrue( isinstance( MLPManager.Factory.getInstance( self.__fakeLocator ), MLP ) )
 
-    @patch( 'biomed.mlp.mlp_manager.Services.getService' )
-    def test_it_initializes_a_models( self, ServiceGetter: MagicMock  ):
+    def test_it_initializes_a_models( self  ):
         Models = {
             "s": self.__S,
             "sx": self.__SX,
@@ -71,46 +68,42 @@ class MLPManagerSpec( unittest.TestCase ):
             def fakeLocator( _, __ ):
                 return pm
 
+            ServiceGetter = MagicMock()
             ServiceGetter.side_effect = fakeLocator
 
-            MyManager = MLPManager.Factory.getInstance()
+            MyManager = MLPManager.Factory.getInstance( ServiceGetter )
             MyManager.buildModel( 2 )
 
             Models[ ModelKey ].assert_called_once_with( pm )
+            ServiceGetter.assert_called_once()
 
-    @patch( 'biomed.mlp.mlp_manager.Services.getService' )
-    def test_it_deligates_the_dimensionality_to_the_model( self, ServiceGetter: MagicMock  ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_deligates_the_dimensionality_to_the_model( self  ):
         Dimensions = 2
 
-        MyManager = MLPManager.Factory.getInstance()
+        MyManager = MLPManager.Factory.getInstance( self.__fakeLocator )
         MyManager.buildModel( 2 )
 
         self.__ReferenceModel.buildModel.assert_called_once_with( Dimensions )
 
 
-    @patch( 'biomed.mlp.mlp_manager.Services.getService' )
-    def test_it_returns_the_summary_of_the_builded_model( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_returns_the_summary_of_the_builded_model( self ):
         Expected = "summary"
 
         self.__ReferenceModel.buildModel.return_value = Expected
 
-        Model = MLPManager.Factory.getInstance()
+        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
 
         self.assertEqual(
             Expected,
             Model.buildModel( MagicMock() )
         )
 
-    @patch( 'biomed.mlp.mlp_manager.Services.getService' )
-    def test_it_returns_the_history_of_the_training( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_returns_the_history_of_the_training( self ):
         Expected = "this should be not a string in real"
 
         self.__ReferenceModel.train.return_value = Expected
 
-        Model = MLPManager.Factory.getInstance()
+        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
         Model.buildModel( 2 )
 
         self.assertEqual(
@@ -118,14 +111,12 @@ class MLPManagerSpec( unittest.TestCase ):
             Model.train( MagicMock(), MagicMock() )
         )
 
-    @patch( 'biomed.mlp.mlp_manager.Services.getService' )
-    def test_it_returns_the_score_of_the_training( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_returns_the_score_of_the_training( self ):
         Expected = "this should be not a string in real"
 
         self.__ReferenceModel.getTrainingScore.return_value = Expected
 
-        Model = MLPManager.Factory.getInstance()
+        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
         Model.buildModel( 2 )
 
         self.assertEqual(
@@ -133,14 +124,12 @@ class MLPManagerSpec( unittest.TestCase ):
             Model.getTrainingScore( MagicMock(), MagicMock() )
         )
 
-    @patch( 'biomed.mlp.mlp_manager.Services.getService' )
-    def test_it_returns_the_predictions( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_returns_the_predictions( self ):
         Expected = "this should be not a string in real"
 
         self.__ReferenceModel.predict.return_value = Expected
 
-        Model = MLPManager.Factory.getInstance()
+        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
         Model.buildModel( 2 )
 
         self.assertEqual(

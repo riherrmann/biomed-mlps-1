@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from pandas import DataFrame
+from biomed.services_getter import ServiceGetter
 
 class abstractstatic(staticmethod):
     __slots__ = ()
-    def __init__(self, function):
-        super(abstractstatic, self).__init__(function)
+    def __init__( self, function ):
+        super( abstractstatic, self ).__init__( function )
         function.__isabstractmethod__ = True
     __isabstractmethod__ = True
 
@@ -21,5 +22,5 @@ class Controller(ABC):
 
 class ControllerFactory( ABC ):
     @abstractstatic
-    def getInstance() -> Controller:
+    def getInstance( getService: ServiceGetter) -> Controller:
         pass

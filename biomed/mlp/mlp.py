@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from biomed.mlp.input_data import InputData
+from biomed.services_getter import ServiceGetter
 from numpy import array as Array
 
 class abstractstatic(staticmethod):
@@ -29,5 +30,5 @@ class MLP( ABC ):
 
 class MLPFactory:
     @abstractstatic
-    def getInstance() -> MLP:
+    def getInstance( getService: ServiceGetter ) -> MLP:
         pass

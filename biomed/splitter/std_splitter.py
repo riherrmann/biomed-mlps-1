@@ -1,6 +1,6 @@
 from biomed.splitter.splitter import Splitter, SplitterFactory
 from biomed.properties_manager import PropertiesManager
-import biomed.services as Services
+from biomed.services_getter import ServiceGetter
 from sklearn.model_selection import train_test_split as simpleSplit
 from sklearn.model_selection import StratifiedShuffleSplit as ComplexSplitter
 from pandas import Series
@@ -57,7 +57,5 @@ class StdSplitter( Splitter ):
 
     class Factory( SplitterFactory ):
         @staticmethod
-        def getInstance() -> Splitter:
-            return StdSplitter(
-                Services.getService( 'properties', PropertiesManager )
-            )
+        def getInstance( getService: ServiceGetter ) -> Splitter:
+            return StdSplitter( getService( 'properties', PropertiesManager ) )

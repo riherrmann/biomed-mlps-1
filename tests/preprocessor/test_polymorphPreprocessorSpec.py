@@ -91,7 +91,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
     def setUp( self ):
         self.__initPreprocessorDependencies()
 
-    def fakeLocator( self, ServiceKey: str, _ ):
+    def __fakeLocator( self, ServiceKey: str, _ ):
         Assigment = {
             "properties": self.__PM,
             "preprocessor.facilitymanager": self.__FM,
@@ -103,15 +103,11 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         return Assigment[ ServiceKey ]
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_is_a_PreProcessor( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
-        MyProc = PolymorphPreprocessor.Factory.getInstance()
+    def test_it_is_a_PreProcessor( self ):
+        MyProc = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         self.assertTrue( isinstance( MyProc, Preprocessor ) )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_gets_dependencies( self, ServiceGetter: MagicMock ):
+    def test_it_gets_dependencies( self ):
         def fakeGetter( ServiceKey: str, ExpectedType ):
              Assigment = {
                  "properties": ( self.__PM, PropertiesManager ),
@@ -127,13 +123,16 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
              return Assigment[ ServiceKey ][ 0 ]
 
+        ServiceGetter = MagicMock()
         ServiceGetter.side_effect = fakeGetter
-        MyProc = PolymorphPreprocessor.Factory.getInstance()
-        self.assertTrue( isinstance( MyProc, Preprocessor ) )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_ignores_unknown_flags( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+        PolymorphPreprocessor.Factory.getInstance( ServiceGetter )
+        self.assertEqual(
+            6,
+            ServiceGetter.call_count
+        )
+
+    def test_it_ignores_unknown_flags( self ):
         TestData = {
             'pmid': [ 42 ],
             'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
@@ -144,7 +143,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         self.__PM.preprocessing[ 'variant' ] = "opc"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
@@ -157,9 +156,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             len( self.__Complex.LastNormalizers )
         )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_uses_simple_normalizer( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_uses_simple_normalizer( self ):
         TestData = {
             'pmid': [ 42 ],
             'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
@@ -169,15 +166,13 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "l"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_uses_complex_normalizer( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_uses_complex_normalizer( self ):
         TestData = {
             'pmid': [ 42 ],
             'text': [ "My little cute poney is a poney" ]
@@ -187,15 +182,13 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "n"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_uses_both_normalizers( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_uses_both_normalizers( self ):
         TestData = {
             'pmid': [ 42 ],
             'text': [ "My little cute Poney is a Poney" ]
@@ -205,15 +198,13 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "nl"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_iterates_over_all_given_texts( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_iterates_over_all_given_texts( self ):
         TestData = {
             'pmid': [ 42, 41, 40 ],
             'text': [
@@ -227,7 +218,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "nl"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
@@ -240,10 +231,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__Simple.LastNormalizers[ 0 ].CallCounter
         )
 
-
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_uses_a_cache_to_determine_if_the_value_was_already_processed( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_uses_a_cache_to_determine_if_the_value_was_already_processed( self ):
         TestData = {
             'pmid': [ 42 ],
             'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
@@ -255,7 +243,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "a"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         Result = PP.preprocessCorpus( Ids, Corpus )
 
         self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
@@ -265,9 +253,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
              self.__FakeCache[ "42a" ]
          )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_caches_new_text_variants( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_caches_new_text_variants( self ):
         TestData = {
             'pmid': [ 42 ],
             'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
@@ -277,7 +263,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "a"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
@@ -287,10 +273,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__FakeCache[ "42a" ]
         )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_does_not_run_in_parallel_if_only_one_worker_is_given( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
+    def test_it_does_not_run_in_parallel_if_only_one_worker_is_given( self ):
         TestData = {
             'pmid': [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ],
             'text': [
@@ -313,7 +296,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "al"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
@@ -331,10 +314,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__Simple.LastNormalizers[ 0 ].CallCounter
         )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_runs_in_parallel( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
+    def test_it_runs_in_parallel( self ):
         self.__FakeCache = Manager().dict()
         self.__Shared = StubbedCache( self.__FakeCache )
 
@@ -362,7 +342,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__PM.preprocessing[ 'variant' ] = "al"
         self.__PM.preprocessing[ 'workers' ] = Workers
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
@@ -383,9 +363,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         for Text in TestData[ 'text' ]:
             self.assertTrue( Text in Parsed )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_clean_up_the_data( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
+    def test_it_clean_up_the_data( self ):
         TestData = {
             'pmid': [ 42 ],
             'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
@@ -395,15 +373,12 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "l"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertTrue( self.__FM.WasCalled )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_fails_on_empty_dataset( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
+    def test_it_fails_on_empty_dataset( self ):
         TestData = {
             'pmid': [ 42 ],
             'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
@@ -415,14 +390,11 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         self.__FM.ReturnEmptySet = True
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError ):
             PP.preprocessCorpus( Ids, Corpus )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_saves_the_shared_memory_on_a_cache_miss_after_the_computing_stage( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
+    def test_it_saves_the_shared_memory_on_a_cache_miss_after_the_computing_stage( self ):
         TestData = {
             'pmid': [ 42 ],
             'text': [ "I love my poney." ],
@@ -432,7 +404,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "l"
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PP.preprocessCorpus( Ids, Corpus )
 
         self.assertDictEqual(
@@ -440,23 +412,17 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
             self.__FakeCache2[ "hardId42" ]
         )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_fills_the_shared_memory_with_the_persistent_memeory_on_init( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
+    def test_it_fills_the_shared_memory_with_the_persistent_memeory_on_init( self ):
         self.__FakeCache2[ "hardId42" ] = { "42a": "abc" }
 
-        PolymorphPreprocessor.Factory.getInstance()
+        PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
 
         self.assertEqual(
             self.__FakeCache,
             self.__FakeCache2[ "hardId42" ]
         )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_keeps_the_order_of_datasets( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
+    def test_it_keeps_the_order_of_datasets( self ):
         OrderOfThings = [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ]
         OrderOfDocs = [
             "My 1 little cute Poney is a Poney",
@@ -485,7 +451,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__FakeCache = Manager().dict()
         self.__Shared = StubbedCache( self.__FakeCache )
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PDocs = PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
@@ -499,10 +465,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
                 OrderOfDocs[ Index ]
             )
 
-    @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
-    def test_it_keeps_the_order_of_datasets_in_paralell( self, ServiceGetter: MagicMock ):
-        ServiceGetter.side_effect = self.fakeLocator
-
+    def test_it_keeps_the_order_of_datasets_in_paralell( self ):
         OrderOfThings = [ 52, 51, 50, 39, 38, 37, 35, 34, 33, 32, 31, 30 ]
         OrderOfDocs = [
             "My 1 little cute Poney is a Poney",
@@ -532,7 +495,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         self.__FakeCache = Manager().dict()
         self.__Shared = StubbedCache( self.__FakeCache )
 
-        PP = PolymorphPreprocessor.Factory.getInstance()
+        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         PDocs = PP.preprocessCorpus( Ids, Corpus )
         self.assertEqual(
             len( PDocs ),

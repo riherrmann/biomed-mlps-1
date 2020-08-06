@@ -3,8 +3,8 @@ from numpy import array as Array
 from biomed.vectorizer.vectorizer import Vectorizer
 from biomed.vectorizer.vectorizer import VectorizerFactory
 from biomed.vectorizer.selector.selector import Selector
-import biomed.services as Services
 from biomed.properties_manager import PropertiesManager
+from biomed.services_getter import ServiceGetter
 from sklearn.feature_extraction.text import TfidfVectorizer
 from numpy import float64
 
@@ -53,8 +53,8 @@ class StdVectorizer( Vectorizer ):
 
     class Factory( VectorizerFactory ):
         @staticmethod
-        def getInstance():
+        def getInstance( getService: ServiceGetter ):
             return StdVectorizer(
-                Services.getService( 'properties', PropertiesManager ),
-                Services.getService( 'vectorizer.selector', Selector ),
+                getService( 'properties', PropertiesManager ),
+                getService( 'vectorizer.selector', Selector ),
             )
