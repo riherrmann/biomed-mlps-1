@@ -15,6 +15,7 @@ from biomed.utils.json_file_writer import JSONFileWriter
 from biomed.utils.csv_file_writer import CSVFileWriter
 import biomed.evaluator.std_evaluator as Eval
 import biomed.splitter.std_splitter as Split
+import biomed.text_mining.text_mining_controller as TMC
 
 __Services = ServiceLocator()
 def startServices() -> None:
@@ -95,7 +96,7 @@ def startServices() -> None:
 
     __Services.set(
         "mlp",
-        MLP.MLPManager.Factory(),
+        MLP.MLPManager.Factory.getInstance(),
         Dependencies = "properties"
     )
 
@@ -114,6 +115,19 @@ def startServices() -> None:
         "splitter",
         Split.StdSplitter.Factory.getInstance(),
         Dependencies = "properties"
+    )
+
+    __Services.set(
+        "test.textminer",
+        TMC.TextminingController.Factory.getInstance(),
+        Dependencies = [
+            'properties',
+            'splitter',
+            'preprocessor',
+            'vectorizer',
+            'mlp',
+            'evaluator'
+        ]
     )
 
 T = TypeVar( 'T' )

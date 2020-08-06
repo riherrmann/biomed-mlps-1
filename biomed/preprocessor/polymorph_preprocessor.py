@@ -1,17 +1,19 @@
-from biomed.preprocessor.preprocessor import PreProcessor
-from biomed.preprocessor.preprocessor import PreProcessorFactory
+from biomed.preprocessor.preprocessor import Preprocessor
+from biomed.preprocessor.preprocessor import PreprocessorFactory
 from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
+from biomed.properties_manager import PropertiesManager
 import biomed.services as Services
 from pandas import Series
 from multiprocessing import Process, Lock, Manager
 from time import sleep
 from math import ceil
 
-class PolymorphPreprocessor( PreProcessor ):
+class PolymorphPreprocessor( Preprocessor ):
     def __init__(
         self,
+        PM: PropertiesManager,
         FM: FacilityManager,
         AlreadyProcessed: Cache,
         Shared: Cache,
@@ -19,6 +21,7 @@ class PolymorphPreprocessor( PreProcessor ):
         Complex: NormalizerFactory,
         Lock: Lock
     ):
+        self.__Properties = PM
         self.__FM = FM
         self.__AlreadyProcessed = AlreadyProcessed
         self.__SharedMemory = Shared
@@ -29,13 +32,7 @@ class PolymorphPreprocessor( PreProcessor ):
         self.__ComplexFlags = Complex.getApplicableFlags()
         self.__Lock = Lock
 
-    def preprocessCorpus(
-        self,
-        Ids: Series,
-        Corpus: Series,
-        Flags: str,
-        Workers = 1
-    ) -> Series:
+    def preprocessCorpus( self, Ids: Series, Corpus: Series ) -> Series:
         self.__SharedMemory.set( "Dirty", False )
         PmIds, Documents = self.__cleanUpData(
             Ids.tolist(),
@@ -46,9 +43,10 @@ class PolymorphPreprocessor( PreProcessor ):
             self.__reflectOrExtract(
                 PmIds,
                 Documents,
-                self.__toSortedString( Flags ),
-                Workers
-            )
+                self.__toSortedString( self.__Properties.preprocessing[ 'variant' ] ),
+                self.__Properties.preprocessing[ 'workers' ]
+            ),
+            index = list( PmIds )
         )
 
     def __cleanUpData( self, PmIds: list, Documents: list ) -> tuple:
@@ -289,12 +287,13 @@ class PolymorphPreprocessor( PreProcessor ):
         if self.__SharedMemory.size() > 0:
             self.__AlreadyProcessed.set( "hardId42", self.__SharedMemory.toDict() )
 
-    class Factory( PreProcessorFactory ):
+    class Factory( PreprocessorFactory ):
         @staticmethod
-        def getInstance() -> PreProcessor:
+        def getInstance() -> Preprocessor:
             FileCache = Services.getService( "preprocessor.cache.persistent", Cache )
 
             return PolymorphPreprocessor(
+                Services.getService( "properties", PropertiesManager ),
                 Services.getService( "preprocessor.facilitymanager", FacilityManager ),
                 FileCache,
                 PolymorphPreprocessor.Factory.__loadSharedMemory( FileCache ),

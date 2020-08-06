@@ -8,13 +8,13 @@ class SimpleCExtendedFFN( ModelBase ):
     def __init__( self, Properties: PropertiesManager ):
         super( SimpleCExtendedFFN, self ).__init__( Properties )
 
-    def buildModel(self, input_dim, nb_classes) -> str:
+    def buildModel( self, Dimensions: int ) -> str:
         Model = Sequential()
         #input layer
         Model.add(
             Dense(
                 units = 10,
-                input_dim = input_dim,
+                input_dim = Dimensions,
                 activity_regularizer= l1( 0.0001 ),
                 activation = "relu",
             )
@@ -31,7 +31,7 @@ class SimpleCExtendedFFN( ModelBase ):
         )
         #output layer
         Model.add( Dropout( 0.1 ) )
-        Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
+        Model.add( Dense( units = 2, activation ='sigmoid' ) )
 
         Model.compile(
             loss="binary_crossentropy",

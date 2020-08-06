@@ -31,7 +31,7 @@ class SelectorBaseSpec( unittest.TestCase ):
             Selector.select( MagicMock() )
 
     def test_it_returns_the_selected_features( self ):
-        Expected = Array( [ 1, 2, 3, 4, 5 ] )
+        Expected = MagicMock()
         GivenSelectorModel = MagicMock()
         GivenSelectorModel.transform.return_value = Expected
 
@@ -45,4 +45,5 @@ class SelectorBaseSpec( unittest.TestCase ):
             list( Selector.select( X ) )
         )
 
+        Expected.toarray.assert_called_once()
         GivenSelectorModel.transform.assert_called_once_with( X )

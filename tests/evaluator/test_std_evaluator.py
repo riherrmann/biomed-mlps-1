@@ -115,7 +115,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         ServiceGetter.side_effect = self.__fakeLocator
 
         ShortName = "test"
-        Description = "test of the module"
+        Description = "test of the module\n"
 
         Path = OS.path.join(
             self.__PM.result_dir,
@@ -127,7 +127,18 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         self.__Simple.write.assert_any_call(
             OS.path.join( Path, 'descr.txt' ),
-            [ Description ]
+            [ Description.strip() ]
+        )
+
+        self.__Simple.reset_mock()
+
+        Description = "test2 of the module\nwith multilines"
+        MyEval = StdEvaluator.Factory.getInstance()
+        MyEval.start( ShortName, Description )
+
+        self.__Simple.write.assert_any_call(
+            OS.path.join( Path, 'descr.txt' ),
+            [ 'test2 of the module', 'with multilines' ]
         )
 
 
@@ -145,8 +156,8 @@ class StdEvaluatorSpec( unittest.TestCase ):
         ServiceGetter.side_effect = self.__fakeLocator
 
         ShortName = "test"
-        Train = [ 12, 123, 423, 21 ]
-        Test = [ 32, 42, 23 ]
+        Train = Series( [ 12, 123, 423, 21 ] )
+        Test = Series( [ 32, 42, 23 ] )
 
         Path = OS.path.join(
             self.__PM.result_dir,
@@ -160,11 +171,11 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         self.__CSV.write.assert_any_call(
             OS.path.join( Path, 'train.csv' ),
-            { 'pmid': Train }
+            { 'pmid': list( Train ) }
         )
         self.__CSV.write.assert_any_call(
             OS.path.join( Path, 'test.csv' ),
-            { 'pmid': Test }
+            { 'pmid': list( Test ) }
         )
 
     @patch( 'biomed.evaluator.std_evaluator.Services.getService' )
@@ -185,17 +196,17 @@ class StdEvaluatorSpec( unittest.TestCase ):
         ServiceGetter.side_effect = self.__fakeLocator
 
         ShortName = "Test"
-        Train = Series( [ "abca", "bacac" ] )
-        Test = Series( [ "asd", "awqwe" ] )
+        Org = Series( [ "abca", "bacac" ] )
+        Pro = Series( [ "asd", "awqwe" ] )
 
-        TrainSize = 42
-        TestSize = 23
+        OrgSize = 42
+        ProSize = 23
 
         def getSize( List: list ):
-            if List == list( Train ):
-                return TrainSize
-            elif List == list( Test ):
-                return TestSize
+            if List == list( Pro ):
+                return ProSize
+            elif List == list( Org ):
+                return OrgSize
             else:
                 raise RuntimeError( 'Unrecognized list' )
 
@@ -208,12 +219,12 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         MyEval = StdEvaluator.Factory.getInstance()
         MyEval.start( ShortName, "test run" )
-        MyEval.capturePreprocessedData( Train, Test )
+        MyEval.capturePreprocessedData( Pro, Org )
         MyEval.finalize()
 
         self.__CSV.write.assert_any_call(
             OS.path.join( Path, 'sizes.csv' ),
-            { 'train': TrainSize, 'test': TestSize }
+            { 'processed': ProSize, 'original': OrgSize }
         )
 
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
@@ -238,11 +249,11 @@ class StdEvaluatorSpec( unittest.TestCase ):
         DF: MagicMock
     ):
         TrainIds = [ 123, 3, 53343 ]
-        TrainingsFeatures = [ [1, 2,], [5, 6,], [9, 10,] ] #this should be a array
+        TrainingsFeatures = [ [1, 2,], [5, 6,], [9, 10,] ] # this should be a array
         TestIds = [ 23, 42 ]
-        TestFeatures = [ [3,4,], [7,8], [11, 0] ] #this should be a array
+        TestFeatures = [ [3,4,], [7,8], [11, 0] ] # this should be a array
 
-        BagOfWords = [ 'a', 'b']
+        BagOfWords = [ 'a', 'b' ]
 
         ShortName = "Test"
 
@@ -259,8 +270,8 @@ class StdEvaluatorSpec( unittest.TestCase ):
         MyEval = StdEvaluator.Factory.getInstance()
         MyEval.start( ShortName, "test run" )
         MyEval.captureFeatures(
-            ( TrainIds, TrainingsFeatures ),
-            ( TestIds, TestFeatures ),
+            ( Series( TrainIds ), TrainingsFeatures ),
+            ( Series( TestIds ), TestFeatures ),
             BagOfWords
         )
         MyEval.finalize()
@@ -268,7 +279,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         DF.assert_any_call(
             TrainingsFeatures,
             columns = BagOfWords,
-            index = TrainIds
+            index = list( TrainIds )
         )
 
         Frame.to_csv.assert_any_call( OS.path.join( Path, 'trainingFeatures.csv' ) )
@@ -276,7 +287,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         DF.assert_any_call(
             TestFeatures,
             columns = BagOfWords,
-            index = TestIds
+            index = list( TestIds )
         )
 
         Frame.to_csv.assert_any_call( OS.path.join( Path, 'testFeatures.csv' ) )
@@ -461,7 +472,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         MyEval = StdEvaluator.Factory.getInstance()
         MyEval.start( ShortName, "test run" )
-        MyEval.score( Predicted, Actual, Labels )
+        MyEval.score( Predicted, Series( Actual ), Series( Labels ) )
         MyEval.finalize()
 
         Scorer.assert_any_call(
@@ -530,7 +541,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         MyEval = StdEvaluator.Factory.getInstance()
         MyEval.start( ShortName, "test run" )
-        MyEval.score( Predicted, Actual, Labels )
+        MyEval.score( Predicted, Series( Actual ), Series( Labels ) )
         MyEval.finalize()
 
         Scorer.assert_any_call(
@@ -588,7 +599,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         MyEval = StdEvaluator.Factory.getInstance()
         MyEval.start( ShortName, "test run" )
-        MyEval.score( Predicted, Actual, Labels )
+        MyEval.score( Predicted, Series( Actual ), Series( Labels ) )
         MyEval.finalize()
 
         Reporter.assert_any_call(

@@ -10,7 +10,7 @@ class SimpleBFFNSpec( unittest.TestCase ):
         MC.return_value = Model
 
         Simple = SimpleBFFN( MagicMock() )
-        Simple.buildModel( MagicMock(), MagicMock() )
+        Simple.buildModel( MagicMock() )
 
         Model.compile.assert_called_once()
 
@@ -27,6 +27,6 @@ class SimpleBFFNSpec( unittest.TestCase ):
 
         Simple = SimpleBFFN( MagicMock() )
         self.assertEqual(
-            Simple.buildModel( MagicMock(), MagicMock() ),
+            Simple.buildModel( MagicMock() ),
             Summary
         )

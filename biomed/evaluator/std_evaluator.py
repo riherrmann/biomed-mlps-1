@@ -81,12 +81,12 @@ class StdEvaluator( Evaluator ):
 
         DF.to_csv( self.__makePathForFile( FileName ) )
 
-    def start( self, ShortName: str, Desription ):
+    def start( self, ShortName: str, Desription: str ):
         checkDir( toAbsPath( self.__Properties.result_dir ) )
         self.__setPath( ShortName )
         mkdir( self.__Path )
         self.__writeJSON( 'config.json', self.__Properties.toDict() )
-        self.__writeFile( 'descr.txt', [ Desription ] )
+        self.__writeFile( 'descr.txt', Desription.strip().splitlines() )
 
     def setFold( self, Fold ):
         self.__checkIfIsStarted()
@@ -116,17 +116,17 @@ class StdEvaluator( Evaluator ):
     def caputrePredictingTime( self ):
         self.__Time[ 'predicting' ] = int( Time.now().strftime( '%s' ) )
 
-    async def __captureData( self, Train: list, Test: list ):
-        self.__writeCSV( 'train.csv', { 'pmid': Train } )
-        self.__writeCSV( 'test.csv', { 'pmid': Test } )
+    async def __captureData( self, Train: Series, Test: Series ):
+        self.__writeCSV( 'train.csv', { 'pmid': list( Train ) } )
+        self.__writeCSV( 'test.csv', { 'pmid': list( Test ) } )
 
-    def captureData( self, Train: list, Test: list ):
+    def captureData( self, Train: Series, Test: Series ):
         self.__enqueueStep( self.__captureData( Train, Test ) )
 
-    async def __capturePreprocessedData( self, TrainDocs: Series, TestDocs: Series ):
+    async def __capturePreprocessedData( self, Processed: Series, Original: Series ):
         Sizes = {
-            'train': memSize( list( TrainDocs ) ),
-            'test': memSize( list( TestDocs ) )
+            'processed': memSize( list( Processed ) ),
+            'original': memSize( list( Original ) )
         }
 
         self.__writeCSV( "sizes.csv", Sizes )
@@ -144,14 +144,14 @@ class StdEvaluator( Evaluator ):
             'trainingFeatures.csv',
             TrainFeatures[ 1 ],
             BagOfWords,
-            TrainFeatures[ 0 ]
+            list( TrainFeatures[ 0 ] )
         )
 
         self.__makeFrameAndSave(
             'testFeatures.csv',
             TestFeatures[ 1 ],
             BagOfWords,
-            TestFeatures[ 0 ]
+            list( TestFeatures[ 0 ] )
         )
 
     def captureFeatures(
@@ -207,17 +207,17 @@ class StdEvaluator( Evaluator ):
             PMIds
         )
 
-    async def __capturePredictions( self, Predictions: Array, PMIds: list, Actual: list = None ):
+    async def __capturePredictions( self, Predictions: Array, PMIds: Series, Actual: Series = None ):
         if not Actual:
-            self.__justSavePredictions( Predictions, PMIds )
+            self.__justSavePredictions( Predictions, list( PMIds ) )
         else:
-            self.__saveLabeledPredictions( Predictions, PMIds, Actual )
+            self.__saveLabeledPredictions( Predictions, list( PMIds ), list( Actual ) )
 
     def capturePredictions(
         self,
         Predictions: Array,
-        PMIds: list,
-        Actual: list = None
+        PMIds: Series,
+        Actual: Series = None
     ):
         self.__enqueueStep(
             self.__capturePredictions( Predictions, PMIds, Actual )
@@ -298,9 +298,12 @@ class StdEvaluator( Evaluator ):
     async def __score(
         self,
         Predictions: Array,
-        Actual: list,
-        Labels: list
+        Actual: Series,
+        Labels: Series
     ):
+        Actual = list( Actual )
+        Labels = list( Labels )
+
         if len( Labels ) == 2:
             self.__LastScore = self.__scoreBinary( Predictions, Actual )
         else:
@@ -308,7 +311,7 @@ class StdEvaluator( Evaluator ):
 
         self.__LastReport = self.__makeReport( Predictions, Actual, Labels )
 
-    def score( self, Predictions: Array, Actual: list, Labels: list ):
+    def score( self, Predictions: Array, Actual: Series, Labels: Series ):
         self.__enqueueStep( self.__score( Predictions, Actual, Labels ) )
 
     async def __waitForSteps( self ):

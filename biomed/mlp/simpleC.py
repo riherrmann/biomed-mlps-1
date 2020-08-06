@@ -8,14 +8,14 @@ class SimpleCFFN( ModelBase ):
     def __init__( self, Properties: PropertiesManager ):
         super( SimpleCFFN, self ).__init__( Properties )
 
-    def buildModel(self, input_dim, nb_classes) -> str:
+    def buildModel( self, Dimensions: int ) -> str:
         Model = Sequential()
         #input layer
         Model.add(
             Dense(
                 units=10,
                 activity_regularizer= l1( 0.0001 ),
-                input_dim = input_dim,
+                input_dim = Dimensions,
             )
         )
         #hidden layer
@@ -29,7 +29,7 @@ class SimpleCFFN( ModelBase ):
             )
         )
         #output layer
-        Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
+        Model.add( Dense( units = 2, activation ='sigmoid' ) )
 
         Model.compile(
             loss="binary_crossentropy",

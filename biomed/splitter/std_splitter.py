@@ -39,24 +39,24 @@ class StdSplitter( Splitter ):
 
     def trainingSplit( self, X: Series, Y: Series ) -> list:
         if self.__Properties.splitting[ 'folds' ] == 1:
-            return [ simpleSplit(
+            return [ tuple( simpleSplit(
                 X,
                 test_size = self.__Properties.splitting[ 'test' ],
                 random_state = self.__Properties.splitting[ 'seed' ],
                 shuffle = True,
                 stratify = Y
-            ) ]
+            ) ) ]
         else:
             return self.__splitFolds( X, Y )
 
     def validationSplit( self, X: Series, Y: Series ) -> tuple:
-        return simpleSplit(
+        return tuple( simpleSplit(
             X,
             test_size = self.__Properties.splitting[ 'validation' ],
             random_state = self.__Properties.splitting[ 'seed' ],
             shuffle = True,
             stratify = Y
-        )
+        ) )
 
     class Factory( SplitterFactory ):
         @staticmethod

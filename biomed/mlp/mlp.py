@@ -1,10 +1,18 @@
 from abc import ABC, abstractmethod
 from biomed.mlp.input_data import InputData
-import numpy as NP
+from numpy import array as Array
+
+class abstractstatic(staticmethod):
+    __slots__ = ()
+    def __init__(self, function):
+        super(abstractstatic, self).__init__(function)
+        function.__isabstractmethod__ = True
+
+    __isabstractmethod__ = True
 
 class MLP( ABC ):
     @abstractmethod
-    def buildModel( self, input_dim, nb_classes ) -> str:
+    def buildModel( self, Dimension ) -> str:
         pass
 
     @abstractmethod
@@ -16,10 +24,10 @@ class MLP( ABC ):
         pass
 
     @abstractmethod
-    def predict( self, X_test: tuple ) -> NP.array:
+    def predict( self, ToPredict: Array ) -> Array:
         pass
 
-class MLPFactory( ABC ):
-    @abstractmethod
+class MLPFactory:
+    @abstractstatic
     def getInstance() -> MLP:
         pass

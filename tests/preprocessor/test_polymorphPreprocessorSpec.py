@@ -4,7 +4,7 @@ from biomed.preprocessor.normalizer.normalizer import Normalizer
 from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
-from biomed.preprocessor.preprocessor import PreProcessor
+from biomed.preprocessor.preprocessor import Preprocessor
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.properties_manager import PropertiesManager
 from pandas import Series
@@ -108,7 +108,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         ServiceGetter.side_effect = self.fakeLocator
 
         MyProc = PolymorphPreprocessor.Factory.getInstance()
-        self.assertTrue( isinstance( MyProc, PreProcessor ) )
+        self.assertTrue( isinstance( MyProc, Preprocessor ) )
 
     @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
     def test_it_gets_dependencies( self, ServiceGetter: MagicMock ):
@@ -129,7 +129,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         ServiceGetter.side_effect = fakeGetter
         MyProc = PolymorphPreprocessor.Factory.getInstance()
-        self.assertTrue( isinstance( MyProc, PreProcessor ) )
+        self.assertTrue( isinstance( MyProc, Preprocessor ) )
 
     @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
     def test_it_ignores_unknown_flags( self, ServiceGetter: MagicMock ):
@@ -142,8 +142,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
 
+        self.__PM.preprocessing[ 'variant' ] = "opc"
+
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "opc" )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
             0,
@@ -165,9 +167,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "l"
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "l" )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
@@ -182,9 +185,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "n"
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "n" )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
@@ -199,9 +203,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "nl"
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "nl" )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertTrue( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
@@ -220,9 +225,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "nl"
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "nl" )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
             1,
@@ -247,14 +253,15 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "a"
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        Result = PP.preprocessCorpus( Ids, Corpus, "a" )
+        Result = PP.preprocessCorpus( Ids, Corpus )
 
         self.assertFalse( self.__Complex.LastNormalizers[ 0 ].WasCalled )
         self.assertFalse( self.__Simple.LastNormalizers[ 0 ].WasCalled )
         self.assertEqual(
-             Result[ 0 ],
+             Result[ 42 ],
              self.__FakeCache[ "42a" ]
          )
 
@@ -268,9 +275,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "a"
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "a" )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertTrue( self.__Complex.LastNormalizers[ 0 ].WasCalled )
         self.assertTrue( "42a" in self.__FakeCache )
@@ -303,9 +311,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "al"
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "al" )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
             1,
@@ -350,9 +359,11 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
         Workers = 3
+        self.__PM.preprocessing[ 'variant' ] = "al"
+        self.__PM.preprocessing[ 'workers' ] = Workers
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "al", Workers )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
             Workers,
@@ -382,9 +393,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "l"
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "l" )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertTrue( self.__FM.WasCalled )
 
@@ -399,12 +411,13 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "l"
 
         self.__FM.ReturnEmptySet = True
 
         PP = PolymorphPreprocessor.Factory.getInstance()
         with self.assertRaises( RuntimeError ):
-            PP.preprocessCorpus( Ids, Corpus, "l" )
+            PP.preprocessCorpus( Ids, Corpus )
 
     @patch( 'biomed.preprocessor.polymorph_preprocessor.Services.getService' )
     def test_it_saves_the_shared_memory_on_a_cache_miss_after_the_computing_stage( self, ServiceGetter: MagicMock ):
@@ -417,9 +430,10 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "l"
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PP.preprocessCorpus( Ids, Corpus, "l" )
+        PP.preprocessCorpus( Ids, Corpus )
 
         self.assertDictEqual(
             self.__FakeCache,
@@ -466,21 +480,22 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "al"
 
         self.__FakeCache = Manager().dict()
         self.__Shared = StubbedCache( self.__FakeCache )
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PDocs = PP.preprocessCorpus( Ids, Corpus, "al" )
+        PDocs = PP.preprocessCorpus( Ids, Corpus )
 
         self.assertEqual(
             len( PDocs ),
             len( OrderOfDocs )
         )
 
-        for Index in range( 0, len( PDocs ) ):
+        for Index in range( 0, len( OrderOfThings ) ):
             self.assertEqual(
-                PDocs[ Index ],
+                PDocs[ OrderOfThings[ Index ] ],
                 OrderOfDocs[ Index ]
             )
 
@@ -511,19 +526,21 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
+        self.__PM.preprocessing[ 'variant' ] = "al"
+        self.__PM.preprocessing[ 'workers' ] = 3
 
         self.__FakeCache = Manager().dict()
         self.__Shared = StubbedCache( self.__FakeCache )
 
         PP = PolymorphPreprocessor.Factory.getInstance()
-        PDocs = PP.preprocessCorpus( Ids, Corpus, "al", 3 )
+        PDocs = PP.preprocessCorpus( Ids, Corpus )
         self.assertEqual(
             len( PDocs ),
             len( OrderOfDocs )
         )
 
-        for Index in range( 0, len( PDocs ) ):
+        for Index in range( 0, len( OrderOfThings ) ):
             self.assertEqual(
-                PDocs[ Index ],
+                PDocs[ OrderOfThings[ Index ] ],
                 OrderOfDocs[ Index ]
-            )
+        )

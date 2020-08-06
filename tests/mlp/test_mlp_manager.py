@@ -73,8 +73,21 @@ class MLPManagerSpec( unittest.TestCase ):
 
             ServiceGetter.side_effect = fakeLocator
 
-            MLPManager.Factory.getInstance()
+            MyManager = MLPManager.Factory.getInstance()
+            MyManager.buildModel( 2 )
+
             Models[ ModelKey ].assert_called_once_with( pm )
+
+    @patch( 'biomed.mlp.mlp_manager.Services.getService' )
+    def test_it_deligates_the_dimensionality_to_the_model( self, ServiceGetter: MagicMock  ):
+        ServiceGetter.side_effect = self.fakeLocator
+        Dimensions = 2
+
+        MyManager = MLPManager.Factory.getInstance()
+        MyManager.buildModel( 2 )
+
+        self.__ReferenceModel.buildModel.assert_called_once_with( Dimensions )
+
 
     @patch( 'biomed.mlp.mlp_manager.Services.getService' )
     def test_it_returns_the_summary_of_the_builded_model( self, ServiceGetter: MagicMock ):
@@ -87,7 +100,7 @@ class MLPManagerSpec( unittest.TestCase ):
 
         self.assertEqual(
             Expected,
-            Model.buildModel( MagicMock(), MagicMock() )
+            Model.buildModel( MagicMock() )
         )
 
     @patch( 'biomed.mlp.mlp_manager.Services.getService' )
@@ -98,6 +111,7 @@ class MLPManagerSpec( unittest.TestCase ):
         self.__ReferenceModel.train.return_value = Expected
 
         Model = MLPManager.Factory.getInstance()
+        Model.buildModel( 2 )
 
         self.assertEqual(
             Expected,
@@ -112,6 +126,7 @@ class MLPManagerSpec( unittest.TestCase ):
         self.__ReferenceModel.getTrainingScore.return_value = Expected
 
         Model = MLPManager.Factory.getInstance()
+        Model.buildModel( 2 )
 
         self.assertEqual(
             Expected,
@@ -126,6 +141,7 @@ class MLPManagerSpec( unittest.TestCase ):
         self.__ReferenceModel.predict.return_value = Expected
 
         Model = MLPManager.Factory.getInstance()
+        Model.buildModel( 2 )
 
         self.assertEqual(
             Expected,

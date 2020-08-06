@@ -19,12 +19,12 @@ class ModelBase( MLP ):
 
         print("Training...")
         Hist = self._Model.fit(
-            x = X.Train,
-            y = Y.Train,
+            x = X.Training,
+            y = Y.Training,
             shuffle = True,
             epochs = self._Properties.training[ 'epochs' ],
             batch_size = self._Properties.training['batch_size'],
-            validation_data = ( X.Val, Y.Val ),
+            validation_data = ( X.Validation, Y.Validation ),
             workers = self._Properties.training['workers'],
             use_multiprocessing = self.__isMultiprocessing()
         )
@@ -45,7 +45,7 @@ class ModelBase( MLP ):
     def __isMultiprocessing( self ):
         return True if self._Properties.training[ "workers" ] > 1 else False
 
-    def __predict( self, ToPredict: tuple ) -> NP.array:
+    def __predict( self, ToPredict: NP.array ) -> NP.array:
         return self._Model.predict(
             ToPredict,
             batch_size = self._Properties.training['batch_size'],

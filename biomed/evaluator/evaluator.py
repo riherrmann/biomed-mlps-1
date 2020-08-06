@@ -13,7 +13,7 @@ class abstractstatic(staticmethod):
 
 class Evaluator( ABC ):
     @abstractmethod
-    def start( self, ShortName: str, Description ):
+    def start( self, ShortName: str, Description: str ):
         pass
 
     @abstractmethod
@@ -45,11 +45,11 @@ class Evaluator( ABC ):
         pass
 
     @abstractmethod
-    def captureData( self, Train: list, Test: list ):
+    def captureData( self, Train: Series, Test: Series ):
         pass
 
     @abstractmethod
-    def capturePreprocessedData( self, TrainDocs: Series, TestDocs: Series ):
+    def capturePreprocessedData( self, Processed: Series, Original: Series ):
         pass
 
     @abstractmethod
@@ -77,7 +77,7 @@ class Evaluator( ABC ):
     def capturePredictions(
         self,
         Predictions: Array,
-        PMIds: list,
+        PMIds: Series,
         Actual: list = None
     ):
         pass
@@ -86,8 +86,8 @@ class Evaluator( ABC ):
     def score(
         self,
         Predictions: Array,
-        Actual: list,
-        Labels: list
+        Actual: Series,
+        Labels: Series
     ):
         pass
 

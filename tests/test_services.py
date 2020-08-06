@@ -6,28 +6,34 @@ from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.properties_manager import PropertiesManager
 from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.preprocessor.cache.cache import Cache
-from biomed.preprocessor.preprocessor import PreProcessor
+from biomed.preprocessor.preprocessor import Preprocessor
 from biomed.vectorizer.selector.selector import Selector
 from biomed.vectorizer.vectorizer import Vectorizer
-from biomed.mlp.mlp import MLPFactory
+from biomed.mlp.mlp import MLP
 from biomed.utils.file_writer import FileWriter
 from biomed.evaluator.evaluator import Evaluator
 from biomed.splitter.splitter import Splitter
+from biomed.text_mining.controller import Controller
 
 class ServicesSpec( unittest.TestCase ):
     def __fullfillDepenendcies( self, Locator: MagicMock ):
         def fullfill( ServiceKey: str, _ ):
             Pair = {
                 "properties": PropertiesManager(),
+                "preprocessor": MagicMock( spec = Preprocessor ),
                 "preprocessor.cache.persistent": MagicMock( spec = Cache ),
                 "preprocessor.facilitymanager": MagicMock( spec = FacilityManager ),
                 "preprocessor.cache.shared": MagicMock( spec = Cache ),
                 "preprocessor.normalizer.simple": MagicMock( spec = NormalizerFactory ),
                 "preprocessor.normalizer.complex": MagicMock( spec = NormalizerFactory ),
+                "vectorizer": MagicMock( spec = Vectorizer ),
                 "vectorizer.selector": MagicMock( spec = Selector ),
+                "evaluator": MagicMock( spec = Evaluator ),
                 "evaluator.simple": MagicMock( spec = FileWriter ),
                 "evaluator.json": MagicMock( spec = FileWriter ),
                 "evaluator.csv": MagicMock( spec = FileWriter ),
+                "splitter": MagicMock( spec = Splitter ),
+                "mlp": MagicMock( spec = MLP )
             }
 
             return Pair[ ServiceKey ]
@@ -129,7 +135,7 @@ class ServicesSpec( unittest.TestCase ):
     @patch( 'biomed.services.__Services', spec = ServiceLocator )
     def test_it_initilizes_the_preprocessor( self, Locator: MagicMock, PPF: MagicMock ):
         self.__fullfillDepenendcies( Locator )
-        PP = MagicMock( spec = PreProcessor )
+        PP = MagicMock( spec = Preprocessor )
         PPF.return_value = PP
 
         Services.startServices()
@@ -181,22 +187,22 @@ class ServicesSpec( unittest.TestCase ):
         )
 
 
-    @patch( 'biomed.services.MLP.MLPManager.Factory' )
+    @patch( 'biomed.services.MLP.MLPManager.Factory.getInstance' )
     @patch( 'biomed.services.__Services', spec = ServiceLocator )
     def test_it_initilizes_the_mlp_manager_factory( self, Locator: MagicMock, MLPF: MagicMock ):
         self.__fullfillDepenendcies( Locator )
-        MLP = MagicMock( spec = MLPFactory )
-        MLPF.return_value = MLP
+        MLPE = MagicMock( spec = MLP )
+        MLPF.return_value = MLPE
 
         Services.startServices()
         MLPF.assert_called_once()
         Locator.set.assert_any_call(
             "mlp",
-            MLP,
+            MLPE,
             Dependencies = "properties"
         )
 
-    @patch( 'biomed.services.SimpleFileWriter.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.SimpleFileWriter.Factory.getInstance' )
     @patch( 'biomed.services.__Services' )
     def test_it_initilizes_the_simple_file_writer( self, Locator: MagicMock, SFF: MagicMock ):
         self.__fullfillDepenendcies( Locator )
@@ -212,7 +218,7 @@ class ServicesSpec( unittest.TestCase ):
         )
 
 
-    @patch( 'biomed.services.JSONFileWriter.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.JSONFileWriter.Factory.getInstance' )
     @patch( 'biomed.services.__Services' )
     def test_it_initilizes_the_json_file_writer( self, Locator: MagicMock, JFF: MagicMock ):
         self.__fullfillDepenendcies( Locator )
@@ -227,7 +233,7 @@ class ServicesSpec( unittest.TestCase ):
             Writer
         )
 
-    @patch( 'biomed.services.CSVFileWriter.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.CSVFileWriter.Factory.getInstance' )
     @patch( 'biomed.services.__Services' )
     def test_it_initilizes_the_csv_file_writer( self, Locator: MagicMock, CFF: MagicMock ):
         self.__fullfillDepenendcies( Locator )
@@ -242,7 +248,7 @@ class ServicesSpec( unittest.TestCase ):
             Writer
         )
 
-    @patch( 'biomed.services.Eval.StdEvaluator.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.Eval.StdEvaluator.Factory.getInstance' )
     @patch( 'biomed.services.__Services' )
     def test_it_initilizes_the_evaluator( self, Locator: MagicMock, EF: MagicMock ):
         self.__fullfillDepenendcies( Locator )
@@ -263,7 +269,7 @@ class ServicesSpec( unittest.TestCase ):
             ]
         )
 
-    @patch( 'biomed.services.Split.StdSplitter.Factory.getInstance', spec = ServiceLocator )
+    @patch( 'biomed.services.Split.StdSplitter.Factory.getInstance' )
     @patch( 'biomed.services.__Services' )
     def test_it_initilizes_the_splitter( self, Locator: MagicMock, SpF: MagicMock ):
         self.__fullfillDepenendcies( Locator )
@@ -277,6 +283,29 @@ class ServicesSpec( unittest.TestCase ):
             "splitter",
             Split,
             Dependencies = "properties"
+        )
+
+    @patch( 'biomed.services.TMC.TextminingController.Factory.getInstance' )
+    @patch( 'biomed.services.__Services' )
+    def test_it_initilizes_the_test_text_miner( self, Locator: MagicMock, TMCF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        TMC = MagicMock( spec = Controller )
+        TMCF.return_value = TMC
+
+        Services.startServices()
+
+        TMCF.assert_called_once()
+        Locator.set.assert_any_call(
+            "test.textminer",
+            TMC,
+            Dependencies = [
+                'properties',
+                'splitter',
+                'preprocessor',
+                'vectorizer',
+                'mlp',
+                'evaluator'
+            ]
         )
 
     @patch( 'biomed.services.__Services', spec = ServiceLocator )

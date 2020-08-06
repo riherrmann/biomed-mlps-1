@@ -16,7 +16,7 @@ from numpy import array as Array
 
 class MLPManager( MLP ):
     def __init__( self, PM: PropertiesManager ):
-        Models = {
+        self.__Models = {
             "s": SimpleFFN,
             "sx": SimpleExtendedFFN,
             "sb": SimpleBFFN,
@@ -28,10 +28,12 @@ class MLPManager( MLP ):
             "c": ComplexFFN,
         }
 
-        self.__Model = Models[ PM.model ]( PM )
+        self.__Model = None
+        self.__Properties = PM
 
-    def buildModel( self, input_dim, nb_classes ) -> str:
-        return self.__Model.buildModel( input_dim, nb_classes )
+    def buildModel( self, Dimensions: int ) -> str:
+        self.__Model = self.__Models[ self.__Properties.model ]( self.__Properties )
+        return self.__Model.buildModel( Dimensions )
 
     def train( self, X: InputData, Y: InputData ) -> dict:
         return self.__Model.train( X, Y )
@@ -43,5 +45,6 @@ class MLPManager( MLP ):
         return self.__Model.predict( ToPredict )
 
     class Factory( MLPFactory ):
+        @staticmethod
         def getInstance():
             return MLPManager( PM = Services.getService( "properties", PropertiesManager ) )

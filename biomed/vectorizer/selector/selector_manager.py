@@ -15,7 +15,7 @@ class SelectorManager( Selector ):
 
     def select( self, X: Array ) -> Array:
         if not self.__Selector:
-            return X
+            return X.toarray()
 
     def getSupportedFeatures( self, Labels: list ) -> list:
         if not self.__Selector:

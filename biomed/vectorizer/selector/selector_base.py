@@ -11,7 +11,7 @@ class SelectorBase( Selector ):
     def _assembleSelector( self ):
         pass
 
-    def build( self, X: Array, Y: Series ):
+    def build( self, X, Y: Series ):
         self._assembleSelector()
         self._Selector.fit( X, Y )
 
@@ -19,4 +19,4 @@ class SelectorBase( Selector ):
         if self._Selector is None:
             raise RuntimeError( "The selector must be builded before using it" )
 
-        return self._Selector.transform( X )
+        return self._Selector.transform( X ).toarray()

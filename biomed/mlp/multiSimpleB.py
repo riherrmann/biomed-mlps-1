@@ -8,16 +8,16 @@ class MultiSimpleBFFN( ModelBase ):
     def __init__( self, Properties: PropertiesManager ):
         super( MultiSimpleBFFN, self ).__init__( Properties )
 
-    def buildModel(self, input_dim, nb_classes) -> str:
+    def buildModel( self, Dimensions: int ) -> str:
         Model = Sequential()
-        Model.add(Dense(64, input_dim=input_dim, activation='relu', activity_regularizer=l1_l2(0.001, 0.001)))
+        Model.add( Dense( 64, input_dim=Dimensions, activation='relu', activity_regularizer = l1_l2( 0.001, 0.001 ) ) )
 #        Model.add(Dropout(0.25))
-        Model.add(Dense(32, activation='relu', kernel_initializer='random_uniform', bias_initializer='zero'))
+        Model.add( Dense( 32, activation='relu', kernel_initializer='random_uniform', bias_initializer='zero' ) )
 #        Model.add(Dropout(0.2))
-        Model.add(Dense(32, activation='relu', kernel_initializer='random_uniform', bias_initializer='zero'))
+        Model.add( Dense( 32, activation='relu', kernel_initializer='random_uniform', bias_initializer='zero' ) )
 #        Model.add(Dropout(0.1))
 
-        Model.add(Dense(nb_classes, activation='softmax'))
+        Model.add( Dense( 16, activation='softmax' ) )
 
         Model.compile(
             loss='categorical_crossentropy',

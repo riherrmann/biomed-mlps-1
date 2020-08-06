@@ -8,12 +8,12 @@ class abstractstatic(staticmethod):
         function.__isabstractmethod__ = True
     __isabstractmethod__ = True
 
-class PreProcessor(ABC):
+class Preprocessor(ABC):
     @abstractmethod
-    def preprocessCorpus( self, Ids: Series, Corpus: Series, Flags: str ) -> Series:
+    def preprocessCorpus( self, Ids: Series, Corpus: Series ) -> Series:
         pass
 
-class PreProcessorFactory( ABC ):
+class PreprocessorFactory( ABC ):
     @abstractstatic
-    def getInstance() -> PreProcessor:
+    def getInstance() -> Preprocessor:
         pass

@@ -10,7 +10,7 @@ class SimpleBExtendedFFNSpec( unittest.TestCase ):
         MC.return_value = Model
 
         Simple = SimpleBExtendedFFN( MagicMock() )
-        Simple.buildModel( MagicMock(), MagicMock() )
+        Simple.buildModel( MagicMock() )
 
         Model.compile.assert_called_once()
 
@@ -27,6 +27,6 @@ class SimpleBExtendedFFNSpec( unittest.TestCase ):
 
         Simple = SimpleBExtendedFFN( MagicMock() )
         self.assertEqual(
-            Simple.buildModel( MagicMock(), MagicMock() ),
+            Simple.buildModel( MagicMock() ),
             Summary
         )
