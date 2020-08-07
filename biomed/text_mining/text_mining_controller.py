@@ -1,5 +1,6 @@
 from biomed.text_mining.controller import Controller, ControllerFactory
 from biomed.properties_manager import PropertiesManager
+from biomed.facilitymanager.facility_manager import FacilityManager
 from biomed.splitter.splitter import Splitter
 from biomed.preprocessor.preprocessor import Preprocessor
 from biomed.vectorizer.vectorizer import Vectorizer
@@ -14,6 +15,7 @@ class TextminingController( Controller ):
     def __init__(
         self,
         Properties: PropertiesManager,
+        FacilityManager: FacilityManager,
         Splitter: Splitter,
         Preprocessor: Preprocessor,
         Vectorizer: Vectorizer,
@@ -21,6 +23,7 @@ class TextminingController( Controller ):
         Evaluator: Evaluator
     ):
         self.__Properties = Properties
+        self.__FacilityManager = FacilityManager
         self.__Splitter = Splitter
         self.__Evaluator = Evaluator
         self.__Preprocessor = Preprocessor
@@ -69,8 +72,8 @@ class TextminingController( Controller ):
 
         self.__Evaluator.capturePreprocessingTime()
         self.__Evaluator.capturePreprocessedData(
-            Processed = Corpus,
-            Original = self.__Data[ 'text' ]
+            Corpus,
+            self.__Data[ 'text' ]
         )
 
         return Corpus
@@ -225,7 +228,7 @@ class TextminingController( Controller ):
         Description: str
     ):
         self.__Evaluator.start( ShortName, Description )
-        self.__Data = Data
+        self.__Data = self.__FacilityManager.clean( Data )
         self.__getCategories()
         self.__runFolds()
 
@@ -234,6 +237,7 @@ class TextminingController( Controller ):
         def getInstance( getService: ServiceGetter ) -> Controller:
             return TextminingController(
                 getService( 'properties', PropertiesManager ),
+                getService( 'facilitymanager', FacilityManager ),
                 getService( 'splitter', Splitter ),
                 getService( 'preprocessor', Preprocessor ),
                 getService( 'vectorizer', Vectorizer ),

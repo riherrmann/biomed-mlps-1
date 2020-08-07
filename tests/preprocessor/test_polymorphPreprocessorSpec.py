@@ -1,26 +1,13 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from biomed.preprocessor.normalizer.normalizer import Normalizer
 from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
-from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
 from biomed.preprocessor.preprocessor import Preprocessor
-from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
+from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
 from biomed.properties_manager import PropertiesManager
 from pandas import Series
 from multiprocessing import Manager
-
-class StubbedFacilityManager( FacilityManager ):
-    def __init__( self ):
-        self.WasCalled = False
-        self.ReturnEmptySet = False
-
-    def clean( self, PmIds: list, Texts: list ) -> tuple:
-        self.WasCalled = True
-        if self.ReturnEmptySet:
-            return ( [], [] )
-        else:
-            return ( PmIds, Texts )
 
 class StubbedNormalizer( Normalizer ):
     def __init__( self ):
@@ -78,7 +65,6 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
     def __initPreprocessorDependencies( self ):
         self.__PM = PropertiesManager()
-        self.__FM = StubbedFacilityManager()
         self.__FakeCache = {}
         self.__FakeCache2 = {}
         self.__Complex = StubbedNormalizerFactory( [ "n", "v", "a" ] )
@@ -94,7 +80,6 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
     def __fakeLocator( self, ServiceKey: str, _ ):
         Assigment = {
             "properties": self.__PM,
-            "preprocessor.facilitymanager": self.__FM,
             "preprocessor.normalizer.simple": self.__Simple,
             "preprocessor.normalizer.complex": self.__Complex,
             "preprocessor.cache.persistent": self.__FileCache,
@@ -111,7 +96,6 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         def fakeGetter( ServiceKey: str, ExpectedType ):
              Assigment = {
                  "properties": ( self.__PM, PropertiesManager ),
-                 "preprocessor.facilitymanager": ( self.__FM, FacilityManager ),
                  "preprocessor.normalizer.simple": ( self.__Simple, NormalizerFactory ),
                  "preprocessor.normalizer.complex": ( self.__Complex, NormalizerFactory ),
                  "preprocessor.cache.persistent": ( self.__FileCache, Cache ),
@@ -128,7 +112,7 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
 
         PolymorphPreprocessor.Factory.getInstance( ServiceGetter )
         self.assertEqual(
-            6,
+            5,
             ServiceGetter.call_count
         )
 
@@ -363,32 +347,15 @@ class PolymorphPreprocessorSpec( unittest.TestCase ):
         for Text in TestData[ 'text' ]:
             self.assertTrue( Text in Parsed )
 
-    def test_it_clean_up_the_data( self ):
-        TestData = {
-            'pmid': [ 42 ],
-            'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
-        }
-
-        Ids = Series( TestData[ 'pmid' ] )
-        Corpus = Series( TestData[ 'text' ] )
-        self.__PM.preprocessing[ 'variant' ] = "l"
-
-        PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
-        PP.preprocessCorpus( Ids, Corpus )
-
-        self.assertTrue( self.__FM.WasCalled )
-
     def test_it_fails_on_empty_dataset( self ):
         TestData = {
-            'pmid': [ 42 ],
+            'pmid': [],
             'text': [ "Liquid chromatography with tandem mass spectrometry method for the simultaneous determination of multiple sweet mogrosides in the fruits of Siraitia grosvenorii and its marketed sweeteners. A high-performance liquid chromatography with electrospray ionization tandem mass spectrometry method has been developed and validated for the simultaneous quantification of eight major sweet mogrosides in different batches of the fruits of Siraitia grosvenorii and its marketed sweeteners." ],
         }
 
         Ids = Series( TestData[ 'pmid' ] )
         Corpus = Series( TestData[ 'text' ] )
         self.__PM.preprocessing[ 'variant' ] = "l"
-
-        self.__FM.ReturnEmptySet = True
 
         PP = PolymorphPreprocessor.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError ):

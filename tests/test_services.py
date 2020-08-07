@@ -4,7 +4,7 @@ import biomed.services as Services
 from biomed.utils.service_locator import ServiceLocator
 from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.properties_manager import PropertiesManager
-from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
+from biomed.facilitymanager.facility_manager import FacilityManager
 from biomed.preprocessor.cache.cache import Cache
 from biomed.preprocessor.preprocessor import Preprocessor
 from biomed.vectorizer.selector.selector import Selector
@@ -22,7 +22,6 @@ class ServicesSpec( unittest.TestCase ):
                 "properties": PropertiesManager(),
                 "preprocessor": MagicMock( spec = Preprocessor ),
                 "preprocessor.cache.persistent": MagicMock( spec = Cache ),
-                "preprocessor.facilitymanager": MagicMock( spec = FacilityManager ),
                 "preprocessor.cache.shared": MagicMock( spec = Cache ),
                 "preprocessor.normalizer.simple": MagicMock( spec = NormalizerFactory ),
                 "preprocessor.normalizer.complex": MagicMock( spec = NormalizerFactory ),
@@ -32,6 +31,7 @@ class ServicesSpec( unittest.TestCase ):
                 "evaluator.simple": MagicMock( spec = FileWriter ),
                 "evaluator.json": MagicMock( spec = FileWriter ),
                 "evaluator.csv": MagicMock( spec = FileWriter ),
+                "facilitymanager": MagicMock( spec = FacilityManager ),
                 "splitter": MagicMock( spec = Splitter ),
                 "mlp": MagicMock( spec = MLP )
             }
@@ -85,21 +85,6 @@ class ServicesSpec( unittest.TestCase ):
             PM
         )
 
-    @patch( 'biomed.services.MariosFacilityManager.Factory.getInstance' )
-    @patch( 'biomed.services.__Services', spec = ServiceLocator )
-    def test_it_initilizes_the_facility_mananger( self, Locator: MagicMock, FM: MagicMock ):
-        self.__fullfillDepenendcies( Locator )
-        Facilitator = MagicMock( spec = FacilityManager )
-        FM.return_value = Facilitator
-
-        Services.startServices()
-
-        FM.assert_called_once()
-        Locator.set.assert_any_call(
-            "preprocessor.facilitymanager",
-            Facilitator
-        )
-
     @patch( 'biomed.services.SharedMemoryCache.Factory.getInstance' )
     @patch( 'biomed.services.__Services', spec = ServiceLocator )
     def test_it_initilizes_the_shared_memory( self, Locator: MagicMock, SMC: MagicMock ):
@@ -145,7 +130,7 @@ class ServicesSpec( unittest.TestCase ):
             "preprocessor",
             PP,
             Dependencies = [
-                "preprocessor.facilitymanager",
+                "properties",
                 "preprocessor.normalizer.simple",
                 "preprocessor.normalizer.complex",
                 "preprocessor.cache.persistent",
@@ -285,6 +270,21 @@ class ServicesSpec( unittest.TestCase ):
             Dependencies = "properties"
         )
 
+    @patch( 'biomed.services.MariosFacilityManager.Factory.getInstance' )
+    @patch( 'biomed.services.__Services', spec = ServiceLocator )
+    def test_it_initilizes_the_facility_mananger( self, Locator: MagicMock, FM: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        Facilitator = MagicMock( spec = FacilityManager )
+        FM.return_value = Facilitator
+
+        Services.startServices()
+
+        FM.assert_called_once()
+        Locator.set.assert_any_call(
+            "facilitymanager",
+            Facilitator
+        )
+
     @patch( 'biomed.services.TMC.TextminingController.Factory.getInstance' )
     @patch( 'biomed.services.__Services' )
     def test_it_initilizes_the_test_text_miner( self, Locator: MagicMock, TMCF: MagicMock ):
@@ -300,6 +300,7 @@ class ServicesSpec( unittest.TestCase ):
             TMC,
             Dependencies = [
                 'properties',
+                'facilitymanager',
                 'splitter',
                 'preprocessor',
                 'vectorizer',

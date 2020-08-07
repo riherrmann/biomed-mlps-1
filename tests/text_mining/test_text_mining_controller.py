@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 from biomed.text_mining.controller import Controller
 from biomed.text_mining.text_mining_controller import TextminingController
 from biomed.properties_manager import PropertiesManager
+from biomed.facilitymanager.facility_manager import FacilityManager
 from biomed.splitter.splitter import Splitter
 from biomed.preprocessor.preprocessor import Preprocessor
 from biomed.vectorizer.vectorizer import Vectorizer
@@ -14,24 +15,6 @@ from numpy import array as Array
 
 class TextminingControllerSpec( unittest.TestCase ):
     def setUp( self ):
-        self.__PM = PropertiesManager()
-        self.__Splitter = MagicMock( spec = Splitter )
-        self.__Preprocessor = MagicMock( spec = Preprocessor )
-        self.__Vectorizer = MagicMock( spec = Vectorizer )
-        self.__MLP = MagicMock( spec = MLP )
-        self.__Evaluator = MagicMock( spec = Evaluator )
-
-        self.__Splitter.trainingSplit.return_value = [ ( MagicMock(), MagicMock() ) ]
-        self.__Splitter.validationSplit.return_value = ( MagicMock(), MagicMock() )
-
-        self.__Preprocessor.preprocessCorpus.return_value = MagicMock()
-
-        TrainFeatures = MagicMock()
-        TrainFeatures.tolist.return_value = []
-        self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
-        self.__Vectorizer.featureizeTest.return_value = MagicMock()
-        self.__Vectorizer.getSupportedFeatures.return_value = MagicMock()
-
         self.__Data = DataFrame(
             {
                 'pmid': [ '1a', '2a', '3a', '4a' ],
@@ -48,9 +31,32 @@ class TextminingControllerSpec( unittest.TestCase ):
             columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ]
         )
 
+
+        self.__PM = PropertiesManager()
+        self.__FacilityManager = MagicMock( spec = FacilityManager )
+        self.__Splitter = MagicMock( spec = Splitter )
+        self.__Preprocessor = MagicMock( spec = Preprocessor )
+        self.__Vectorizer = MagicMock( spec = Vectorizer )
+        self.__MLP = MagicMock( spec = MLP )
+        self.__Evaluator = MagicMock( spec = Evaluator )
+
+        self.__FacilityManager.clean.return_value = self.__Data
+
+        self.__Splitter.trainingSplit.return_value = [ ( MagicMock(), MagicMock() ) ]
+        self.__Splitter.validationSplit.return_value = ( MagicMock(), MagicMock() )
+
+        self.__Preprocessor.preprocessCorpus.return_value = MagicMock()
+
+        TrainFeatures = MagicMock()
+        TrainFeatures.tolist.return_value = []
+        self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
+        self.__Vectorizer.featureizeTest.return_value = MagicMock()
+        self.__Vectorizer.getSupportedFeatures.return_value = MagicMock()
+
     def __fakeLocator( self, ServiceKey: str, _ ):
         Dependencies = {
             'properties': self.__PM,
+            'facilitymanager': self.__FacilityManager,
             'splitter': self.__Splitter,
             'preprocessor': self.__Preprocessor,
             'vectorizer': self.__Vectorizer,
@@ -69,6 +75,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             Dependencies = {
                 'properties': PropertiesManager,
                 'splitter': Splitter,
+                'facilitymanager': FacilityManager,
                 'preprocessor': Preprocessor,
                 'vectorizer': Vectorizer,
                 'mlp': MLP,
@@ -88,7 +95,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         TextminingController.Factory.getInstance( ServiceGetter )
         self.assertEqual(
-            6,
+            7,
             ServiceGetter.call_count
         )
 
@@ -108,6 +115,19 @@ class TextminingControllerSpec( unittest.TestCase ):
             Name,
             Description
         )
+
+    def test_it_cleans_up_the_Data( self ):
+        Data = MagicMock()
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        self.__FacilityManager.clean.assert_called_once_with( Data )
 
     def test_it_splits_the_test_data_for_binary( self ):
         self.__PM.classifier = 'is_cancer'

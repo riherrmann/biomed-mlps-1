@@ -3,7 +3,7 @@ from biomed.utils.service_locator import ServiceLocator
 from biomed.properties_manager import PropertiesManager
 from biomed.preprocessor.normalizer.complexNormalizer import ComplexNormalizer
 from biomed.preprocessor.normalizer.simpleNormalizer import SimpleNormalizer
-from biomed.preprocessor.facilitymanager.mFacilityManager import MariosFacilityManager
+from biomed.facilitymanager.mFacilityManager import MariosFacilityManager
 from biomed.preprocessor.cache.sharedMemoryCache import SharedMemoryCache
 import biomed.preprocessor.cache.numpyArrayFileCache as NPC
 import biomed.preprocessor.polymorph_preprocessor  as PP
@@ -36,11 +36,6 @@ def startServices() -> None:
     )
 
     __Services.set(
-        "preprocessor.facilitymanager",
-        MariosFacilityManager.Factory.getInstance()
-    )
-
-    __Services.set(
         "preprocessor.cache.shared",
         SharedMemoryCache.Factory.getInstance()
     )
@@ -60,6 +55,12 @@ def startServices() -> None:
         CSVFileWriter.Factory.getInstance()
     )
 
+    __Services.set(
+        "facilitymanager",
+        MariosFacilityManager.Factory.getInstance()
+    )
+
+
     #dependend services
     __Services.set(
         "preprocessor.cache.persistent",
@@ -71,7 +72,7 @@ def startServices() -> None:
         "preprocessor",
         PP.PolymorphPreprocessor.Factory.getInstance( getService ),
         Dependencies = [
-            "preprocessor.facilitymanager",
+            "properties",
             "preprocessor.normalizer.simple",
             "preprocessor.normalizer.complex",
             "preprocessor.cache.persistent",
@@ -122,6 +123,7 @@ def startServices() -> None:
         TMC.TextminingController.Factory.getInstance( getService ),
         Dependencies = [
             'properties',
+            'facilitymanager',
             'splitter',
             'preprocessor',
             'vectorizer',

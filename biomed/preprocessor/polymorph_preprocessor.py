@@ -2,7 +2,6 @@ from biomed.preprocessor.preprocessor import Preprocessor
 from biomed.preprocessor.preprocessor import PreprocessorFactory
 from biomed.preprocessor.normalizer.normalizer import NormalizerFactory
 from biomed.preprocessor.cache.cache import Cache
-from biomed.preprocessor.facilitymanager.facility_manager import FacilityManager
 from biomed.properties_manager import PropertiesManager
 from biomed.services_getter import ServiceGetter
 from pandas import Series
@@ -14,7 +13,6 @@ class PolymorphPreprocessor( Preprocessor ):
     def __init__(
         self,
         PM: PropertiesManager,
-        FM: FacilityManager,
         AlreadyProcessed: Cache,
         Shared: Cache,
         Simple: NormalizerFactory,
@@ -22,7 +20,6 @@ class PolymorphPreprocessor( Preprocessor ):
         Lock: Lock
     ):
         self.__Properties = PM
-        self.__FM = FM
         self.__AlreadyProcessed = AlreadyProcessed
         self.__SharedMemory = Shared
         self.__Cache = Cache
@@ -34,27 +31,19 @@ class PolymorphPreprocessor( Preprocessor ):
 
     def preprocessCorpus( self, Ids: Series, Corpus: Series ) -> Series:
         self.__SharedMemory.set( "Dirty", False )
-        PmIds, Documents = self.__cleanUpData(
-            Ids.tolist(),
-            Corpus.tolist()
-        )
+        Ids = list( Ids )
+        if not Ids:
+            raise RuntimeError( "No processable data had been given" )
 
         return Series(
             self.__reflectOrExtract(
-                PmIds,
-                Documents,
+                Ids,
+                list( Corpus ),
                 self.__toSortedString( self.__Properties.preprocessing[ 'variant' ] ),
                 self.__Properties.preprocessing[ 'workers' ]
             ),
-            index = list( PmIds )
+            index = Ids
         )
-
-    def __cleanUpData( self, PmIds: list, Documents: list ) -> tuple:
-        Result = self.__FM.clean( PmIds, Documents )
-        if not Result[ 0 ] or not Result[ 1 ]:
-            raise RuntimeError( "ERROR: Empty Dataset detected." )
-
-        return Result
 
     def __reflectOrExtract(
         self,
@@ -294,7 +283,6 @@ class PolymorphPreprocessor( Preprocessor ):
 
             return PolymorphPreprocessor(
                 getService( "properties", PropertiesManager ),
-                getService( "preprocessor.facilitymanager", FacilityManager ),
                 FileCache,
                 PolymorphPreprocessor.Factory.__loadSharedMemory( getService, FileCache ),
                 getService( "preprocessor.normalizer.simple", NormalizerFactory ),

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pandas import DataFrame
 
 class abstractstatic(staticmethod):
     __slots__ = ()
@@ -9,7 +10,7 @@ class abstractstatic(staticmethod):
 
 class FacilityManager(ABC):
     @abstractmethod
-    def clean( Pmids: list, Text: list ) -> tuple:
+    def clean( Frame: DataFrame ) -> DataFrame:
         pass
 
 class FacilityManagerFactory( ABC ):
