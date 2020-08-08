@@ -7,6 +7,7 @@ from biomed.utils.file_writer import FileWriter
 from datetime import datetime
 from pandas import Series, DataFrame
 import os as OS
+from numpy import array as Array
 
 class StdEvaluatorSpec( unittest.TestCase ):
     def setUp( self ):
@@ -328,7 +329,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         Frame = MagicMock( spec = DataFrame )
         Ids = [ 1, 2, 3, 4 ]
-        Predicted = [ 1, 0, 1, 0 ] #this should be a array
+        Predicted = Array( [ 1, 0, 1, 0 ] )
         Actual = [ 1, 1, 1, 0 ]
 
         Path = OS.path.join(
@@ -346,7 +347,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         MyEval.finalize()
 
         DF.assert_any_call(
-            [ Ids, list( Predicted ) ],
+            { 'pmid': Ids, self.__PM.classifier: Predicted.tolist() },
             columns = [ 'pmid', self.__PM.classifier ],
         )
 
@@ -358,7 +359,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         MyEval.finalize()
 
         DF.assert_any_call(
-            [ Ids, list( Predicted ) ],
+            { 'pmid': Ids, self.__PM.classifier: Predicted.tolist() },
             columns = [ 'pmid', self.__PM.classifier ],
         )
 
@@ -369,7 +370,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         MyEval.finalize()
 
         DF.assert_any_call(
-            [ list( Predicted ), Actual ],
+            { self.__PM.classifier: Predicted.tolist(), 'actual': Actual },
             columns = [ 'predicted', 'actual' ],
             index = Ids
         )
@@ -443,7 +444,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         )
 
         DF.assert_any_call(
-            [ Macro, Micro, Binary ],
+            [ [ Macro, Micro, Binary ] ],
             columns = [ 'macro', 'micro', 'binary' ],
         )
 
@@ -509,7 +510,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         )
 
         DF.assert_any_call(
-            [ Macro, Micro, Sample ],
+            [ [ Macro, Micro, Sample ] ],
             columns = [ 'macro', 'micro', 'samples' ],
         )
 

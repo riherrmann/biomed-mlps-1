@@ -192,26 +192,26 @@ class StdEvaluator( Evaluator ):
     def captureEvaluationScore( self, Score: dict ):
         self.__enqueueStep( self.__captureEvaluationScore( Score ) )
 
-    def __justSavePredictions( self, Predictions: Array, PMIds: list ):
+    def __justSavePredictions( self, Predictions: list, PMIds: list ):
         self.__makeFrameAndSave(
             'predictions.csv',
-            [ PMIds, list( Predictions ) ],
+            { 'pmid': PMIds, self.__Properties.classifier: Predictions },
             [ 'pmid', self.__Properties.classifier ]
         )
 
-    def __saveLabeledPredictions( self, Predictions: Array, PMIds: list, Labels: list ):
+    def __saveLabeledPredictions( self, Predictions: list, PMIds: list, Labels: list ):
         self.__makeFrameAndSave(
             'predictions.csv',
-            [ list( Predictions ), Labels ],
+            { self.__Properties.classifier: Predictions, 'actual': Labels },
             [ 'predicted', 'actual' ],
             PMIds
         )
 
     async def __capturePredictions( self, Predictions: Array, PMIds: Series, Actual: Series = None ):
         if not Actual:
-            self.__justSavePredictions( Predictions, list( PMIds ) )
+            self.__justSavePredictions( Predictions.tolist(), list( PMIds ) )
         else:
-            self.__saveLabeledPredictions( Predictions, list( PMIds ), list( Actual ) )
+            self.__saveLabeledPredictions( Predictions.tolist(), list( PMIds ), list( Actual ) )
 
     def capturePredictions(
         self,
@@ -251,7 +251,7 @@ class StdEvaluator( Evaluator ):
 
         self.__makeFrameAndSave(
             'f1.csv',
-            Score,
+            [ Score ],
             [ 'macro', 'micro', 'binary' ],
         )
 
@@ -271,7 +271,7 @@ class StdEvaluator( Evaluator ):
 
         self.__makeFrameAndSave(
             'f1.csv',
-            Score,
+            [ Score ],
             [ 'macro', 'micro', 'samples' ],
         )
 

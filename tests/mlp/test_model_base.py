@@ -66,6 +66,7 @@ class ModelBaseSpec( unittest.TestCase ):
 
     def test_it_returns_the_training_history( self ):
         Hist = MagicMock()
+        Hist.history = Hist
         Model = MagicMock( spec = Sequential )
         Model.fit.return_value = Hist
 
@@ -92,13 +93,46 @@ class ModelBaseSpec( unittest.TestCase ):
         X = InputData( MagicMock(), MagicMock(), MagicMock() )
         Y = InputData( NP.zeros( ( 2, 3 ) ), MagicMock(), MagicMock() )
 
-        FFN = ModelBaseSpec.StubbedFFN( PropertiesManager(), Model )
+        PM = PropertiesManager()
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 1
+
+        FFN = ModelBaseSpec.StubbedFFN( PM, Model )
         FFN.train( X, Y )
         FFN.getTrainingScore( X, Y )
 
         Model.evaluate.assert_called_once_with(
             X.Test,
             Y.Test,
+            batch_size = PM[ "training" ][ "batch_size" ],
+            workers = PM[ "training" ][ "workers" ],
+            use_multiprocessing = False,
+            return_dict = True,
+            verbose = 0
+        )
+
+    def test_it_gets_the_training_evaluation_for_multi_processing( self ):
+        Model = MagicMock( spec = Sequential )
+        X = InputData( MagicMock(), MagicMock(), MagicMock() )
+        Y = InputData( NP.zeros( ( 2, 3 ) ), MagicMock(), MagicMock() )
+
+        PM = PropertiesManager()
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 3
+
+        FFN = ModelBaseSpec.StubbedFFN( PM, Model )
+        FFN.train( X, Y )
+        FFN.getTrainingScore( X, Y )
+
+        Model.evaluate.assert_called_once_with(
+            X.Test,
+            Y.Test,
+            batch_size = PM[ "training" ][ "batch_size" ],
+            workers = PM[ "training" ][ "workers" ],
+            use_multiprocessing = True,
+            return_dict = True,
             verbose = 0
         )
 
@@ -128,7 +162,7 @@ class ModelBaseSpec( unittest.TestCase ):
     def test_it_predicts( self ):
         Model = MagicMock( spec = Sequential )
         ToPredict = MagicMock()
-        Model.predict.return_value = NP.array( [] )
+        Model.predict.return_value = NP.array( [ [ 0.0, 0.0 ] ] )
 
         PM = PropertiesManager()
         PM[ "training" ][ "epochs" ] = 1
@@ -152,7 +186,7 @@ class ModelBaseSpec( unittest.TestCase ):
     def test_it_predicts_with_mulitprocessing( self ):
         Model = MagicMock( spec = Sequential )
         ToPredict = MagicMock()
-        Model.predict.return_value = NP.array( [] )
+        Model.predict.return_value = NP.array( [ [ 0., 0. ] ] )
 
         PM = PropertiesManager()
         PM[ "training" ][ "epochs" ] = 1
@@ -185,13 +219,19 @@ class ModelBaseSpec( unittest.TestCase ):
         X = InputData( MagicMock(), MagicMock(), MagicMock() )
         Y = InputData( NP.zeros( ( 2, 2 ) ), MagicMock(), MagicMock() )
 
-        Model.predict.return_value = NP.array( [ [0.00716622], [0.98867947], [0.01186692] ] )
+        Model.predict.return_value = NP.array(
+            [
+                [ 0.0, 0.00 ],
+                [ 0.0, 0.98867947 ],
+                [ 0.0, 0.00 ]
+             ]
+        )
 
         FFN = ModelBaseSpec.StubbedFFN( PM, Model )
         FFN.train( X, Y )
         arrayEqual(
             FFN.predict( ToPredict ),
-            NP.array( [ [0], [1], [0] ] )
+            NP.array( [ 0, 1, 0 ] )
         )
 
     def test_it_returns_normalized_multi_classified_data( self ):

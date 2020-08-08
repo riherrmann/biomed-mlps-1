@@ -10,6 +10,7 @@ from biomed.mlp.input_data import InputData
 from biomed.services_getter import ServiceGetter
 from pandas import DataFrame, Series
 from tensorflow.keras.utils import to_categorical as hotEncode
+from numpy import array as Array
 
 class TextminingController( Controller ):
     def __init__(
@@ -108,6 +109,9 @@ class TextminingController( Controller ):
 
         return ( TrainingFeatures, TestFeatures )
 
+    def __convertToArray( self, Value: Series ):
+        return Array( list( Value ) )
+
     def __validationSplit(
         self,
         Training: tuple
@@ -125,8 +129,8 @@ class TextminingController( Controller ):
         ValidationFeatures = Features.filter( list( Validation ) )
 
         return (
-            ( Training, TrainingFeatures.to_numpy() ),
-            ( Validation, ValidationFeatures.to_numpy() )
+            ( Training, self.__convertToArray( TrainingFeatures ) ),
+            ( Validation, self.__convertToArray( ValidationFeatures ) )
         )
 
     def __hotEncodeLabel( self, Ids: Series ) -> tuple:
@@ -154,8 +158,12 @@ class TextminingController( Controller ):
 
     def __train( self, Features: InputData, Labels: InputData ):
         print( "training...." )
-
-        Structure = self.__Model.buildModel( Features.Training.shape[ 0 ] )
+        print( "Training: {}\nValidation: {}\nTest: {}".format(
+            Features.Training.shape,
+            Features.Validation.shape,
+            Features.Test.shape
+        ) )
+        Structure = self.__Model.buildModel( Features.Training.shape[ 1 ] )
         History = self.__Model.train( Features, Labels )
         Score = self.__Model.getTrainingScore( Features, Labels )
 

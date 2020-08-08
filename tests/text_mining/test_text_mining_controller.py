@@ -31,6 +31,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ]
         )
 
+        self.__INDF = patch( 'biomed.text_mining.text_mining_controller.InputData' )
 
         self.__PM = PropertiesManager()
         self.__FacilityManager = MagicMock( spec = FacilityManager )
@@ -39,6 +40,11 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer = MagicMock( spec = Vectorizer )
         self.__MLP = MagicMock( spec = MLP )
         self.__Evaluator = MagicMock( spec = Evaluator )
+        self.__IND = self.__INDF.start()
+        self.__IND.Training = MagicMock()
+        self.__IND.Training.shape = ( MagicMock(), MagicMock() )
+        self.__IND.Validation = MagicMock()
+        self.__IND.Test = MagicMock()
 
         self.__FacilityManager.clean.return_value = self.__Data
 
@@ -52,6 +58,9 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
         self.__Vectorizer.featureizeTest.return_value = MagicMock()
         self.__Vectorizer.getSupportedFeatures.return_value = MagicMock()
+
+    def tearDown( self ):
+        self.__INDF.stop()
 
     def __fakeLocator( self, ServiceKey: str, _ ):
         Dependencies = {
@@ -284,7 +293,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Splitter.trainingSplit.return_value = [ ( TrainingsIds, TestIds ) ]
         self.__Preprocessor.preprocessCorpus.return_value = ProCorpus
         TrainFeatures = MagicMock()
-        TrainFeatures.tolist.return_value = [[1],[2]]
+        TrainFeatures.tolist.return_value = [ ( 1, 1 ), ( 1, 2 ) ]
         self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
         self.__PM.classifier = 'is_cancer'
 
@@ -711,7 +720,8 @@ class TextminingControllerSpec( unittest.TestCase ):
         Dimension = 2
         Payload = MagicMock( spec = InputData )
         Payload.Training = MagicMock()
-        Payload.Training.shape = ( Dimension, MagicMock() )
+        Payload.Training.shape = ( MagicMock(), Dimension )
+        Payload.Validation = MagicMock()
         Payload.Test = MagicMock()
 
         DataBinding.return_value = Payload

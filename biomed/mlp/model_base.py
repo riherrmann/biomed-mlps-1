@@ -29,7 +29,7 @@ class ModelBase( MLP ):
 
         self.__Trained = True
 
-        return Hist
+        return Hist.history
 
     def __verifyTraining( self ):
         if not self.__Trained:
@@ -37,7 +37,15 @@ class ModelBase( MLP ):
 
     def getTrainingScore( self, X: InputData, Y: InputData ) -> dict:
         self.__verifyTraining()
-        return self._Model.evaluate( X.Test, Y.Test, verbose = 0 )
+        return self._Model.evaluate(
+                X.Test,
+                Y.Test,
+                batch_size = self._Properties.training['batch_size'],
+                workers = self._Properties.training['workers'],
+                use_multiprocessing = self.__isMultiprocessing(),
+                return_dict =  True,
+                verbose = 0
+        )
 
     def __isMultiClass( self ) -> bool:
         return self._Properties.classifier == 'doid'
@@ -54,9 +62,9 @@ class ModelBase( MLP ):
         )
 
     def __normalizeBinary( self, Predictions: NP.array ) -> NP.array:
-        return NP.where( Predictions < 0.5, 0, 1 )
+        return NP.where( self.__normalize( Predictions ) < 0.5, 0, 1 )
 
-    def __normalizeMulti( self, Predictions: NP.array ) -> NP.array:
+    def __normalize( self, Predictions: NP.array ) -> NP.array:
         return NP.argmax( Predictions, axis = 1 )
 
     def predict( self, ToPredict: tuple ) -> NP.array:
@@ -64,6 +72,6 @@ class ModelBase( MLP ):
 
         print("Generating test predictions...")
         if self.__isMultiClass():
-            return self.__normalizeMulti( self.__predict( ToPredict ) )
+            return self.__normalize( self.__predict( ToPredict ) )
         else:
             return self.__normalizeBinary( self.__predict( ToPredict ) )
