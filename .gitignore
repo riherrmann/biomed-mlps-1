@@ -1,5 +1,7 @@
 .DS_Store
 /.idea/*.xml
+/.gradle/
+/nlpclient/client.jar
 !.idea/dictionaries/riherrmann.xml
 *.pyc
 *.swp

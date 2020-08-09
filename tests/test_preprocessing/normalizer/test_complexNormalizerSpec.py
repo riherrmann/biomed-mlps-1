@@ -6,82 +6,113 @@ if AdditionalPath not in Sys.path:
     Sys.path.append( AdditionalPath )
 
 import unittest
+from unittest.mock import MagicMock, patch, ANY
+import subprocess
 from biomed.preprocessor.normalizer.complexNormalizer import ComplexNormalizer
 from biomed.preprocessor.normalizer.normalizer import Normalizer
 
 class ComplexNormalizerSpec( unittest.TestCase ):
+    __Documents = [
+        "A",
+        "B",
+        "C"
+    ]
 
     def test_it_is_a_normalizer( self ):
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertTrue( isinstance( MyNormal, Normalizer ) )
 
-    def test_it_filters_nouns_out( self ):
+    @patch( 'biomed.preprocessor.normalizer.complexNormalizer.Process' )
+    def test_it_initilaizes_a_new_subprocess_with_the_given_configuration( self, Sub: MagicMock ):
+        Flags = "na"
+        NP = MagicMock( spec = subprocess.Popen )
+        Sub.Popen = NP
+        Impl = MagicMock( spec = subprocess.Popen )
+        NP.return_value = Impl
+        Impl.communicate.return_value = ( "".encode( 'UTF-8' ), "".encode( 'UTF-8' ) )
+
         MyNormal = ComplexNormalizer.Factory.getInstance()
-        self.assertEqual(
-            "poney text Bulloc",
-            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc." ], "n" )[ 0 ]
+        MyNormal.apply(
+            ComplexNormalizerSpec.__Documents,
+            Flags
         )
 
-    def test_it_filters_verbs_out( self ):
-        MyNormal = ComplexNormalizer.Factory.getInstance()
-        self.assertEqual(
-            "write",
-            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc." ], "v" )[ 0 ]
+        NP.assert_called_once_with(
+            [
+                "java",
+                "-jar",
+                OS.path.abspath(
+                    OS.path.join(
+                        OS.path.dirname( __file__ ), '..', '..', '..', 'nlpclient', 'client.jar' )
+                ),
+                "-f",
+                Flags
+            ],
+            stdin = ANY,
+            stdout = ANY,
+            stderr = ANY,
         )
 
-    def test_it_filters_adjectives_out( self ):
+    @patch( 'biomed.preprocessor.normalizer.complexNormalizer.Process' )
+    def test_it_calls_the_client_with_the_normalized_and_batched_documents( self, Sub: MagicMock ):
+        NP = MagicMock( spec = subprocess.Popen )
+        Impl = MagicMock( spec = subprocess.Popen )
+        NP.return_value = Impl
+        Sub.Popen = NP
+
+        Impl.communicate.return_value = ( "".encode( 'UTF-8' ), "".encode( 'UTF-8' ) )
+
+        Documents = [
+            "I am \n text1",
+            "I am text2",
+            "I\nam\ntext3\n"
+        ]
+
         MyNormal = ComplexNormalizer.Factory.getInstance()
-        self.assertEqual(
-            "little",
-            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc." ], "a" )[ 0 ]
+        MyNormal.apply(
+            Documents,
+            "na"
         )
 
-    def test_it_filters_symbols_out( self ):
-        MyNormal = ComplexNormalizer.Factory.getInstance()
-        self.assertEqual(
-            "$",
-            MyNormal.apply( [ "And then he just found $1." ], "y" )[ 0 ]
-        )
-
-    def test_it_filters_numerals_out( self ):
-        MyNormal = ComplexNormalizer.Factory.getInstance()
-        self.assertEqual(
-            "3.14159265359",
-            MyNormal.apply( [ "And then he just found 3.14159265359." ], "u" )[ 0 ]
+        Impl.communicate.assert_called_once_with(
+            "I am   text1\nI am text2\nI am text3".encode( 'UTF-8' )
         )
 
 
-    def test_it_filters_mixed_out( self ):
-        MyNormal = ComplexNormalizer.Factory.getInstance()
-        self.assertEqual(
-            "poney write text Bulloc",
-            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc." ], "nv" )[ 0 ]
-        )
+    @patch( 'biomed.preprocessor.normalizer.complexNormalizer.Process' )
+    def test_it_fails_if_a_error_occurs_in_the_sub_process( self, Sub: MagicMock ):
+        ErrorMsg = "errror"
+        NP = MagicMock( spec = subprocess.Popen )
+        Impl = MagicMock( spec = subprocess.Popen )
 
-    def test_it_reads_muliple_sentences( self ):
+        NP.return_value = Impl
+        Sub.Popen = NP
+
+        Impl.communicate.return_value = ( "".encode( 'UTF-8' ), ErrorMsg.encode( 'UTF-8' ) )
+
+        MyNormal = ComplexNormalizer.Factory.getInstance()
+        with self.assertRaises( RuntimeError, msg = ErrorMsg):
+            MyNormal.apply(
+                self.__Documents,
+                "na"
+            )
+
+    @patch( 'biomed.preprocessor.normalizer.complexNormalizer.Process' )
+    def test_it_returns_a_list_with_the_parsed_documents( self, Sub: MagicMock ):
+        ParsedDocumentes = "text1\ntext2\ntext3"
+        NP = MagicMock( spec = subprocess.Popen )
+        Impl = MagicMock( spec = subprocess.Popen )
+
+        NP.return_value = Impl
+        Sub.Popen = NP
+
+        Impl.communicate.return_value = ( ParsedDocumentes.encode( 'UTF-8' ), "".encode( 'UTF-8' ) )
+
         MyNormal = ComplexNormalizer.Factory.getInstance()
         self.assertListEqual(
-            [ "write love" ],
-            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc. It loves writing." ], "v" )
-        )
-
-    def test_it_filters_odd_document_formats( self ):
-        MyNormal = ComplexNormalizer.Factory.getInstance()
-        self.assertListEqual(
-            [ "write love" ],
-            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc.\n\n\n\n\nIt loves writing." ], "v" )
-        )
-
-    def test_it_filters_empty_sentences( self ):
-        MyNormal = ComplexNormalizer.Factory.getInstance()
-        self.assertListEqual(
-            [ "little" ],
-            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc.\n\n\n\n\nIt loves writing." ], "a" )
-        )
-
-    def test_it_takes_a_stack_of_documents( self ):
-        MyNormal = ComplexNormalizer.Factory.getInstance()
-        self.assertListEqual(
-            [ "write", "love", "hate", "love" ],
-            MyNormal.apply( [ "My little poney is writing a text for me, Bulloc.", "It loves writing.", "But it hates cake.", "Love it!" ], "v" )
+            MyNormal.apply(
+                self.__Documents,
+                "na"
+            ),
+            [ "text1", "text2", "text3" ]
         )
