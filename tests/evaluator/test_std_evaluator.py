@@ -370,7 +370,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         MyEval.finalize()
 
         DF.assert_any_call(
-            { self.__PM.classifier: Predicted.tolist(), 'actual': Actual },
+            { 'predicted': Predicted.tolist(), 'actual': Actual },
             columns = [ 'predicted', 'actual' ],
             index = Ids
         )
@@ -506,12 +506,12 @@ class StdEvaluatorSpec( unittest.TestCase ):
         Scorer.assert_any_call(
             y_pred = Predicted,
             y_true = Actual,
-            average = 'samples'
+            average = 'weighted'
         )
 
         DF.assert_any_call(
             [ [ Macro, Micro, Sample ] ],
-            columns = [ 'macro', 'micro', 'samples' ],
+            columns = [ 'macro', 'micro', 'weighted' ],
         )
 
         Frame.to_csv.assert_any_call( OS.path.join( Path, 'f1.csv' ) )

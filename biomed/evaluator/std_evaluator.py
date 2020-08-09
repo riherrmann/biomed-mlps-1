@@ -202,7 +202,7 @@ class StdEvaluator( Evaluator ):
     def __saveLabeledPredictions( self, Predictions: list, PMIds: list, Labels: list ):
         self.__makeFrameAndSave(
             'predictions.csv',
-            { self.__Properties.classifier: Predictions, 'actual': Labels },
+            { 'predicted': Predictions, 'actual': Labels },
             [ 'predicted', 'actual' ],
             PMIds
         )
@@ -265,14 +265,14 @@ class StdEvaluator( Evaluator ):
             F1(
                 y_pred = Predictions,
                 y_true = Actual,
-                average = 'samples'
+                average = 'weighted'
             )
         ]
 
         self.__makeFrameAndSave(
             'f1.csv',
             [ Score ],
-            [ 'macro', 'micro', 'samples' ],
+            [ 'macro', 'micro', 'weighted' ],
         )
 
         return Score

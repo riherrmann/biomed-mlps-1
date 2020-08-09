@@ -27,4 +27,5 @@ class SimpleFileWriterSpec( unittest.TestCase ):
         MyWriter.write( FileName, Content )
 
         self.__open.assert_any_call( FileName, 'x' )
-        File.writelines.assert_called_once_with( Content )
+        for Line in Content:
+            File.write.assert_any_call( Line + "\n" )
