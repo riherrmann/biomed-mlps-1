@@ -2,28 +2,21 @@ from keras.models import Sequential
 from keras.layers import Dense
 from biomed.properties_manager import PropertiesManager
 from keras.regularizers import l1
-from biomed.mlp.mlp import MLP
-from biomed.mlp.mlp import MLPFactory
+from biomed.mlp.model_base import ModelBase
 
-class SimpleFFN( MLP ):
-    class Factory( MLPFactory ):
-        @staticmethod
-        def getInstance( Properties: PropertiesManager ):
-            return SimpleFFN( Properties )
-
+class SimpleFFN( ModelBase ):
     def __init__( self, Properties: PropertiesManager ):
         super( SimpleFFN, self ).__init__( Properties )
 
-
-    def build_mlp_model(self, input_dim, nb_classes):
+    def buildModel( self, Dimensions: int ) -> str:
         Model = Sequential()
         #input layer
         Model.add(
             Dense(
                 units=10,
-                input_dim = input_dim,
+                input_dim = Dimensions,
                 activation = "relu",
-                activity_regularizer = l1(0.0001)
+                activity_regularizer = l1( 0.0001 )
             )
         )
         #hidden layer
@@ -36,7 +29,7 @@ class SimpleFFN( MLP ):
             )
         )
         #output layer
-        Model.add( Dense( units = nb_classes, activation ='sigmoid' ) )
+        Model.add( Dense( units = 2, activation ='sigmoid' ) )
 
         Model.compile(
             loss='mean_squared_error',
@@ -44,5 +37,5 @@ class SimpleFFN( MLP ):
             metrics=['accuracy']
         )
 
-        Model.summary()
         self._Model = Model
+        return self._summarize()

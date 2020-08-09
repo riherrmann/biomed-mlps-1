@@ -6,19 +6,16 @@ class PipelineRunner:
         def getInstance():
             return PipelineRunner()
 
-    def __init__( self ):
-        self.__Output = None
-
     def run( self, Permutations: list ):
-        self.__Output = {}
-        self.__runPipeline( Permutations )
-        return dict( self.__Output )
-
-    def __runPipeline( self, Permutations: list ):
         Pipe = Pipeline.Factory.getInstance()
         for Configuration in Permutations:
-            self.__Output[ Configuration[ "id" ] ] = Pipe.pipe(
-                Configuration[ "training" ],
-                Configuration[ "test" ],
-                Configuration
-            )
+            self.__runPipeline( Pipe, Configuration )
+
+    def __runPipeline( self, Pipe: Pipeline, Configuration: dict ):
+        Pipe.pipe(
+            Data = Configuration[ "trainings_data" ],
+            TestData = Configuration[ "test_data" ],
+            ShortName = Configuration[ "shortname" ],
+            Description = Configuration[ "description" ],
+            Properties = Configuration
+        )

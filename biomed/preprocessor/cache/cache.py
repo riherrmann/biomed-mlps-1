@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
+from biomed.services_getter import ServiceGetter
 
 class abstractstatic(staticmethod):
     __slots__ = ()
-    def __init__(self, function):
+    def __init__( self, function ):
         super(abstractstatic, self).__init__(function)
         function.__isabstractmethod__ = True
     __isabstractmethod__ = True
@@ -29,7 +30,7 @@ class Cache(ABC):
 
 class CacheFactory( ABC ):
     @abstractstatic
-    def getInstance() -> Cache:
+    def getInstance( getService: ServiceGetter ) -> Cache:
         pass
 
 class FileCacheFactory( ABC ):

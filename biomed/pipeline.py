@@ -1,37 +1,42 @@
 from pandas import DataFrame
+import biomed.services as Services
 from biomed.properties_manager import PropertiesManager
-from biomed.preprocessor.polymorph_preprocessor import PolymorphPreprocessor
-from biomed.text_mining_manager import TextMiningManager
+from biomed.text_mining.controller import Controller
 
 class Pipeline:
     class Factory:
         @staticmethod
         def getInstance():
-            return Pipeline( PropertiesManager() )
+            return Pipeline()
 
-    def __init__( self, Properties: PropertiesManager ):
-        self.__Properties = Properties
-
-    def __startTextminer( self ):
-        self.__TextMining = TextMiningManager(
-            self.__Properties,
-            PolymorphPreprocessor.Factory.getInstance( self.__Properties )
-        )
-
-    def pipe( self, training_data: DataFrame, test_data: DataFrame, properties: dict = None ):
-        self.__reassign( properties )
-        self.__startTextminer()
-
-        print( 'Setup for input data')
-        self.__TextMining.setup_for_input_data( training_data, test_data )
-        print( 'Setup for target dimension', self.__Properties[ "classifier" ] )
-        self.__TextMining.setup_for_target_dimension( self.__Properties[ "classifier" ] )
-        print( 'Build MLP and get predictions' )
-        return self.__TextMining.get_mlp_predictions()
-
-    def __reassign( self, New: dict ):
+    def __reassign( self, New: dict, Properties: PropertiesManager ):
         if not New:
             return
         else:
             for Key in New:
-                self.__Properties[ Key ] = New[ Key ]
+                Properties[ Key ] = New[ Key ]
+
+    def __startMining(
+        self,
+        Data: DataFrame,
+        TestData,
+        ShortName: str,
+        Description: str,
+    ):
+        Miner = Services.getService( 'test.textminer', Controller )
+        Miner.process( Data, None, ShortName, Description )
+
+    def pipe(
+        self,
+        Data: DataFrame,
+        TestData,
+        ShortName: str,
+        Description: str,
+        Properties: dict = None
+    ):
+        Services.startServices()
+        self.__reassign(
+            Properties,
+            Services.getService( 'properties', PropertiesManager )
+        )
+        self.__startMining( Data, TestData, ShortName, Description )

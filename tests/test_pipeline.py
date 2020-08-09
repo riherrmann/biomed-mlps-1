@@ -1,119 +1,45 @@
 import unittest
-from unittest.mock import MagicMock, patch, ANY
-
-from pandas import DataFrame
+from unittest.mock import MagicMock, patch
 from biomed.pipeline import Pipeline
-from biomed.text_mining_manager import TextMiningManager
 from biomed.properties_manager import PropertiesManager
+from biomed.text_mining.text_mining_controller import TextminingController
 
 class PipelineSpec( unittest.TestCase ):
+    def test_it_is_a_pipeline( self ):
+        self.assertTrue( isinstance( Pipeline.Factory.getInstance(), Pipeline ) )
 
-    @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
-    def test_it_is_a_Pipeline( self, _ ):
+    @patch( 'biomed.pipeline.Services' )
+    def test_it_starts_the_service_locator( self, Services: MagicMock ):
         Pipe = Pipeline.Factory.getInstance()
-        self.assertTrue( isinstance( Pipe, Pipeline ) )
+        Pipe.pipe( MagicMock(), MagicMock(), MagicMock(), MagicMock(), MagicMock() )
 
-    @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
-    @patch( 'biomed.pipeline.PropertiesManager' )
-    def test_it_initializes_the_properties_manager( self, PM: MagicMock, _ ):
-        Pipeline.Factory.getInstance()
-        PM.assert_called_once_with()
+        Services.startServices.assert_called_once()
 
-    @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
-    @patch( 'biomed.pipeline.PropertiesManager' )
-    @patch( 'biomed.pipeline.TextMiningManager' )
-    def test_it_initializes_the_text_mining(
-        self,
-        TM: MagicMock,
-        PMF: MagicMock,
-        PPF: MagicMock
-    ):
-        TrainData = {
-            'pmid': [ 23 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 42 ],
-            'is_cancer': [ False ],
-            'text': [ "My little cute poney is a poney" ]
-        }
-        TestData = {
-            'pmid': [ 42 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 23 ],
-            'is_cancer': [ False ],
-            'text': [ "My little cute poney is a poney" ]
-        }
+    @patch( 'biomed.pipeline.Services' )
+    def test_it_reassings_properties( self, Services: MagicMock ):
+        PM = PropertiesManager()
+        PM.classifier = 'is_cancer'
 
-        Train = DataFrame( TrainData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        Test = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-
-        PM = MagicMock( spec = PropertiesManager )
-        PMF.return_value = PM
+        Services.getService.side_effect = lambda Key, __ : PM if Key == 'properties' else MagicMock()
 
         Pipe = Pipeline.Factory.getInstance()
-        Pipe.pipe( Train, Test )
+        Pipe.pipe( MagicMock(), MagicMock(), MagicMock(), MagicMock(), { 'classifier': 'doid' } )
 
-        PPF.assert_called_once_with( PM )
-
-        TM.assert_called_once_with(
-            PM,
-            ANY
-        )
-
-    @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
-    @patch( 'biomed.pipeline.TextMiningManager' )
-    def test_it_runs_the_text_miner_with_the_given_data( self, TM: MagicMock, _ ):
-        TrainData = {
-            'pmid': [ 23 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 42 ],
-            'is_cancer': [ False ],
-            'text': [ "My little cute poney is a poney" ]
-        }
-        TestData = {
-            'pmid': [ 42 ],
-            'cancer_type': [ -1 ],
-            'doid': [ 23 ],
-            'is_cancer': [ False ],
-            'text': [ "My little cute poney is a poney" ]
-        }
-
-        Train = DataFrame( TrainData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-        Test = DataFrame( TestData, columns = [ 'pmid', 'cancer_type', 'doid', 'is_cancer', 'text' ] )
-
-        TMM = MagicMock( spec = TextMiningManager )
-        TM.return_value = TMM
-
-        Pipe = Pipeline.Factory.getInstance()
-        Pipe.pipe( Train, Test )
-
-        TMM.setup_for_input_data.assert_called_once_with( Train, Test )
-
-    @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
-    @patch( 'biomed.pipeline.TextMiningManager' )
-    def test_it_returns_the_computed_predictions( self, TM: MagicMock, _ ):
-        Expected = 42
-        TMM = MagicMock( spec = TextMiningManager )
-        TMM.get_mlp_predictions.return_value = Expected
-        TM.return_value = TMM
-
-        Pipe = Pipeline.Factory.getInstance()
         self.assertEqual(
-            Expected,
-            Pipe.pipe( MagicMock(), MagicMock() )
+            'doid',
+            PM.classifier
         )
 
-    @patch( 'biomed.pipeline.PolymorphPreprocessor.Factory.getInstance' )
-    @patch( 'biomed.pipeline.TextMiningManager' )
-    @patch( 'biomed.pipeline.PropertiesManager' )
-    def test_it_assigns_new_properties( self, PMF: MagicMock, _, __ ):
-        PM = { "classifier": "is_cancer" }
-        PMF.return_value = PM
-        Expected = { "workers": 23, "classifier": "is_cancer" }
+    @patch( 'biomed.pipeline.Services' )
+    def test_it_kicks_off_the_test_run( self, Services: MagicMock ):
+        TMC = MagicMock( spec = TextminingController )
+        Short = MagicMock()
+        Description = MagicMock()
+        Data = MagicMock()
+
+        Services.getService.side_effect = lambda Key, __ : TMC if Key == 'test.textminer' else MagicMock()
 
         Pipe = Pipeline.Factory.getInstance()
-        Pipe.pipe( MagicMock(), MagicMock(),Expected )
+        Pipe.pipe( Data, None, Short, Description, None  )
 
-        self.assertDictEqual(
-            Expected,
-            PM
-        )
+        TMC.process.assert_called_once_with( Data, None, Short, Description )

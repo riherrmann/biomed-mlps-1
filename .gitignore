@@ -1,4 +1,6 @@
 .DS_Store
+/ignoreMe/*
+/aux/*
 /.idea/*.xml
 /.gradle/
 /nlpclient/client.jar

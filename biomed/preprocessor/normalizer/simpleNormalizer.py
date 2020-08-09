@@ -72,8 +72,11 @@ class SimpleNormalizer( Normalizer ):
             "l": LowerFilter.Factory.getInstance(),
             "*": PunctuationFilter.Factory.getInstance()
         }
-        @staticmethod
-        def getInstance() -> Normalizer:
+
+        def getApplicableFlags( self ) -> list:
+            return [ "l", "s", "w" ]
+
+        def getInstance( self ) -> Normalizer:
             return SimpleNormalizer( {
                     "s": StemFilter.Factory.getInstance(),
                     "w": StopWordsFilter.Factory.getInstance(),

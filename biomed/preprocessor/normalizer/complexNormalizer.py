@@ -58,6 +58,8 @@ class ComplexNormalizer( Normalizer ):
         return "\n".join( StackOfDocument ).strip()
 
     class Factory( NormalizerFactory ):
-        @staticmethod
-        def getInstance() -> Normalizer:
+        def getApplicableFlags( self ) -> list:
+            return [ "a", "d", "n", "v"  ]
+
+        def getInstance( self ) -> Normalizer:
             return ComplexNormalizer()
