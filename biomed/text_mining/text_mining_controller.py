@@ -103,11 +103,11 @@ class TextminingController( Controller ):
         )
 
         self.__Evaluator.captureVectorizingTime()
-        self.__Evaluator.captureFeatures(
+        """self.__Evaluator.captureFeatures(
             ( TrainingIds, TrainingFeatures ),
             ( TestIds, TestFeatures ),
             self.__Vectorizer.getSupportedFeatures()
-        )
+        )"""
 
         return ( TrainingFeatures, TestFeatures )
 

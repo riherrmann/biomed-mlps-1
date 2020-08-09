@@ -447,6 +447,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__Evaluator.captureVectorizingTime.assert_called_once()
 
+    @unittest.skip( "currently disabled due reducing the runtime")
     def test_it_captures_the_resulting_features_and_their_Labels( self ):
         TrainingIds = MagicMock()
         TrainFeatures = MagicMock()
