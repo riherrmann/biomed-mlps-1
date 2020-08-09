@@ -7,15 +7,16 @@ from biomed.vectorizer.vectorizer import Vectorizer
 from biomed.mlp.mlp import MLP
 from biomed.evaluator.evaluator import Evaluator
 from biomed.mlp.input_data import InputData
+from biomed.encoder.categorie_encoder import CategoriesEncoder
 from biomed.services_getter import ServiceGetter
 from pandas import DataFrame, Series
-from tensorflow.keras.utils import to_categorical as hotEncode
 from numpy import array as Array
 
 class TextminingController( Controller ):
     def __init__(
         self,
         Properties: PropertiesManager,
+        Encoder: CategoriesEncoder,
         FacilityManager: FacilityManager,
         Splitter: Splitter,
         Preprocessor: Preprocessor,
@@ -24,6 +25,7 @@ class TextminingController( Controller ):
         Evaluator: Evaluator
     ):
         self.__Properties = Properties
+        self.__Encoder = Encoder
         self.__FacilityManager = FacilityManager
         self.__Splitter = Splitter
         self.__Evaluator = Evaluator
@@ -134,11 +136,10 @@ class TextminingController( Controller ):
         )
 
     def __hotEncodeLabel( self, Ids: Series ) -> tuple:
-        return hotEncode(
-            self.__Data[ self.__Properties.classifier ]
-                .filter( list( Ids ) )
-                .to_numpy(),
-            len( self.__Categories )
+        return self.__Encoder.hotEncode(
+            self.__convertToArray(
+                list( self.__Data[ self.__Properties.classifier ].filter( list( Ids ) ) )
+            )
         )
 
     def __makeInputData( self, Training: tuple, Validation: tuple, Test: tuple ) -> tuple:
@@ -175,6 +176,7 @@ class TextminingController( Controller ):
     def __predict( self, TestIds: Series, Features: InputData, Labels: InputData ):
         print( "prediciting..." )
         Predictions = self.__Model.predict( Features.Test )
+        Predictions = self.__Encoder.decode( Predictions )
         Expected = list( self.__Data[ self.__Properties.classifier ].filter( TestIds ) )
 
         self.__Evaluator.caputrePredictingTime()
@@ -187,7 +189,7 @@ class TextminingController( Controller ):
         self.__Evaluator.score(
             Predictions,
             Expected,
-            self.__Categories
+            self.__Encoder.getCategories()
     )
 
     def __trainAndPredict( self, Training: tuple, Test: tuple ):
@@ -224,10 +226,6 @@ class TextminingController( Controller ):
 
         self.__printResults( self.__Evaluator.finalize() )
 
-    def __getCategories( self ):
-        self.__Categories = self.__Data[ self.__Properties.classifier ].unique()
-        self.__Categories.sort()
-
     def process(
         self,
         Data: DataFrame,
@@ -237,7 +235,7 @@ class TextminingController( Controller ):
     ):
         self.__Evaluator.start( ShortName, Description )
         self.__Data = self.__FacilityManager.clean( Data )
-        self.__getCategories()
+        self.__Encoder.setCategories( self.__Data[ self.__Properties.classifier ] )
         self.__runFolds()
 
     class Factory( ControllerFactory ):
@@ -245,6 +243,7 @@ class TextminingController( Controller ):
         def getInstance( getService: ServiceGetter ) -> Controller:
             return TextminingController(
                 getService( 'properties', PropertiesManager ),
+                getService( 'categories', CategoriesEncoder ),
                 getService( 'facilitymanager', FacilityManager ),
                 getService( 'splitter', Splitter ),
                 getService( 'preprocessor', Preprocessor ),

@@ -15,6 +15,7 @@ from biomed.utils.json_file_writer import JSONFileWriter
 from biomed.utils.csv_file_writer import CSVFileWriter
 import biomed.evaluator.std_evaluator as Eval
 import biomed.splitter.std_splitter as Split
+from biomed.encoder.std_categorie_encoder import StdCategoriesEncoder
 import biomed.text_mining.text_mining_controller as TMC
 
 __Services = ServiceLocator()
@@ -60,6 +61,10 @@ def startServices() -> None:
         MariosFacilityManager.Factory.getInstance()
     )
 
+    __Services.set(
+        "categories",
+        StdCategoriesEncoder.Factory.getInstance()
+    )
 
     #dependend services
     __Services.set(
@@ -123,6 +128,7 @@ def startServices() -> None:
         TMC.TextminingController.Factory.getInstance( getService ),
         Dependencies = [
             'properties',
+            'categories',
             'facilitymanager',
             'splitter',
             'preprocessor',

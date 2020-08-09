@@ -10,6 +10,7 @@ from biomed.vectorizer.vectorizer import Vectorizer
 from biomed.mlp.mlp import MLP
 from biomed.mlp.input_data import InputData
 from biomed.evaluator.evaluator import Evaluator
+from biomed.encoder.categorie_encoder import CategoriesEncoder
 from pandas import DataFrame, Series
 from numpy import array as Array
 
@@ -34,6 +35,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__INDF = patch( 'biomed.text_mining.text_mining_controller.InputData' )
 
         self.__PM = PropertiesManager()
+        self.__Encoder = MagicMock( spec = CategoriesEncoder )
         self.__FacilityManager = MagicMock( spec = FacilityManager )
         self.__Splitter = MagicMock( spec = Splitter )
         self.__Preprocessor = MagicMock( spec = Preprocessor )
@@ -65,6 +67,7 @@ class TextminingControllerSpec( unittest.TestCase ):
     def __fakeLocator( self, ServiceKey: str, _ ):
         Dependencies = {
             'properties': self.__PM,
+            'categories': self.__Encoder,
             'facilitymanager': self.__FacilityManager,
             'splitter': self.__Splitter,
             'preprocessor': self.__Preprocessor,
@@ -83,6 +86,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         def fakeLocator( ServiceKey: str, Type ):
             Dependencies = {
                 'properties': PropertiesManager,
+                'categories': CategoriesEncoder,
                 'splitter': Splitter,
                 'facilitymanager': FacilityManager,
                 'preprocessor': Preprocessor,
@@ -104,7 +108,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         TextminingController.Factory.getInstance( ServiceGetter )
         self.assertEqual(
-            7,
+            8,
             ServiceGetter.call_count
         )
 
@@ -137,6 +141,36 @@ class TextminingControllerSpec( unittest.TestCase ):
         )
 
         self.__FacilityManager.clean.assert_called_once_with( Data )
+
+    def test_it_sets_the_categories_for_binary( self ):
+        self.__PM.classifier = 'is_cancer'
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = self.__Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        self.__Encoder.setCategories.assert_called_once_with(
+            self.__Data[ 'is_cancer' ]
+        )
+
+    def test_it_sets_the_categories_for_mulit_class( self ):
+        self.__PM.classifier = 'doid'
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = self.__Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        self.__Encoder.setCategories.assert_called_once_with(
+            self.__Data[ 'doid' ]
+        )
 
     def test_it_splits_the_test_data_for_binary( self ):
         self.__PM.classifier = 'is_cancer'
@@ -548,11 +582,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             ArgumentsFeatures[ 2 ].tolist()
         )
 
-    @patch( 'biomed.text_mining.text_mining_controller.hotEncode' )
-    def test_it_hot_encodes_the_labels_for_binary(
-        self,
-        HotEncoder: MagicMock
-    ):
+    def test_it_hot_encodes_the_labels_for_binary( self ):
         TrainingFeatures = Array( [ [ 0., 2. ], [ 0.1, 0.3 ] ] )
         TrainingIds = Series( [ '1a' ] )
         ValidationIds = Series( [ '2a' ] )
@@ -575,42 +605,26 @@ class TextminingControllerSpec( unittest.TestCase ):
             Description = MagicMock()
         )
 
-        ArgumentsLabels, _ = HotEncoder.call_args_list[ 0 ]
+        ArgumentsLabels, _ = self.__Encoder.hotEncode.call_args_list[ 0 ]
 
         self.assertEqual(
             list( self.__Data[ 'is_cancer' ].filter( list( TrainingIds ) ) ),
             ArgumentsLabels[ 0 ].tolist()
         )
-        self.assertEqual(
-            2,
-            ArgumentsLabels[ 1 ]
-        )
 
-        ArgumentsLabels, _ = HotEncoder.call_args_list[ 1 ]
+        ArgumentsLabels, _ = self.__Encoder.hotEncode.call_args_list[ 1 ]
         self.assertEqual(
             list( self.__Data[ 'is_cancer' ].filter( list( ValidationIds ) ) ),
             ArgumentsLabels[ 0 ].tolist()
         )
-        self.assertEqual(
-            2,
-            ArgumentsLabels[ 1 ]
-        )
 
-        ArgumentsLabels, _ = HotEncoder.call_args_list[ 2 ]
+        ArgumentsLabels, _ = self.__Encoder.hotEncode.call_args_list[ 2 ]
         self.assertEqual(
             list( self.__Data[ 'is_cancer' ].filter( list( TestIds ) ) ),
             ArgumentsLabels[ 0 ].tolist()
         )
-        self.assertEqual(
-            2,
-            ArgumentsLabels[ 1 ]
-        )
 
-    @patch( 'biomed.text_mining.text_mining_controller.hotEncode' )
-    def test_it_hot_encodes_the_labels_for_multiclass(
-        self,
-        HotEncoder: MagicMock
-    ):
+    def test_it_hot_encodes_the_labels_for_multiclass( self ):
         TrainingFeatures = Array( [ [ 0., 2. ], [ 0.1, 0.3 ] ] )
         TrainingIds = Series( [ '1a' ] )
         ValidationIds = Series( [ '2a' ] )
@@ -633,44 +647,29 @@ class TextminingControllerSpec( unittest.TestCase ):
             Description = MagicMock()
         )
 
-        ArgumentsLabels, _ = HotEncoder.call_args_list[ 0 ]
+        ArgumentsLabels, _ = self.__Encoder.hotEncode.call_args_list[ 0 ]
 
         self.assertEqual(
             list( self.__Data[ 'doid' ].filter( list( TrainingIds ) ) ),
             ArgumentsLabels[ 0 ].tolist()
         )
-        self.assertEqual(
-            len( self.__Data[ 'doid' ].unique() ),
-            ArgumentsLabels[ 1 ]
-        )
 
-        ArgumentsLabels, _ = HotEncoder.call_args_list[ 1 ]
+        ArgumentsLabels, _ = self.__Encoder.hotEncode.call_args_list[ 1 ]
         self.assertEqual(
             list( self.__Data[ 'doid' ].filter( list( ValidationIds ) ) ),
             ArgumentsLabels[ 0 ].tolist()
         )
-        self.assertEqual(
-            len( self.__Data[ 'doid' ].unique() ),
-            ArgumentsLabels[ 1 ]
-        )
 
-        ArgumentsLabels, _ = HotEncoder.call_args_list[ 2 ]
+        ArgumentsLabels, _ = self.__Encoder.hotEncode.call_args_list[ 2 ]
         self.assertEqual(
             list( self.__Data[ 'doid' ].filter( list( TestIds ) ) ),
             ArgumentsLabels[ 0 ].tolist()
         )
-        self.assertEqual(
-            len( self.__Data[ 'doid' ].unique() ),
-            ArgumentsLabels[ 1 ]
-        )
 
-
-    @patch( 'biomed.text_mining.text_mining_controller.hotEncode' )
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
     def test_it_collects_the_input_data_for_labels(
         self,
         DataBinding: MagicMock,
-        HotEncoder: MagicMock
     ):
         TrainingFeatures = Array( [ [ 0., 2. ], [ 0.1, 0.3 ] ] )
         TrainingIds = Series( [ '1a' ] )
@@ -690,7 +689,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Splitter.validationSplit.return_value = ( TrainingIds, ValidationIds )
         self.__Vectorizer.featureizeTrain.return_value = TrainingFeatures
         self.__Vectorizer.featureizeTest.return_value = TestFeatures
-        HotEncoder.side_effect = lambda _, __ : Encoded.pop( 0 )
+        self.__Encoder.hotEncode.side_effect = lambda _ : Encoded.pop( 0 )
 
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
@@ -852,6 +851,20 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         self.__MLP.predict.assert_called_once_with( Test )
 
+    def test_it_decodes_the_predicted_data( self ):
+        Predicted = MagicMock()
+        self.__MLP.predict.return_value = Predicted
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = self.__Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        self.__Encoder.decode.assert_called_once_with( Predicted )
+
     def test_it_captures_the_prediction_time( self ):
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
@@ -871,7 +884,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         Predictions = MagicMock()
 
 
-        self.__MLP.predict.return_value = Predictions
+        self.__Encoder.decode.return_value = Predictions
         self.__PM.classifier = 'is_cancer'
 
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
@@ -909,7 +922,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         Predictions = MagicMock()
 
 
-        self.__MLP.predict.return_value = Predictions
+        self.__Encoder.decode.return_value = Predictions
         self.__PM.classifier = 'doid'
 
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
@@ -947,7 +960,8 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         Predictions = MagicMock()
 
-        self.__MLP.predict.return_value = Predictions
+        self.__Encoder.decode.return_value = Predictions
+        self.__Encoder.getCategories.return_value = ClassLabels
         self.__PM.classifier = 'is_cancer'
 
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
@@ -985,7 +999,8 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         Predictions = MagicMock()
 
-        self.__MLP.predict.return_value = Predictions
+        self.__Encoder.decode.return_value = Predictions
+        self.__Encoder.getCategories.return_value = ClassLabels
         self.__PM.classifier = 'doid'
 
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )

@@ -13,6 +13,7 @@ from biomed.mlp.mlp import MLP
 from biomed.utils.file_writer import FileWriter
 from biomed.evaluator.evaluator import Evaluator
 from biomed.splitter.splitter import Splitter
+from biomed.encoder.categorie_encoder import CategoriesEncoder
 from biomed.text_mining.controller import Controller
 
 class ServicesSpec( unittest.TestCase ):
@@ -33,6 +34,7 @@ class ServicesSpec( unittest.TestCase ):
                 "evaluator.csv": MagicMock( spec = FileWriter ),
                 "facilitymanager": MagicMock( spec = FacilityManager ),
                 "splitter": MagicMock( spec = Splitter ),
+                "categories": MagicMock( spec = CategoriesEncoder ),
                 "mlp": MagicMock( spec = MLP )
             }
 
@@ -98,6 +100,21 @@ class ServicesSpec( unittest.TestCase ):
         Locator.set.assert_any_call(
             "preprocessor.cache.shared",
             SM
+        )
+
+    @patch( 'biomed.services.StdCategoriesEncoder.Factory.getInstance' )
+    @patch( 'biomed.services.__Services', spec = ServiceLocator )
+    def test_it_initilizes_the_categories_encoder( self, Locator: MagicMock, CF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        C = MagicMock( spec = CategoriesEncoder )
+        CF.return_value = C
+
+        Services.startServices()
+
+        CF.assert_called_once()
+        Locator.set.assert_any_call(
+            "categories",
+            C
         )
 
     @patch( 'biomed.services.NPC.NumpyArrayFileCache.Factory.getInstance' )
@@ -300,6 +317,7 @@ class ServicesSpec( unittest.TestCase ):
             TMC,
             Dependencies = [
                 'properties',
+                'categories',
                 'facilitymanager',
                 'splitter',
                 'preprocessor',
