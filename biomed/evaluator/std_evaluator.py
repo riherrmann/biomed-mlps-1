@@ -125,14 +125,14 @@ class StdEvaluator( Evaluator ):
 
     async def __capturePreprocessedData( self, Processed: Series, Original: Series ):
         Sizes = {
-            'processed': memSize( list( Processed ) ),
-            'original': memSize( list( Original ) )
+            'processed': Processed.memory_usage( deep = True ),
+            'original': Original.memory_usage( deep = True )
         }
 
         self.__writeCSV( "sizes.csv", Sizes )
 
-    def capturePreprocessedData( self, TrainDocs: Series, TestDocs: Series ):
-        self.__enqueueStep( self.__capturePreprocessedData( TrainDocs, TestDocs ) )
+    def capturePreprocessedData( self, Processed: Series, Original: Series ):
+        self.__enqueueStep( self.__capturePreprocessedData( Processed, Original ) )
 
     async def __captureFeatures(
         self,

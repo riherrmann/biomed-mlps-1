@@ -176,21 +176,15 @@ class StdEvaluatorSpec( unittest.TestCase ):
         memSize: MagicMock
     ):
         ShortName = "Test"
-        Org = Series( [ "abca", "bacac" ] )
-        Pro = Series( [ "asd", "awqwe" ] )
+        Org = MagicMock( spec = Series )
+        Pro = MagicMock( spec = Series )
 
         OrgSize = 42
         ProSize = 23
 
-        def getSize( List: list ):
-            if List == list( Pro ):
-                return ProSize
-            elif List == list( Org ):
-                return OrgSize
-            else:
-                raise RuntimeError( 'Unrecognized list' )
+        Org.memory_usage.return_value = OrgSize
+        Pro.memory_usage.return_value = ProSize
 
-        memSize.side_effect = getSize
 
         Path = OS.path.join(
             self.__PM.result_dir,
@@ -206,6 +200,9 @@ class StdEvaluatorSpec( unittest.TestCase ):
             OS.path.join( Path, 'sizes.csv' ),
             { 'processed': ProSize, 'original': OrgSize }
         )
+
+        Org.memory_usage.assert_called_once_with( deep = True )
+        Pro.memory_usage.assert_called_once_with( deep = True )
 
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
     def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_features(
