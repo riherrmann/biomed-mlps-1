@@ -32,6 +32,7 @@ class PropertiesManager:
 
         self.selection = dict(
             type = False,
+            amountOfFeatures = 500,
         )
 
         self.training = dict(
