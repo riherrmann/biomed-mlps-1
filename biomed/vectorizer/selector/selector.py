@@ -21,14 +21,11 @@ class Selector( ABC ):
         pass
 
     @abstractmethod
-    def getSupportedFeatures( self, Labels: list ) -> list:
+    def getSupportedFeatures( self, FeatureNames: list ) -> list:
         pass
 
 
-class SelectorFactory( ABC ):
-    def __init__( self, getService: ServiceGetter ):
-        self._getService = getService
-
-    @abstractmethod
-    def getInstance( self ) -> Selector:
+class SelectorFactory:
+    @abstractstatic
+    def getInstance( getService: ServiceGetter ) -> Selector:
         pass
