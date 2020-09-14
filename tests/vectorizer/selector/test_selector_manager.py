@@ -11,14 +11,20 @@ class SelectorManagerSpec( unittest.TestCase ):
             spec = Selector
         )
 
+        self.__FP = patch(
+            'biomed.vectorizer.selector.selector_manager.FactorSelector',
+            spec = Selector
+        )
+
         self.__D = self.__DP.start()
+        self.__F = self.__FP.start()
         self.__ReferenceSelector = MagicMock( spec = Selector )
         self.__D.return_value = self.__ReferenceSelector
         self.__PM = PropertiesManager()
 
     def tearDown( self ):
         self.__DP.stop()
-
+        self.__FP.stop()
 
     def __fakeLocator( self, _, __ ):
         return self.__PM
@@ -45,7 +51,8 @@ class SelectorManagerSpec( unittest.TestCase ):
 
     def test_it_uses_the_given_selectors( self ):
         Selectors = {
-            "dependency": self.__D
+            "dependency": self.__D,
+            "factor": self.__F,
         }
 
         for SelectorKey in Selectors:
