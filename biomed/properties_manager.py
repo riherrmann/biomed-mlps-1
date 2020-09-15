@@ -3,7 +3,7 @@ import os as OS
 class PropertiesManager:
     def __init__(self):
         self.classifier = "is_cancer"
-        self.model = "c"
+        self.model = "b2"
 
         self.splitting = dict(
             folds = 1,

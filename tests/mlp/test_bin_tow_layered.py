@@ -1,20 +1,20 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from keras.models import Sequential
-from biomed.mlp.simpleCEx import SimpleCExtendedFFN
+from biomed.mlp.bin_tow_layered import Bin2Layered
 
-class SimpleCExtendedFFNSpec( unittest.TestCase ):
-    @patch( 'biomed.mlp.simpleCEx.Sequential' )
+class Bin2LayerSpec( unittest.TestCase ):
+    @patch( 'biomed.mlp.bin_tow_layered.Sequential' )
     def test_it_compiles_the_model( self, MC: MagicMock ):
         Model = MagicMock( spec = Sequential )
         MC.return_value = Model
 
-        Simple = SimpleCExtendedFFN( MagicMock() )
+        Simple = Bin2Layered( MagicMock() )
         Simple.buildModel( MagicMock() )
 
         Model.compile.assert_called_once()
 
-    @patch( 'biomed.mlp.simpleCEx.Sequential' )
+    @patch( 'biomed.mlp.bin_tow_layered.Sequential' )
     def test_it_returns_the_model_summary( self, MC: MagicMock ):
         Summary = "summary"
         def summarize( print_fn ):
@@ -25,7 +25,7 @@ class SimpleCExtendedFFNSpec( unittest.TestCase ):
 
         Model.summary.side_effect = summarize
 
-        Simple = SimpleCExtendedFFN( MagicMock() )
+        Simple = Bin2Layered( MagicMock() )
         self.assertEqual(
             Simple.buildModel( MagicMock() ),
             Summary

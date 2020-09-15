@@ -2,30 +2,14 @@ from biomed.mlp.mlp import MLP
 from biomed.mlp.mlp import MLPFactory
 from biomed.mlp.input_data import InputData
 import biomed.services_getter as ServiceGetter
-from biomed.mlp.multiSimple import MultiSimpleFFN
-from biomed.mlp.multiSimpleB import MultiSimpleBFFN
-from biomed.mlp.simple import SimpleFFN
-from biomed.mlp.simpleEx import SimpleExtendedFFN
-from biomed.mlp.simpleB import SimpleBFFN
-from biomed.mlp.simpleBEx import SimpleBExtendedFFN
-from biomed.mlp.simpleC import SimpleCFFN
-from biomed.mlp.simpleCEx import SimpleCExtendedFFN
-from biomed.mlp.complex import ComplexFFN
+from biomed.mlp.bin_tow_layered import Bin2Layered
 from biomed.properties_manager import PropertiesManager
 from numpy import array as Array
 
 class MLPManager( MLP ):
     def __init__( self, PM: PropertiesManager ):
         self.__Models = {
-            "s": SimpleFFN,
-            "sx": SimpleExtendedFFN,
-            "sb": SimpleBFFN,
-            "sbx": SimpleBExtendedFFN,
-            "sc": SimpleCFFN,
-            "scx": SimpleCExtendedFFN,
-            "ms": MultiSimpleFFN,
-            "msb": MultiSimpleBFFN,
-            "c": ComplexFFN,
+            "b2": Bin2Layered,
         }
 
         self.__Model = None

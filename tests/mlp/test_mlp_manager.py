@@ -6,43 +6,19 @@ from biomed.properties_manager import PropertiesManager
 
 class MLPManagerSpec( unittest.TestCase ):
     def setUp( self ):
-        self.__SP = patch( 'biomed.mlp.mlp_manager.SimpleFFN', spec = MLP )
-        self.__SXP = patch( 'biomed.mlp.mlp_manager.SimpleExtendedFFN', spec = MLP )
-        self.__SBP = patch( 'biomed.mlp.mlp_manager.SimpleBFFN', spec = MLP )
-        self.__SBXP = patch( 'biomed.mlp.mlp_manager.SimpleBExtendedFFN', spec = MLP )
-        self.__SCP = patch( 'biomed.mlp.mlp_manager.SimpleCFFN', spec = MLP )
-        self.__SCXP = patch( 'biomed.mlp.mlp_manager.SimpleCExtendedFFN', spec = MLP )
-        self.__MSP = patch( 'biomed.mlp.mlp_manager.MultiSimpleFFN', spec = MLP )
-        self.__MSBP = patch( 'biomed.mlp.mlp_manager.MultiSimpleBFFN', spec = MLP )
-        self.__CP = patch( 'biomed.mlp.mlp_manager.ComplexFFN', spec = MLP )
+        self.__B2P = patch( 'biomed.mlp.mlp_manager.Bin2Layered', spec = MLP )
 
-        self.__S = self.__SP.start()
-        self.__SX = self.__SXP.start()
-        self.__SB = self.__SBP.start()
-        self.__SBX = self.__SBXP.start()
-        self.__SC = self.__SCP.start()
-        self.__SCX = self.__SCXP.start()
-        self.__MS = self.__MSP.start()
-        self.__MSB = self.__MSBP.start()
-        self.__C = self.__CP.start()
+        self.__B2 = self.__B2P.start()
 
         self.__ReferenceModel = MagicMock( spec = MLP )
-        self.__S.return_value = self.__ReferenceModel
+        self.__B2.return_value = self.__ReferenceModel
 
     def tearDown( self ):
-        self.__SP.stop()
-        self.__SXP.stop()
-        self.__SBP.stop()
-        self.__SBXP.stop()
-        self.__SCP.stop()
-        self.__SCXP.stop()
-        self.__MSP.stop()
-        self.__MSBP.stop()
-        self.__CP.stop()
+        self.__B2P.stop()
 
     def __fakeLocator( self, _, __ ):
         PM = PropertiesManager()
-        PM.model = "s"
+        PM.model = "b2"
         return PM
 
     def test_it_is_a_mlp_instance( self ):
@@ -50,15 +26,7 @@ class MLPManagerSpec( unittest.TestCase ):
 
     def test_it_initializes_a_models( self  ):
         Models = {
-            "s": self.__S,
-            "sx": self.__SX,
-            "sb": self.__SB,
-            "sbx": self.__SBX,
-            "sc": self.__SC,
-            "scx": self.__SCX,
-            "ms": self.__MS,
-            "msb": self.__MSB,
-            "c": self.__C,
+            "b2": self.__B2,
         }
 
         for ModelKey in Models:
@@ -78,12 +46,12 @@ class MLPManagerSpec( unittest.TestCase ):
             ServiceGetter.assert_called_once()
 
     def test_it_deligates_the_dimensionality_to_the_model( self  ):
-        Dimensions = 2
+        InputShape = ( 2, 3 )
 
         MyManager = MLPManager.Factory.getInstance( self.__fakeLocator )
-        MyManager.buildModel( 2 )
+        MyManager.buildModel( InputShape )
 
-        self.__ReferenceModel.buildModel.assert_called_once_with( Dimensions )
+        self.__ReferenceModel.buildModel.assert_called_once_with( InputShape )
 
 
     def test_it_returns_the_summary_of_the_builded_model( self ):
@@ -104,7 +72,7 @@ class MLPManagerSpec( unittest.TestCase ):
         self.__ReferenceModel.train.return_value = Expected
 
         Model = MLPManager.Factory.getInstance( self.__fakeLocator )
-        Model.buildModel( 2 )
+        Model.buildModel( ( 2, 3 ) )
 
         self.assertEqual(
             Expected,
@@ -117,7 +85,7 @@ class MLPManagerSpec( unittest.TestCase ):
         self.__ReferenceModel.getTrainingScore.return_value = Expected
 
         Model = MLPManager.Factory.getInstance( self.__fakeLocator )
-        Model.buildModel( 2 )
+        Model.buildModel( ( 2, 3 ) )
 
         self.assertEqual(
             Expected,
@@ -130,7 +98,7 @@ class MLPManagerSpec( unittest.TestCase ):
         self.__ReferenceModel.predict.return_value = Expected
 
         Model = MLPManager.Factory.getInstance( self.__fakeLocator )
-        Model.buildModel( 2 )
+        Model.buildModel( ( 2, 3) )
 
         self.assertEqual(
             Expected,
