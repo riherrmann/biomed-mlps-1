@@ -1,6 +1,9 @@
 from biomed.properties_manager import PropertiesManager
 from biomed.mlp.mlp import MLP
 from biomed.mlp.input_data import InputData
+from keras.callbacks import EarlyStopping as Stopper
+from keras.callbacks import ModelCheckpoint as Checkpoint
+from keras.models import load_model as loadModel
 from typing import Union
 import numpy as NP
 
@@ -15,6 +18,23 @@ class ModelBase( MLP ):
         self._Model.summary( print_fn = lambda X: Summery.append( X ) )
         return "\n".join( Summery )
 
+    def __initStopper( self ) -> Stopper:
+        return Stopper(
+            monitor = 'val_loss',
+            mode = 'min',
+            verbose = 1,
+            patience = self._Properties.training[ 'patience' ]
+        )
+
+    def __initCheckpoint( self ) -> Checkpoint:
+        return Checkpoint(
+            'model.h5',
+            monitor = 'val_accuracy',
+            mode = 'max',
+            verbose = 1,
+            save_best_only = True
+        )
+
     def train( self, X: InputData, Y: InputData, Weights: Union[ None, dict ] = None ) -> dict:
         print("Training...")
         Hist = self._Model.fit(
@@ -26,9 +46,14 @@ class ModelBase( MLP ):
             batch_size = self._Properties.training['batch_size'],
             validation_data = ( X.Validation, Y.Validation ),
             workers = self._Properties.training['workers'],
-            use_multiprocessing = self.__isMultiprocessing()
+            use_multiprocessing = self.__isMultiprocessing(),
+            callbacks = [
+                self.__initStopper(),
+                self.__initCheckpoint(),
+            ]
         )
 
+        self._Model = loadModel( 'model.h5' )
         self.__Trained = True
 
         return Hist.history
