@@ -2,6 +2,7 @@ from biomed.vectorizer.selector.selector import Selector, SelectorFactory
 from biomed.vectorizer.selector.dependency_selector import DependencySelector
 from biomed.vectorizer.selector.factor_selector import FactorSelector
 from biomed.vectorizer.selector.regression_selector import RegressionSelector
+from biomed.vectorizer.selector.logistic_regression_selector import LogisticRegressionSelector
 from biomed.properties_manager import PropertiesManager
 from biomed.services_getter import ServiceGetter
 from pandas import Series
@@ -15,6 +16,7 @@ class SelectorManager( Selector ):
             "dependency": DependencySelector,
             "factor": FactorSelector,
             "regression": RegressionSelector,
+            "logisticRegression": LogisticRegressionSelector,
         }
 
     def __buildSelectorModel( self, X: Array, Labels: Series, Weights: Union[ None, dict ] ):
