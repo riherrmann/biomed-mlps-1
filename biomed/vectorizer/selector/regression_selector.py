@@ -1,17 +1,16 @@
 from biomed.vectorizer.selector.selector_base import SelectorBase
 from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.svm import LinearSVC
 from typing import Union
 
-class FactorSelector( SelectorBase ):
+class RegressionSelector( SelectorBase ):
     def _assembleSelector( self, Weights: Union[ None, dict ] ):
         self._Selector = SelectFromModel(
-            ExtraTreesClassifier(
-                n_estimators = self._Properties.selection[ 'treeEstimators' ],
+            LinearSVC(
                 class_weight = Weights
             ),
-            max_features = self._Properties.selection[ 'amountOfFeatures' ],
             prefit = False,
+            max_features = self._Properties.selection[ 'amountOfFeatures' ],
         )
 
     def getSupportedFeatures( self, FeatureNames: list ) -> list:

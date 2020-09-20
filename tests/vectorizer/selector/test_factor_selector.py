@@ -16,21 +16,6 @@ class FactorSelectorSpec( unittest.TestCase ):
 
     @patch( 'biomed.vectorizer.selector.factor_selector.SelectFromModel' )
     @patch( 'biomed.vectorizer.selector.factor_selector.ExtraTreesClassifier' )
-    def test_it_uses_the_given_amount_of_samples( self, TreeModel: MagicMock, ModelSelector: MagicMock ):
-        MySelect = FactorSelector( self.__PM )
-
-        self.__PM.selection[ 'amountOfFeatures' ] = 42
-
-        MySelect.build( MagicMock(), MagicMock(), None )
-
-        TreeModel.assert_called_once_with(
-            n_estimators = ANY,
-            class_weight = ANY,
-            max_features = self.__PM.selection[ 'amountOfFeatures' ],
-        )
-
-    @patch( 'biomed.vectorizer.selector.factor_selector.SelectFromModel' )
-    @patch( 'biomed.vectorizer.selector.factor_selector.ExtraTreesClassifier' )
     def test_it_uses_the_given_amount_of_trees( self, TreeModel: MagicMock, ModelSelector: MagicMock ):
         MySelect = FactorSelector( self.__PM )
 
@@ -41,7 +26,6 @@ class FactorSelectorSpec( unittest.TestCase ):
         TreeModel.assert_called_once_with(
             n_estimators = self.__PM.selection[ 'treeEstimators' ],
             class_weight = ANY,
-            max_features = ANY,
         )
 
     @patch( 'biomed.vectorizer.selector.factor_selector.SelectFromModel' )
@@ -56,7 +40,6 @@ class FactorSelectorSpec( unittest.TestCase ):
         TreeModel.assert_called_once_with(
             n_estimators = ANY,
             class_weight = Weights,
-            max_features = ANY,
         )
 
     @patch( 'biomed.vectorizer.selector.factor_selector.SelectFromModel' )
@@ -69,7 +52,25 @@ class FactorSelectorSpec( unittest.TestCase ):
 
         MySelect.build( MagicMock(), MagicMock(), MagicMock() )
 
-        ModelSelector.assert_called_once_with( Model, prefit = False )
+        ModelSelector.assert_called_once_with( Model, prefit = False, max_features = ANY )
+
+    @patch( 'biomed.vectorizer.selector.factor_selector.SelectFromModel' )
+    @patch( 'biomed.vectorizer.selector.factor_selector.ExtraTreesClassifier' )
+    def test_it_uses_the_given_amount_of_samples( self, TreeModel: MagicMock, ModelSelector: MagicMock ):
+        MySelect = FactorSelector( self.__PM )
+
+        self.__PM.selection[ 'amountOfFeatures' ] = 42
+
+        Model = MagicMock( spec = ExtraTreesClassifier )
+        TreeModel.return_value = Model
+
+        MySelect.build( MagicMock(), MagicMock(), MagicMock() )
+
+        ModelSelector.assert_called_once_with(
+            Model,
+            prefit = False,
+            max_features = self.__PM.selection[ 'amountOfFeatures' ],
+        )
 
     def test_it_fails_to_return_the_supported_features_if_a_selector_was_not_builded( self ):
         MySelect = FactorSelector( self.__PM )
