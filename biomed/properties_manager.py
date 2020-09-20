@@ -34,6 +34,7 @@ class PropertiesManager:
             type = False,
             amountOfFeatures = 500,
             treeEstimators = 250,
+            treeMaxFeatures = 500,
         )
 
         self.training = dict(
