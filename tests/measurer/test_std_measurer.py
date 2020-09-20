@@ -3,6 +3,7 @@ from biomed.measurer.measurer import Measurer
 from biomed.properties_manager import PropertiesManager
 import unittest
 from unittest.mock import MagicMock, patch
+from numpy import array as Array
 
 class StdMeasurerSpec( unittest.TestCase ):
     def setUp( self ):
@@ -62,4 +63,18 @@ class StdMeasurerSpec( unittest.TestCase ):
             'balanced',
             Classes,
             Actual,
+        )
+
+    @patch( 'biomed.measurer.std_measurer.weightClasses' )
+    def test_it_maps_the_weights_to_the_given_classes( self, weightFunc: MagicMock ):
+        self.__PM.weights[ 'use_class_weights' ] = True
+
+        Classes = Array( [ 0, 1 ] )
+        Weights = Array( [ 0.23, 0.42 ] )
+
+        weightFunc.return_value = Weights
+        MyMeasurer = StdMeasurer.Factory.getInstance( self.__fakeLocator )
+        self.assertDictEqual(
+            { 0: 0.23, 1: 0.42 },
+            MyMeasurer.measureClassWeights( Classes, MagicMock() )
         )

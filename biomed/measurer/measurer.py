@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from biomed.services_getter import ServiceGetter
+from typing import Union
 from numpy import array as Array
 
 class abstractstatic(staticmethod):
@@ -12,7 +13,7 @@ class abstractstatic(staticmethod):
 
 class Measurer( ABC ):
     @abstractmethod
-    def measureClassWeights( self, Classes: Array, Actual: Array ) -> Array:
+    def measureClassWeights( self, Classes: Array, Actual: Array ) -> Union[ None, dict ]:
         pass
 
 class MeasurerFactory:

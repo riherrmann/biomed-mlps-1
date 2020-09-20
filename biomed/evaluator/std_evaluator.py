@@ -123,9 +123,9 @@ class StdEvaluator( Evaluator ):
     def captureData( self, Train: Series, Test: Series ):
         self.__enqueueStep( self.__captureData( Train, Test ) )
 
-    async def __captureClassWeights( self, Weights: Union[ None, Series ] ):
-        if isinstance( Weights, Series ):
-            self.__writeCSV( 'weights.csv', { 'weights': list( Weights ) } )
+    async def __captureClassWeights( self, Weights: Union[ None, dict ] ):
+        if isinstance( Weights, dict ):
+            self.__writeCSV( 'weights.csv', Weights )
 
     def captureClassWeights( self, Weights: Union[ None, Series ] ):
         self.__enqueueStep( self.__captureClassWeights( Weights ) )

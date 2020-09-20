@@ -51,7 +51,7 @@ class Evaluator( ABC ):
         pass
 
     @abstractmethod
-    def captureClassWeights( self, Weights: Union[ None, Series ] ):
+    def captureClassWeights( self, Weights: Union[ None, dict ] ):
         pass
 
     @abstractmethod

@@ -144,7 +144,7 @@ class TextminingController( Controller ):
 
         return ( Features, Labels )
 
-    def __train( self, Features: InputData, Labels: InputData, Weights: Union[ None, Array ] ):
+    def __train( self, Features: InputData, Labels: InputData, Weights: Union[ None, dict ] ):
         print( "training...." )
         print( "Training: {}\nValidation: {}\nTest: {}".format(
             Features.Training.shape,
@@ -181,7 +181,7 @@ class TextminingController( Controller ):
             self.__Encoder.getCategories()
     )
 
-    def __trainAndPredict( self, Training: tuple, Test: tuple, Weights: Union[ None, Array ] ):
+    def __trainAndPredict( self, Training: tuple, Test: tuple, Weights: Union[ None, dict ] ):
         TestIds = Test[ 0 ]
         Training, Validation = self.__validationSplit( Training )
         Features, Labels = self.__makeInputData( Training, Validation, Test )
