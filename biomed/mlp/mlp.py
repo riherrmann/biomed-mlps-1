@@ -13,7 +13,7 @@ class abstractstatic(staticmethod):
 
 class MLP( ABC ):
     @abstractmethod
-    def buildModel( self, Dimension ) -> str:
+    def buildModel( self, Shape: tuple ) -> str:
         pass
 
     @abstractmethod

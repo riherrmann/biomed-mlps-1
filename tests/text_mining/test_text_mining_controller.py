@@ -717,10 +717,10 @@ class TextminingControllerSpec( unittest.TestCase ):
 
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
     def test_it_builds_a_model( self, DataBinding: MagicMock ):
-        Dimension = 2
+        Shape = ( 2, 3 )
         Payload = MagicMock( spec = InputData )
         Payload.Training = MagicMock()
-        Payload.Training.shape = ( MagicMock(), Dimension )
+        Payload.Training.shape = Shape
         Payload.Validation = MagicMock()
         Payload.Test = MagicMock()
 
@@ -734,7 +734,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             Description = MagicMock()
         )
 
-        self.__MLP.buildModel.assert_called_once_with( Dimension )
+        self.__MLP.buildModel.assert_called_once_with( Shape )
 
     def test_it_saves_the_model_structure( self ):
         Expected = "structure"

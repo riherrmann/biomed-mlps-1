@@ -164,7 +164,8 @@ class TextminingController( Controller ):
             Features.Validation.shape,
             Features.Test.shape
         ) )
-        Structure = self.__Model.buildModel( Features.Training.shape[ 1 ] )
+
+        Structure = self.__Model.buildModel( Features.Training.shape )
         History = self.__Model.train( Features, Labels )
         Score = self.__Model.getTrainingScore( Features, Labels )
 
@@ -175,6 +176,7 @@ class TextminingController( Controller ):
 
     def __predict( self, TestIds: Series, Features: InputData, Labels: InputData ):
         print( "prediciting..." )
+
         Predictions = self.__Model.predict( Features.Test )
         Predictions = self.__Encoder.decode( Predictions )
         Expected = list( self.__Data[ self.__Properties.classifier ].filter( TestIds ) )
