@@ -1,7 +1,7 @@
 .DS_Store
 /ignoreMe/*
 /aux/*
-/.idea/*.xml
+.idea
 /.gradle/
 /nlpclient/client.jar
 !.idea/dictionaries/riherrmann.xml
@@ -9,3 +9,4 @@
 *.swp
 *.png
 *.bak
+.coverage
