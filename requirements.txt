@@ -11,3 +11,4 @@ tensorflow
 nltk
 matplotlib
 seaborn
+h5py

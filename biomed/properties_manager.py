@@ -39,6 +39,7 @@ class PropertiesManager:
             epochs = 150,
             batch_size = 10,
             workers = 90,
+            patience = 100,
         )
 
         self.weights = dict(
