@@ -13,6 +13,7 @@ from biomed.mlp.mlp import MLP
 from biomed.utils.file_writer import FileWriter
 from biomed.evaluator.evaluator import Evaluator
 from biomed.splitter.splitter import Splitter
+from biomed.measurer.measurer import Measurer
 from biomed.encoder.categorie_encoder import CategoriesEncoder
 from biomed.text_mining.controller import Controller
 
@@ -34,6 +35,7 @@ class ServicesSpec( unittest.TestCase ):
                 "evaluator.csv": MagicMock( spec = FileWriter ),
                 "facilitymanager": MagicMock( spec = FacilityManager ),
                 "splitter": MagicMock( spec = Splitter ),
+                "measurer": MagicMock( spec = Measurer ),
                 "categories": MagicMock( spec = CategoriesEncoder ),
                 "mlp": MagicMock( spec = MLP )
             }
@@ -284,6 +286,22 @@ class ServicesSpec( unittest.TestCase ):
         Locator.set.assert_any_call(
             "splitter",
             Split,
+            Dependencies = "properties"
+        )
+
+    @patch( 'biomed.services.Measure.StdMeasurer.Factory.getInstance' )
+    @patch( 'biomed.services.__Services' )
+    def test_it_initilizes_the_measurer( self, Locator: MagicMock, MeF: MagicMock ):
+        self.__fullfillDepenendcies( Locator )
+        Measure = MagicMock( spec = Measurer )
+        MeF.return_value = Measure
+
+        Services.startServices()
+
+        MeF.assert_called_once_with( Services.getService )
+        Locator.set.assert_any_call(
+            "measurer",
+            Measure,
             Dependencies = "properties"
         )
 

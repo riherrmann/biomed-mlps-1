@@ -4,13 +4,16 @@ from biomed.facilitymanager.facility_manager import FacilityManager
 from biomed.splitter.splitter import Splitter
 from biomed.preprocessor.preprocessor import Preprocessor
 from biomed.vectorizer.vectorizer import Vectorizer
+from biomed.measurer.measurer import Measurer
 from biomed.mlp.mlp import MLP
 from biomed.evaluator.evaluator import Evaluator
 from biomed.mlp.input_data import InputData
 from biomed.encoder.categorie_encoder import CategoriesEncoder
 from biomed.services_getter import ServiceGetter
 from pandas import DataFrame, Series
+from typing import Union
 from numpy import array as Array
+from numpy import unique
 
 class TextminingController( Controller ):
     def __init__(
@@ -21,6 +24,7 @@ class TextminingController( Controller ):
         Splitter: Splitter,
         Preprocessor: Preprocessor,
         Vectorizer: Vectorizer,
+        Measurer: Measurer,
         MLP: MLP,
         Evaluator: Evaluator
     ):
@@ -31,16 +35,11 @@ class TextminingController( Controller ):
         self.__Evaluator = Evaluator
         self.__Preprocessor = Preprocessor
         self.__Vectorizer = Vectorizer
+        self.__Measurer = Measurer
         self.__Model = MLP
 
         self.__Data = None
         self.__Categories = None
-
-    def __splitIntoTestAndTrainingData( self ) -> list:
-        return self.__Splitter.trainingSplit(
-            self.__Data[ 'pmid' ],
-            self.__Data[ self.__Properties.classifier ]
-        )
 
     def __mapIdsToKey( self, Ids: Series, Key: str ) -> Series:
         Set = self.__Data[ Key ]
@@ -52,18 +51,6 @@ class TextminingController( Controller ):
             TrainingIds,
             self.__mapIdsToKey( TrainingIds, self.__Properties.classifier )
         )
-
-    def __runFolds( self ):
-        Folds = self.__splitIntoTestAndTrainingData()
-        Index = 1
-        for Fold in Folds:
-            print( "run fold #{}".format( str( Index ) ) )
-            if 1 < len( Folds ):
-                self.__Evaluator.setFold( Index )
-
-            self.__runFold( Fold[ 0 ], Fold[ 1 ] )
-
-            Index += 1
 
     def __preprocess( self ) -> Series:
         print( "preprocessing....." )
@@ -157,7 +144,7 @@ class TextminingController( Controller ):
 
         return ( Features, Labels )
 
-    def __train( self, Features: InputData, Labels: InputData ):
+    def __train( self, Features: InputData, Labels: InputData, Weights: Union[ None, Array ] ):
         print( "training...." )
         print( "Training: {}\nValidation: {}\nTest: {}".format(
             Features.Training.shape,
@@ -166,7 +153,7 @@ class TextminingController( Controller ):
         ) )
 
         Structure = self.__Model.buildModel( Features.Training.shape )
-        History = self.__Model.train( Features, Labels )
+        History = self.__Model.train( Features, Labels, Weights )
         Score = self.__Model.getTrainingScore( Features, Labels )
 
         self.__Evaluator.captureModel( Structure )
@@ -194,11 +181,11 @@ class TextminingController( Controller ):
             self.__Encoder.getCategories()
     )
 
-    def __trainAndPredict( self, Training: tuple, Test: tuple ):
+    def __trainAndPredict( self, Training: tuple, Test: tuple, Weights: Union[ None, Array ] ):
         TestIds = Test[ 0 ]
         Training, Validation = self.__validationSplit( Training )
         Features, Labels = self.__makeInputData( Training, Validation, Test )
-        self.__train( Features, Labels )
+        self.__train( Features, Labels, Weights )
         self.__predict( TestIds, Features, Labels )
 
     def __printResults( self, Results: dict ):
@@ -215,18 +202,49 @@ class TextminingController( Controller ):
     ):
         self.__Evaluator.captureData( TrainingIds, TestIds )
         self.__Evaluator.captureStartTime()
+
         TrainingFeatures, TestFeatures = self.__vectorize(
             self.__preprocess(),
             TrainingIds,
             TestIds
         )
 
+        Actual = self.__convertToArray(
+            self.__mapIdsToKey( TrainingIds, self.__Properties.classifier )
+        )
+
+        Weights = self.__Measurer.measureClassWeights(
+            unique( Actual ),
+            Actual
+        )
+
+        self.__Evaluator.captureClassWeights( Weights )
+
         self.__trainAndPredict(
             ( TrainingIds, TrainingFeatures ),
-            ( TestIds, TestFeatures )
+            ( TestIds, TestFeatures ),
+            Weights,
         )
 
         self.__printResults( self.__Evaluator.finalize() )
+
+    def __splitIntoTestAndTrainingData( self ) -> list:
+        return self.__Splitter.trainingSplit(
+            self.__Data[ 'pmid' ],
+            self.__Data[ self.__Properties.classifier ]
+        )
+
+    def __runFolds( self ):
+        Folds = self.__splitIntoTestAndTrainingData()
+        Index = 1
+        for Fold in Folds:
+            print( "run fold #{}".format( str( Index ) ) )
+            if 1 < len( Folds ):
+                self.__Evaluator.setFold( Index )
+
+            self.__runFold( Fold[ 0 ], Fold[ 1 ] )
+
+            Index += 1
 
     def process(
         self,
@@ -250,6 +268,7 @@ class TextminingController( Controller ):
                 getService( 'splitter', Splitter ),
                 getService( 'preprocessor', Preprocessor ),
                 getService( 'vectorizer', Vectorizer ),
+                getService( 'measurer', Measurer ),
                 getService( 'mlp', MLP ),
                 getService( 'evaluator', Evaluator )
             )

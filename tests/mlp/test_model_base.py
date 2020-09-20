@@ -32,6 +32,7 @@ class ModelBaseSpec( unittest.TestCase ):
         Model.fit.assert_called_once_with(
             x = X.Training,
             y = Y.Training,
+            class_weight = None,
             shuffle = True,
             epochs = PM[ "training" ][ "epochs" ],
             batch_size = PM[ "training" ][ "batch_size" ],
@@ -56,6 +57,34 @@ class ModelBaseSpec( unittest.TestCase ):
         Model.fit.assert_called_once_with(
             x = X.Training,
             y = Y.Training,
+            class_weight = None,
+            shuffle = True,
+            epochs = PM[ "training" ][ "epochs" ],
+            batch_size = PM[ "training" ][ "batch_size" ],
+            validation_data = ( X.Validation, Y.Validation ),
+            workers = PM[ "training" ][ "workers" ],
+            use_multiprocessing = True
+        )
+
+
+    def test_it_trains_a_model_with_class_weights_if_weights_are_given( self ):
+        Model = MagicMock( spec = Sequential )
+        X = InputData( MagicMock(), MagicMock(), MagicMock() )
+        Y = InputData( MagicMock(), MagicMock(), MagicMock() )
+        Weights = MagicMock()
+
+        PM = PropertiesManager()
+        PM[ "training" ][ "epochs" ] = 1
+        PM[ "training" ][ "batch_size" ] = 2
+        PM[ "training" ][ "workers" ] = 2
+
+        FFN = ModelBaseSpec.StubbedFFN( PM, Model )
+        FFN.train( X, Y, Weights )
+
+        Model.fit.assert_called_once_with(
+            x = X.Training,
+            y = Y.Training,
+            class_weight = Weights,
             shuffle = True,
             epochs = PM[ "training" ][ "epochs" ],
             batch_size = PM[ "training" ][ "batch_size" ],

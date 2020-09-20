@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, ANY
 from biomed.mlp.mlp_manager import MLPManager
 from biomed.mlp.mlp import MLP
 from biomed.properties_manager import PropertiesManager
@@ -45,7 +45,7 @@ class MLPManagerSpec( unittest.TestCase ):
             Models[ ModelKey ].assert_called_once_with( pm )
             ServiceGetter.assert_called_once()
 
-    def test_it_deligates_the_dimensionality_to_the_model( self  ):
+    def test_it_deligates_the_dimensionality_to_the_model( self ):
         InputShape = ( 2, 3 )
 
         MyManager = MLPManager.Factory.getInstance( self.__fakeLocator )
@@ -65,6 +65,25 @@ class MLPManagerSpec( unittest.TestCase ):
             Expected,
             Model.buildModel( MagicMock() )
         )
+
+    def test_it_deligates_the_training_arguments_without_weights_to_the_model_by_default( self ):
+        X = MagicMock()
+        Y = MagicMock()
+
+        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
+        Model.buildModel( ( 2, 3 ) )
+        Model.train( X, Y )
+
+        self.__ReferenceModel.train.assert_called_once_with( X, Y, None )
+
+    def test_it_deligates_given_weights_to_the_model( self ):
+        Weights = MagicMock()
+
+        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
+        Model.buildModel( ( 2, 3 ) )
+        Model.train( MagicMock(), MagicMock(), Weights )
+
+        self.__ReferenceModel.train.assert_called_once_with( ANY, ANY, Weights )
 
     def test_it_returns_the_history_of_the_training( self ):
         Expected = "this should be not a string in real"

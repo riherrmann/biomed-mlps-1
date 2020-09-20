@@ -41,6 +41,10 @@ class PropertiesManager:
             workers = 90,
         )
 
+        self.weights = dict(
+            use_class_weights = False
+        )
+
         self.predictions = dict(
             verbose = 1,
         )
