@@ -66,7 +66,7 @@ class SelectorManagerSpec( unittest.TestCase ):
             ServiceGetter.side_effect = fakeLocator
 
             MyManager = SelectorManager.Factory.getInstance( ServiceGetter )
-            MyManager.build( MagicMock(), MagicMock() )
+            MyManager.build( MagicMock(), MagicMock(), MagicMock() )
 
             Selectors[ SelectorKey ].assert_called_once_with( PM )
 
@@ -78,11 +78,12 @@ class SelectorManagerSpec( unittest.TestCase ):
 
         X = MagicMock()
         Y = MagicMock()
+        Weights = MagicMock()
 
         MyManager = SelectorManager.Factory.getInstance( ServiceGetter )
-        MyManager.build( X, Y )
+        MyManager.build( X, Y, Weights )
 
-        self.__ReferenceSelector.build.assert_called_once_with( X, Y )
+        self.__ReferenceSelector.build.assert_called_once_with( X, Y, Weights )
 
     def test_it_reflects_the_given_features_if_no_selector_was_selected( self ):
         def fakeLocator( _, __ ):
@@ -94,7 +95,7 @@ class SelectorManagerSpec( unittest.TestCase ):
         Expected.toarray.return_value = Expected
 
         MySelector = SelectorManager.Factory.getInstance( fakeLocator )
-        MySelector.build( MagicMock(), MagicMock() )
+        MySelector.build( MagicMock(), MagicMock(), MagicMock() )
         self.assertEqual(
             Expected,
             MySelector.select( Expected )
@@ -109,7 +110,7 @@ class SelectorManagerSpec( unittest.TestCase ):
         X = MagicMock()
 
         MySelector = SelectorManager.Factory.getInstance( ServiceGetter )
-        MySelector.build( MagicMock(), MagicMock() )
+        MySelector.build( MagicMock(), MagicMock(), MagicMock() )
         MySelector.select( X )
         self.__ReferenceSelector.select.assert_called_once_with( X )
 
@@ -123,7 +124,7 @@ class SelectorManagerSpec( unittest.TestCase ):
         self.__ReferenceSelector.select.return_value = Selection
 
         MySelector = SelectorManager.Factory.getInstance( ServiceGetter )
-        MySelector.build( MagicMock(), MagicMock() )
+        MySelector.build( MagicMock(), MagicMock(), MagicMock() )
         self.assertEqual(
             Selection,
             MySelector.select( MagicMock() )
@@ -138,7 +139,7 @@ class SelectorManagerSpec( unittest.TestCase ):
         Expected = MagicMock()
 
         MySelector = SelectorManager.Factory.getInstance( fakeLocator )
-        MySelector.build( MagicMock(), MagicMock() )
+        MySelector.build( MagicMock(), MagicMock(), MagicMock() )
         self.assertEqual(
             Expected,
             MySelector.getSupportedFeatures( Expected )
@@ -153,7 +154,7 @@ class SelectorManagerSpec( unittest.TestCase ):
         Names = MagicMock()
 
         MySelector = SelectorManager.Factory.getInstance( ServiceGetter )
-        MySelector.build( MagicMock(), MagicMock() )
+        MySelector.build( MagicMock(), MagicMock(), MagicMock() )
         MySelector.getSupportedFeatures( Names )
         self.__ReferenceSelector.getSupportedFeatures.assert_called_once_with( Names )
 
@@ -167,7 +168,7 @@ class SelectorManagerSpec( unittest.TestCase ):
         self.__ReferenceSelector.getSupportedFeatures.return_value = SelectedFeatures
 
         MySelector = SelectorManager.Factory.getInstance( ServiceGetter )
-        MySelector.build( MagicMock(), MagicMock() )
+        MySelector.build( MagicMock(), MagicMock(), MagicMock() )
         self.assertEqual(
             SelectedFeatures,
             MySelector.getSupportedFeatures( MagicMock() )

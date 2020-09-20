@@ -57,7 +57,7 @@ class StdVectorizerSpec( unittest.TestCase ):
         )
 
         MyVectorizer = StdVectorizer.Factory.getInstance( self.__fakeLocator )
-        MyVectorizer.featureizeTrain( MagicMock(), MagicMock() )
+        MyVectorizer.featureizeTrain( MagicMock(), MagicMock(), MagicMock() )
 
         Vect.assert_called_once_with(
             analyzer = self.__PM.vectorizing[ 'analyzer' ],
@@ -82,25 +82,26 @@ class StdVectorizerSpec( unittest.TestCase ):
         Y = MagicMock()
 
         MyVectorizer = StdVectorizer.Factory.getInstance( self.__fakeLocator )
-        MyVectorizer.featureizeTrain( X, Y )
+        MyVectorizer.featureizeTrain( X, Y, MagicMock() )
 
         Tdidf.fit_transform.assert_called_once_with( X )
 
     @patch( 'biomed.vectorizer.std_vectorizer.TfidfVectorizer' )
-    def test_it_delegates_the_extracted_training_features_and_labels_to_the_selector( self, Vect: MagicMock ):
+    def test_it_delegates_the_extracted_training_features_and_labels_and_class_weights_to_the_selector( self, Vect: MagicMock ):
         Tdidf = MagicMock( spec = TfidfVectorizer )
         Vect.return_value = Tdidf
 
         X = MagicMock()
         Y = MagicMock()
         F = MagicMock()
+        Weights = MagicMock()
 
         Tdidf.fit_transform.return_value = F
 
         MyVectorizer = StdVectorizer.Factory.getInstance( self.__fakeLocator )
-        MyVectorizer.featureizeTrain( X, Y )
+        MyVectorizer.featureizeTrain( X, Y, Weights )
 
-        self.__Selector.build.assert_called_once_with( F, Y )
+        self.__Selector.build.assert_called_once_with( F, Y, Weights )
 
     @patch( 'biomed.vectorizer.std_vectorizer.TfidfVectorizer' )
     def test_it_selects_from_the_extracted_training_features( self, Vect: MagicMock ):
@@ -111,7 +112,7 @@ class StdVectorizerSpec( unittest.TestCase ):
         Tdidf.fit_transform.return_value = F
 
         MyVectorizer = StdVectorizer.Factory.getInstance( self.__fakeLocator )
-        MyVectorizer.featureizeTrain( MagicMock(), MagicMock() )
+        MyVectorizer.featureizeTrain( MagicMock(), MagicMock(), MagicMock() )
 
         self.__Selector.select.assert_called_once_with( F )
 
@@ -125,7 +126,7 @@ class StdVectorizerSpec( unittest.TestCase ):
 
         self.assertEqual(
             Selection,
-            MyVectorizer.featureizeTrain( MagicMock(), MagicMock() )
+            MyVectorizer.featureizeTrain( MagicMock(), MagicMock(), MagicMock() )
         )
 
     def test_it_fails_if_no_trainings_features_had_been_extracted_before( self ):
@@ -142,7 +143,7 @@ class StdVectorizerSpec( unittest.TestCase ):
         X = MagicMock()
 
         MyVectorizer = StdVectorizer.Factory.getInstance( self.__fakeLocator )
-        MyVectorizer.featureizeTrain( MagicMock(), MagicMock() )
+        MyVectorizer.featureizeTrain( MagicMock(), MagicMock(), MagicMock() )
         MyVectorizer.featureizeTest( X )
 
         Tdidf.transform.assert_called_once_with( X )
@@ -156,7 +157,7 @@ class StdVectorizerSpec( unittest.TestCase ):
         Tdidf.transform.return_value = F
 
         MyVectorizer = StdVectorizer.Factory.getInstance( self.__fakeLocator )
-        MyVectorizer.featureizeTrain( MagicMock(), MagicMock() )
+        MyVectorizer.featureizeTrain( MagicMock(), MagicMock(), MagicMock() )
         MyVectorizer.featureizeTest( MagicMock() )
 
         self.__Selector.select.assert_called_with( F )
@@ -167,7 +168,7 @@ class StdVectorizerSpec( unittest.TestCase ):
         self.__Selector.select.return_value = Selection
 
         MyVectorizer = StdVectorizer.Factory.getInstance( self.__fakeLocator )
-        MyVectorizer.featureizeTrain( MagicMock(), MagicMock() )
+        MyVectorizer.featureizeTrain( MagicMock(), MagicMock(), MagicMock() )
 
         self.assertEqual(
             Selection,
@@ -189,7 +190,7 @@ class StdVectorizerSpec( unittest.TestCase ):
         Tdidf.get_feature_names.return_value = F
 
         MyVectorizer = StdVectorizer.Factory.getInstance( self.__fakeLocator )
-        MyVectorizer.featureizeTrain( MagicMock(), MagicMock() )
+        MyVectorizer.featureizeTrain( MagicMock(), MagicMock(), MagicMock() )
         MyVectorizer.getSupportedFeatures()
 
         self.__Selector.getSupportedFeatures.assert_called_with( F )
@@ -200,7 +201,7 @@ class StdVectorizerSpec( unittest.TestCase ):
         self.__Selector.getSupportedFeatures.return_value = Selection
 
         MyVectorizer = StdVectorizer.Factory.getInstance( self.__fakeLocator )
-        MyVectorizer.featureizeTrain( MagicMock(), MagicMock() )
+        MyVectorizer.featureizeTrain( MagicMock(), MagicMock(), MagicMock() )
 
         self.assertEqual(
             Selection,

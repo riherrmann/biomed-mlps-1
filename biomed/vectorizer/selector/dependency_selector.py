@@ -3,7 +3,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 
 class DependencySelector( SelectorBase ):
-    def _assembleSelector( self ):
+    def _assembleSelector( self, _ ):
         self._Selector = SelectKBest(
             chi2,
             k = self._Properties.selection[ 'amountOfFeatures' ]

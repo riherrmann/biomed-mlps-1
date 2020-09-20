@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from numpy import array as Array
 from pandas import Series
+from typing import Union
 from biomed.services_getter import ServiceGetter
 
 class abstractstatic(staticmethod):
@@ -14,7 +15,12 @@ class abstractstatic(staticmethod):
 
 class Vectorizer( ABC ):
     @abstractmethod
-    def featureizeTrain( self, Train: Series, Labels: Series ) -> Array:
+    def featureizeTrain(
+        self,
+        Train: Series,
+        Labels: Series,
+        Weights: Union[ None, dict ]
+    ) -> Array:
         pass
 
     @abstractmethod

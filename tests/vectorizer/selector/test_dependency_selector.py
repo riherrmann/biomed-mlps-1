@@ -20,7 +20,7 @@ class DependencySelectorSpec( unittest.TestCase ):
 
         self.__PM.selection[ 'amountOfFeatures' ] = 42
 
-        MySelect.build( MagicMock(), MagicMock() )
+        MySelect.build( MagicMock(), MagicMock(), MagicMock() )
 
         KBest.assert_called_once_with(
             chi2,
@@ -38,7 +38,7 @@ class DependencySelectorSpec( unittest.TestCase ):
         Selector = MagicMock( spec = SelectKBest )
         KBest.return_value = Selector
 
-        MySelect.build( MagicMock(), MagicMock() )
+        MySelect.build( MagicMock(), MagicMock(), MagicMock() )
         MySelect.getSupportedFeatures( MagicMock() )
 
         Selector.get_support.assert_called_once_with( indices = True )
@@ -54,7 +54,7 @@ class DependencySelectorSpec( unittest.TestCase ):
         KBest.return_value = Selector
         Selector.get_support.return_value = AcceptedKeys
 
-        MySelect.build( MagicMock(), MagicMock() )
+        MySelect.build( MagicMock(), MagicMock(), MagicMock() )
         self.assertListEqual(
             [ "b", "c", "e" ],
             MySelect.getSupportedFeatures( FeatureNames )

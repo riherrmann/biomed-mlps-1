@@ -407,6 +407,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         Labels.index = [ '1a', '2a', '3a', '4a' ]
         Labels = Labels.filter( [ '1a', '3a' ] )
         TestIds = Series( [ '2a', '4a' ] )
+        Weights = MagicMock()
 
         self.__Splitter.trainingSplit.return_value = [ ( TrainingsIds, TestIds ) ]
         self.__Preprocessor.preprocessCorpus.return_value = ProCorpus
@@ -414,6 +415,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         TrainFeatures.tolist.return_value = [ ( 1, 1 ), ( 1, 2 ) ]
         self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
         self.__PM.classifier = 'is_cancer'
+        self.__Measurer.measureClassWeights.return_value = Weights
 
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
@@ -433,6 +435,11 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.assertListEqual(
             list( Labels ),
             list( Arguments[ 1 ] )
+        )
+
+        self.assertEqual(
+            Weights,
+            Arguments[ 2 ]
         )
 
         self.__Vectorizer.featureizeTrain.assert_called_once()
@@ -453,6 +460,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         Labels.index = [ '1a', '2a', '3a', '4a' ]
         Labels = Labels.filter( [ '1a', '3a' ] )
         TestIds = Series( [ '2a', '4a' ] )
+        Weights = MagicMock()
 
         self.__Splitter.trainingSplit.return_value = [ ( TrainingsIds, TestIds ) ]
         TrainFeatures = MagicMock()
@@ -460,6 +468,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
         self.__Preprocessor.preprocessCorpus.return_value = ProCorpus
         self.__PM.classifier = 'doid'
+        self.__Measurer.measureClassWeights.return_value = Weights
 
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
@@ -479,6 +488,11 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.assertListEqual(
             list( Labels ),
             list( Arguments[ 1 ] )
+        )
+
+        self.assertEqual(
+            Weights,
+            Arguments[ 2 ]
         )
 
         self.__Vectorizer.featureizeTrain.assert_called_once()

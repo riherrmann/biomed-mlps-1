@@ -33,6 +33,7 @@ class PropertiesManager:
         self.selection = dict(
             type = False,
             amountOfFeatures = 500,
+            treeEstimators = 250,
         )
 
         self.training = dict(

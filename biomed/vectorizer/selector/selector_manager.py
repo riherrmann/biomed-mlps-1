@@ -4,6 +4,7 @@ from biomed.vectorizer.selector.factor_selector import FactorSelector
 from biomed.properties_manager import PropertiesManager
 from biomed.services_getter import ServiceGetter
 from pandas import Series
+from typing import Union
 from numpy import array as Array
 
 class SelectorManager( Selector ):
@@ -14,15 +15,15 @@ class SelectorManager( Selector ):
             "factor": FactorSelector,
         }
 
-    def __buildSelectorModel( self, X: Array, Y: Series ):
+    def __buildSelectorModel( self, X: Array, Labels: Series, Weights: Union[ None, dict ] ):
         self.__Selector = self.__Selectors[ self.__Properties.selection[ 'type' ] ]( self.__Properties )
-        self.__Selector.build( X, Y )
+        self.__Selector.build( X, Labels, Weights )
 
-    def build( self, X: Array, Y: Series ):
+    def build( self, X: Array, Labels: Series, Weights: Union[ None, dict ] ):
         if not self.__Properties.selection[ 'type' ]:
             self.__Selector = None
         else:
-            self.__buildSelectorModel( X, Y )
+            self.__buildSelectorModel( X, Labels, Weights )
 
     def select( self, X: Array ) -> Array:
         if not self.__Selector:

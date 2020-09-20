@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from numpy import array as Array
 from pandas import Series
+from typing import Union
 from biomed.services_getter import ServiceGetter
 
 class abstractstatic( staticmethod ):
@@ -13,7 +14,7 @@ class abstractstatic( staticmethod ):
 
 class Selector( ABC ):
     @abstractmethod
-    def build( self, X: Array, Labels: Series ):
+    def build( self, X: Array, Labels: Series, ClassWeights: Union[ None, dict ] ):
         pass
 
     @abstractmethod
