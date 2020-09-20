@@ -16,20 +16,20 @@ class SelectorManagerSpec( unittest.TestCase ):
             spec = Selector
         )
 
-        self.__RP = patch(
-            'biomed.vectorizer.selector.selector_manager.RegressionSelector',
+        self.__LVP = patch(
+            'biomed.vectorizer.selector.selector_manager.LinearVectorSelector',
             spec = Selector
         )
 
-        self.__LRP = patch(
+        self.__LLVP = patch(
             'biomed.vectorizer.selector.selector_manager.LogisticRegressionSelector',
             spec = Selector
         )
 
         self.__D = self.__DP.start()
         self.__F = self.__FP.start()
-        self.__R = self.__RP.start()
-        self.__LR = self.__LRP.start()
+        self.__LV = self.__LVP.start()
+        self.__LR = self.__LLVP.start()
 
         self.__ReferenceSelector = MagicMock( spec = Selector )
         self.__D.return_value = self.__ReferenceSelector
@@ -38,8 +38,8 @@ class SelectorManagerSpec( unittest.TestCase ):
     def tearDown( self ):
         self.__DP.stop()
         self.__FP.stop()
-        self.__RP.stop()
-        self.__LRP.stop()
+        self.__LVP.stop()
+        self.__LLVP.stop()
 
     def __fakeLocator( self, _, __ ):
         return self.__PM
@@ -68,7 +68,7 @@ class SelectorManagerSpec( unittest.TestCase ):
         Selectors = {
             "dependency": self.__D,
             "factor": self.__F,
-            "regression": self.__R,
+            "linearVector": self.__LV,
             "logisticRegression": self.__LR,
         }
 

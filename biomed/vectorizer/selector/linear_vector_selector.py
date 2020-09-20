@@ -3,7 +3,7 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.svm import LinearSVC
 from typing import Union
 
-class RegressionSelector( SelectorBase ):
+class LinearVectorSelector( SelectorBase ):
     def _assembleSelector( self, Weights: Union[ None, dict ] ):
         self._Selector = SelectFromModel(
             LinearSVC(

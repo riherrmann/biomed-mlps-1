@@ -1,7 +1,7 @@
 from biomed.vectorizer.selector.selector import Selector, SelectorFactory
 from biomed.vectorizer.selector.dependency_selector import DependencySelector
 from biomed.vectorizer.selector.factor_selector import FactorSelector
-from biomed.vectorizer.selector.regression_selector import RegressionSelector
+from biomed.vectorizer.selector.linear_vector_selector import LinearVectorSelector
 from biomed.vectorizer.selector.logistic_regression_selector import LogisticRegressionSelector
 from biomed.properties_manager import PropertiesManager
 from biomed.services_getter import ServiceGetter
@@ -15,7 +15,7 @@ class SelectorManager( Selector ):
         self.__Selectors = {
             "dependency": DependencySelector,
             "factor": FactorSelector,
-            "regression": RegressionSelector,
+            "linearVector": LinearVectorSelector,
             "logisticRegression": LogisticRegressionSelector,
         }
 
