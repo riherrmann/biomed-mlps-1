@@ -72,7 +72,8 @@ class TextminingController( Controller ):
         self,
         Corpus: Series,
         TrainingIds: Series,
-        TestIds: Series
+        TestIds: Series,
+        Weights: Union[ None, dict ],
     ) -> tuple:
         print( "vectorizing..." )
 
@@ -82,7 +83,8 @@ class TextminingController( Controller ):
 
         TrainingFeatures = self.__Vectorizer.featureizeTrain(
             Corpus.filter( list( TrainingIds ) ),
-            Labels
+            Labels,
+            Weights,
         )
 
         TestFeatures = self.__Vectorizer.featureizeTest(
@@ -203,12 +205,6 @@ class TextminingController( Controller ):
         self.__Evaluator.captureData( TrainingIds, TestIds )
         self.__Evaluator.captureStartTime()
 
-        TrainingFeatures, TestFeatures = self.__vectorize(
-            self.__preprocess(),
-            TrainingIds,
-            TestIds
-        )
-
         Actual = self.__convertToArray(
             self.__mapIdsToKey( TrainingIds, self.__Properties.classifier )
         )
@@ -219,6 +215,13 @@ class TextminingController( Controller ):
         )
 
         self.__Evaluator.captureClassWeights( Weights )
+
+        TrainingFeatures, TestFeatures = self.__vectorize(
+            self.__preprocess(),
+            TrainingIds,
+            TestIds,
+            Weights,
+        )
 
         self.__trainAndPredict(
             ( TrainingIds, TrainingFeatures ),

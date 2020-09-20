@@ -4,7 +4,7 @@ from biomed.properties_manager import PropertiesManager
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import ExtraTreesClassifier
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, ANY
 
 class FactorSelectorSpec( unittest.TestCase ):
     def setUp( self ):
@@ -21,10 +21,42 @@ class FactorSelectorSpec( unittest.TestCase ):
 
         self.__PM.selection[ 'amountOfFeatures' ] = 42
 
-        MySelect.build( MagicMock(), MagicMock() )
+        MySelect.build( MagicMock(), MagicMock(), None )
 
         TreeModel.assert_called_once_with(
-            n_estimators = self.__PM.selection[ 'amountOfFeatures' ]
+            n_estimators = ANY,
+            class_weight = ANY,
+            max_features = self.__PM.selection[ 'amountOfFeatures' ],
+        )
+
+    @patch( 'biomed.vectorizer.selector.factor_selector.SelectFromModel' )
+    @patch( 'biomed.vectorizer.selector.factor_selector.ExtraTreesClassifier' )
+    def test_it_uses_the_given_amount_of_trees( self, TreeModel: MagicMock, ModelSelector: MagicMock ):
+        MySelect = FactorSelector( self.__PM )
+
+        self.__PM.selection[ 'treeEstimators' ] = 42
+
+        MySelect.build( MagicMock(), MagicMock(), None )
+
+        TreeModel.assert_called_once_with(
+            n_estimators = self.__PM.selection[ 'treeEstimators' ],
+            class_weight = ANY,
+            max_features = ANY,
+        )
+
+    @patch( 'biomed.vectorizer.selector.factor_selector.SelectFromModel' )
+    @patch( 'biomed.vectorizer.selector.factor_selector.ExtraTreesClassifier' )
+    def test_it_uses_the_given_class_weights( self, TreeModel: MagicMock, ModelSelector: MagicMock ):
+        Weights = MagicMock()
+
+        MySelect = FactorSelector( self.__PM )
+
+        MySelect.build( MagicMock(), MagicMock(), Weights )
+
+        TreeModel.assert_called_once_with(
+            n_estimators = ANY,
+            class_weight = Weights,
+            max_features = ANY,
         )
 
     @patch( 'biomed.vectorizer.selector.factor_selector.SelectFromModel' )
@@ -35,7 +67,7 @@ class FactorSelectorSpec( unittest.TestCase ):
         Model = MagicMock( spec = ExtraTreesClassifier )
         TreeModel.return_value = Model
 
-        MySelect.build( MagicMock(), MagicMock() )
+        MySelect.build( MagicMock(), MagicMock(), MagicMock() )
 
         ModelSelector.assert_called_once_with( Model, prefit = False )
 
@@ -51,7 +83,7 @@ class FactorSelectorSpec( unittest.TestCase ):
         Selector = MagicMock( spec = SelectFromModel )
         ModelSelector.return_value = Selector
 
-        MySelect.build( MagicMock(), MagicMock() )
+        MySelect.build( MagicMock(), MagicMock(), MagicMock() )
         MySelect.getSupportedFeatures( MagicMock() )
 
         Selector.get_support.assert_called_once_with( indices = True )
@@ -68,7 +100,7 @@ class FactorSelectorSpec( unittest.TestCase ):
         ModelSelector.return_value = Selector
         Selector.get_support.return_value = AcceptedKeys
 
-        MySelect.build( MagicMock(), MagicMock() )
+        MySelect.build( MagicMock(), MagicMock(), MagicMock() )
         self.assertListEqual(
             [ "b", "c", "e" ],
             MySelect.getSupportedFeatures( FeatureNames )

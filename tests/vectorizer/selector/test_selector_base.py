@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 from biomed.vectorizer.selector.selector_base import SelectorBase
+from typing import Union
 
 class SelectorBaseSpec( unittest.TestCase ):
     class StubbedSelector( SelectorBase ):
@@ -12,10 +13,12 @@ class SelectorBaseSpec( unittest.TestCase ):
         ):
             self.__GivenSelector = GivenSelector
             self.__GivenSelectedKeys = GivenSelectedKeys
+            self.GivenWeights = None
             super( SelectorBaseSpec.StubbedSelector, self ).__init__( SampleSize )
 
-        def _assembleSelector( self ):
+        def _assembleSelector( self, Weights: Union[ None, dict ] ):
             self._Selector = self.__GivenSelector
+            self.GivenWeights = Weights
 
         def getSupportedFeatures( self, FeatureNames: list ) -> list:
             return self._filterFeatureNamesByIndex( FeatureNames, self.__GivenSelectedKeys )
@@ -24,11 +27,16 @@ class SelectorBaseSpec( unittest.TestCase ):
         GivenSelectorModel = MagicMock()
         X = MagicMock()
         Y = MagicMock()
+        Weights = MagicMock()
 
         Selector = SelectorBaseSpec.StubbedSelector( 2, GivenSelectorModel )
-        Selector.build( X, Y )
+        Selector.build( X, Y, Weights )
 
         GivenSelectorModel.fit.assert_called_once_with( X, Y )
+        self.assertEqual(
+            Weights,
+            Selector.GivenWeights
+        )
 
     def test_it_fails_if_a_selector_was_not_builded( self ):
         Selector = SelectorBaseSpec.StubbedSelector( 2, MagicMock() )
@@ -44,7 +52,7 @@ class SelectorBaseSpec( unittest.TestCase ):
         Y = MagicMock()
 
         Selector = SelectorBaseSpec.StubbedSelector( 2, GivenSelectorModel )
-        Selector.build( X, Y )
+        Selector.build( X, Y, MagicMock() )
         self.assertListEqual(
             list( Expected ),
             list( Selector.select( X ) )
@@ -58,7 +66,7 @@ class SelectorBaseSpec( unittest.TestCase ):
         Keys = [ 1, 3 ]
 
         Selector = SelectorBaseSpec.StubbedSelector( 2, MagicMock(), Keys )
-        Selector.build( MagicMock(), MagicMock() )
+        Selector.build( MagicMock(), MagicMock(), MagicMock() )
 
         self.assertListEqual(
             [ 'b', 'd' ],

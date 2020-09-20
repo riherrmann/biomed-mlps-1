@@ -1,6 +1,7 @@
 from biomed.vectorizer.selector.selector import Selector
 from biomed.properties_manager import PropertiesManager
 from abc import abstractmethod
+from typing import Union
 from pandas import Series
 from numpy import array as Array
 
@@ -10,12 +11,12 @@ class SelectorBase( Selector ):
         self._Properties = Properties
 
     @abstractmethod
-    def _assembleSelector( self ):
+    def _assembleSelector( self, Weights: Union[ None, dict ] ):
         pass
 
-    def build( self, X, Y: Series ):
-        self._assembleSelector()
-        self._Selector.fit( X, Y )
+    def build( self, X: Array, Labels: Series, Weights: Union[ None, dict ] ):
+        self._assembleSelector( Weights )
+        self._Selector.fit( X, Labels )
 
     def select( self, X: Array ) -> Array:
         self._validateSelector()

@@ -7,6 +7,7 @@ from biomed.properties_manager import PropertiesManager
 from biomed.services_getter import ServiceGetter
 from sklearn.feature_extraction.text import TfidfVectorizer
 from numpy import float64
+from typing import Union
 
 class StdVectorizer( Vectorizer ):
     def __init__( self, Properties: PropertiesManager, Selector: Selector ):
@@ -29,10 +30,15 @@ class StdVectorizer( Vectorizer ):
              dtype = float64,
         )
 
-    def featureizeTrain( self, Train: Series, Labels: Series ) -> Array:
+    def featureizeTrain(
+        self,
+        Train: Series,
+        Labels: Series,
+        Weights: Union[ None, dict ]
+    ) -> Array:
         self.__initializeVectorizer()
         Features = self.__Vectorizer.fit_transform( Train )
-        self.__Selector.build( Features, Labels )
+        self.__Selector.build( Features, Labels, Weights )
         return self.__Selector.select( Features )
 
     def __checkVectorizer( self ):
