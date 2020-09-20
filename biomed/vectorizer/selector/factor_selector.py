@@ -8,7 +8,8 @@ class FactorSelector( SelectorBase ):
         self._Selector = SelectFromModel(
             ExtraTreesClassifier(
                 n_estimators = self._Properties.selection[ 'treeEstimators' ],
-                class_weight = Weights
+                class_weight = Weights,
+                max_features = self._Properties.selection[ 'treeMaxFeatures' ],
             ),
             max_features = self._Properties.selection[ 'amountOfFeatures' ],
             prefit = False,
