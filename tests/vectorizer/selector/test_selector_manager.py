@@ -16,8 +16,15 @@ class SelectorManagerSpec( unittest.TestCase ):
             spec = Selector
         )
 
+        self.__RP = patch(
+            'biomed.vectorizer.selector.selector_manager.RegressionSelector',
+            spec = Selector
+        )
+
         self.__D = self.__DP.start()
         self.__F = self.__FP.start()
+        self.__R = self.__RP.start()
+
         self.__ReferenceSelector = MagicMock( spec = Selector )
         self.__D.return_value = self.__ReferenceSelector
         self.__PM = PropertiesManager()
@@ -25,6 +32,7 @@ class SelectorManagerSpec( unittest.TestCase ):
     def tearDown( self ):
         self.__DP.stop()
         self.__FP.stop()
+        self.__RP.stop()
 
     def __fakeLocator( self, _, __ ):
         return self.__PM
@@ -53,6 +61,7 @@ class SelectorManagerSpec( unittest.TestCase ):
         Selectors = {
             "dependency": self.__D,
             "factor": self.__F,
+            "regression": self.__R,
         }
 
         for SelectorKey in Selectors:
