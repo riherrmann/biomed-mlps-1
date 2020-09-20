@@ -20,7 +20,7 @@ class MLPManager( MLP ):
         self.__Model = self.__Models[ self.__Properties.model ]( self.__Properties )
         return self.__Model.buildModel( Dimensions )
 
-    def train( self, X: InputData, Y: InputData, Weights: Union[ None, Array ] = None ) -> dict:
+    def train( self, X: InputData, Y: InputData, Weights: Union[ None, dict ] = None ) -> dict:
         return self.__Model.train( X, Y, Weights )
 
     def getTrainingScore( self, X: InputData, Y: InputData ) -> dict:

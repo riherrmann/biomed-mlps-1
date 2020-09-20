@@ -173,7 +173,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
     def test_it_captures_the_class_weights_if_there_are_present( self ):
         ShortName = "test"
-        Weights = Series( [ 0.23, 0.1, 0.42 ] )
+        Weights = { 1: 0.23, 2: 0.1, 3: 0.42 }
         Path = OS.path.join(
             self.__PM.result_dir,
             '{}-{}'.format( ShortName, self.__TimeValue )
@@ -186,7 +186,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         self.__CSV.write.assert_any_call(
             OS.path.join( Path, 'weights.csv' ),
-            { 'weights': list( Weights ) }
+            Weights,
         )
 
         self.assertEqual(
@@ -655,7 +655,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.captureData( MagicMock(), MagicMock() )
-        MyEval.captureClassWeights( MagicMock( spec = Series ) )
+        MyEval.captureClassWeights( MagicMock( spec = dict ) )
         MyEval.capturePreprocessedData( MagicMock(), MagicMock() )
         MyEval.captureFeatures( MagicMock(), MagicMock(), MagicMock() )
         MyEval.captureTrainingHistory( MagicMock() )

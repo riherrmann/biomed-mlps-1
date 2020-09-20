@@ -15,7 +15,7 @@ class ModelBase( MLP ):
         self._Model.summary( print_fn = lambda X: Summery.append( X ) )
         return "\n".join( Summery )
 
-    def train( self, X: InputData, Y: InputData, Weights: Union[ None, NP.array ] = None ) -> dict:
+    def train( self, X: InputData, Y: InputData, Weights: Union[ None, dict ] = None ) -> dict:
         print("Training...")
         Hist = self._Model.fit(
             x = X.Training,

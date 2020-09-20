@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from biomed.mlp.input_data import InputData
 from biomed.services_getter import ServiceGetter
+from typing import Union
 from numpy import array as Array
 
 class abstractstatic(staticmethod):
@@ -17,7 +18,7 @@ class MLP( ABC ):
         pass
 
     @abstractmethod
-    def train( self, X: InputData, Y: InputData, Weights: Array ) -> dict:
+    def train( self, X: InputData, Y: InputData, Weights: Union[ None, dict ] ) -> dict:
         pass
 
     @abstractmethod
