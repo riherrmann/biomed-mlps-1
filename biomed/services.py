@@ -15,6 +15,7 @@ from biomed.utils.json_file_writer import JSONFileWriter
 from biomed.utils.csv_file_writer import CSVFileWriter
 import biomed.evaluator.std_evaluator as Eval
 import biomed.splitter.std_splitter as Split
+import biomed.measurer.std_measurer as Measure
 from biomed.encoder.std_categorie_encoder import StdCategoriesEncoder
 import biomed.text_mining.text_mining_controller as TMC
 
@@ -120,6 +121,12 @@ def startServices() -> None:
     __Services.set(
         "splitter",
         Split.StdSplitter.Factory.getInstance( getService ),
+        Dependencies = "properties"
+    )
+
+    __Services.set(
+        "measurer",
+        Measure.StdMeasurer.Factory.getInstance( getService ),
         Dependencies = "properties"
     )
 

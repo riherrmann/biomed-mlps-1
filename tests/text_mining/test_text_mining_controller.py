@@ -7,6 +7,7 @@ from biomed.facilitymanager.facility_manager import FacilityManager
 from biomed.splitter.splitter import Splitter
 from biomed.preprocessor.preprocessor import Preprocessor
 from biomed.vectorizer.vectorizer import Vectorizer
+from biomed.measurer.measurer import Measurer
 from biomed.mlp.mlp import MLP
 from biomed.mlp.input_data import InputData
 from biomed.evaluator.evaluator import Evaluator
@@ -40,6 +41,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Splitter = MagicMock( spec = Splitter )
         self.__Preprocessor = MagicMock( spec = Preprocessor )
         self.__Vectorizer = MagicMock( spec = Vectorizer )
+        self.__Measurer = MagicMock( spec = Measurer )
         self.__MLP = MagicMock( spec = MLP )
         self.__Evaluator = MagicMock( spec = Evaluator )
         self.__IND = self.__INDF.start()
@@ -60,6 +62,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
         self.__Vectorizer.featureizeTest.return_value = MagicMock()
         self.__Vectorizer.getSupportedFeatures.return_value = MagicMock()
+        self.__Measurer.measureClassWeights.return_value = MagicMock()
 
     def tearDown( self ):
         self.__INDF.stop()
@@ -72,6 +75,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             'splitter': self.__Splitter,
             'preprocessor': self.__Preprocessor,
             'vectorizer': self.__Vectorizer,
+            'measurer': self.__Measurer,
             'mlp': self.__MLP,
             'evaluator': self.__Evaluator
         }
@@ -91,6 +95,7 @@ class TextminingControllerSpec( unittest.TestCase ):
                 'facilitymanager': FacilityManager,
                 'preprocessor': Preprocessor,
                 'vectorizer': Vectorizer,
+                'measurer':Measurer,
                 'mlp': MLP,
                 'evaluator': Evaluator
             }
@@ -108,7 +113,7 @@ class TextminingControllerSpec( unittest.TestCase ):
 
         TextminingController.Factory.getInstance( ServiceGetter )
         self.assertEqual(
-            8,
+            9,
             ServiceGetter.call_count
         )
 
@@ -141,6 +146,85 @@ class TextminingControllerSpec( unittest.TestCase ):
         )
 
         self.__FacilityManager.clean.assert_called_once_with( Data )
+
+    def test_it_weight_classes_for_binary( self ):
+        self.__PM.classifier = 'is_cancer'
+
+        TrainingIds = Series( [ '1a', '2a', '3a' ], index = [ 0, 1, 2 ] )
+        TrainFeatures = MagicMock()
+        TrainFeatures.tolist.return_value = [ ( 1, 1 ), ( 1, 2 ), ( 0, 1 ) ]
+
+        self.__Splitter.trainingSplit.return_value = [ ( TrainingIds, MagicMock() ) ]
+        self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = self.__Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        Classes, CurrentLabels = self.__Measurer.measureClassWeights.call_args_list[ 0 ][ 0 ]
+
+        self.__Measurer.measureClassWeights.assert_called_once()
+
+        self.assertListEqual(
+            [ 0, 1 ],
+            Classes.tolist()
+        )
+
+        self.assertListEqual(
+            [ 0, 1, 1 ],
+            CurrentLabels.tolist(),
+        )
+
+    def test_it_weight_classes_for_multiclass( self ):
+        self.__PM.classifier = 'doid'
+
+        TrainingIds = Series( [ '1a', '2a', '3a', '4a' ], index = [ 0, 1, 2, 3 ] )
+        TrainFeatures = MagicMock()
+        TrainFeatures.tolist.return_value = [ ( 1, 1 ), ( 1, 2 ), ( 0, 1 ), ( 1, 1 ) ]
+
+        self.__Splitter.trainingSplit.return_value = [ ( TrainingIds, MagicMock() ) ]
+        self.__Vectorizer.featureizeTrain.return_value = TrainFeatures
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = self.__Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        Classes, CurrentLabels = self.__Measurer.measureClassWeights.call_args_list[ 0 ][ 0 ]
+
+        self.__Measurer.measureClassWeights.assert_called_once()
+
+        self.assertListEqual(
+            [ -1, 1, 2 ],
+            Classes.tolist()
+        )
+
+        self.assertListEqual(
+            [ -1, 1, 2, -1 ],
+            CurrentLabels.tolist(),
+        )
+
+    def test_it_captures_the_class_weights( self ):
+        Weights = MagicMock()
+
+        self.__Measurer.measureClassWeights.return_value = Weights
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = self.__Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        self.__Evaluator.captureClassWeights.assert_called_once_with( Weights )
 
     def test_it_sets_the_categories_for_binary( self ):
         self.__PM.classifier = 'is_cancer'
@@ -752,12 +836,13 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Evaluator.captureModel.assert_called_once_with( Expected )
 
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    def test_it_trains_the_model( self, DataBinding: MagicMock ):
+    def test_it_trains_the_model_without_weights( self, DataBinding: MagicMock ):
         Features = MagicMock()
         Labels = MagicMock()
         Bindings = [ Features, Labels ]
 
         DataBinding.side_effect = lambda _, __, ___ : Bindings.pop( 0 )
+        self.__Measurer.measureClassWeights.return_value = None
 
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
         MyController.process(
@@ -767,7 +852,27 @@ class TextminingControllerSpec( unittest.TestCase ):
             Description = MagicMock()
         )
 
-        self.__MLP.train.assert_called_once_with( Features, Labels )
+        self.__MLP.train.assert_called_once_with( Features, Labels, None )
+
+    @patch( 'biomed.text_mining.text_mining_controller.InputData' )
+    def test_it_trains_the_model_with_weights( self, DataBinding: MagicMock ):
+        Features = MagicMock()
+        Labels = MagicMock()
+        Bindings = [ Features, Labels ]
+        Weights = MagicMock()
+
+        DataBinding.side_effect = lambda _, __, ___ : Bindings.pop( 0 )
+        self.__Measurer.measureClassWeights.return_value = Weights
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = self.__Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        self.__MLP.train.assert_called_once_with( Features, Labels, Weights )
 
     def test_it_captures_the_training_time( self ):
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )

@@ -1,6 +1,7 @@
 from biomed.properties_manager import PropertiesManager
 from biomed.mlp.mlp import MLP
 from biomed.mlp.input_data import InputData
+from typing import Union
 import numpy as NP
 
 class ModelBase( MLP ):
@@ -14,11 +15,12 @@ class ModelBase( MLP ):
         self._Model.summary( print_fn = lambda X: Summery.append( X ) )
         return "\n".join( Summery )
 
-    def train( self, X: InputData, Y: InputData ) -> dict:
+    def train( self, X: InputData, Y: InputData, Weights: Union[ None, NP.array ] = None ) -> dict:
         print("Training...")
         Hist = self._Model.fit(
             x = X.Training,
             y = Y.Training,
+            class_weight = Weights,
             shuffle = True,
             epochs = self._Properties.training[ 'epochs' ],
             batch_size = self._Properties.training['batch_size'],

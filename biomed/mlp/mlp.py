@@ -17,7 +17,7 @@ class MLP( ABC ):
         pass
 
     @abstractmethod
-    def train( self, X: InputData, Y: InputData ) -> dict:
+    def train( self, X: InputData, Y: InputData, Weights: Array ) -> dict:
         pass
 
     @abstractmethod

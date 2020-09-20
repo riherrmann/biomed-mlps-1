@@ -4,6 +4,7 @@ from biomed.mlp.input_data import InputData
 import biomed.services_getter as ServiceGetter
 from biomed.mlp.bin_tow_layered import Bin2Layered
 from biomed.properties_manager import PropertiesManager
+from typing import Union
 from numpy import array as Array
 
 class MLPManager( MLP ):
@@ -19,8 +20,8 @@ class MLPManager( MLP ):
         self.__Model = self.__Models[ self.__Properties.model ]( self.__Properties )
         return self.__Model.buildModel( Dimensions )
 
-    def train( self, X: InputData, Y: InputData ) -> dict:
-        return self.__Model.train( X, Y )
+    def train( self, X: InputData, Y: InputData, Weights: Union[ None, Array ] = None ) -> dict:
+        return self.__Model.train( X, Y, Weights )
 
     def getTrainingScore( self, X: InputData, Y: InputData ) -> dict:
         return self.__Model.getTrainingScore( X, Y )

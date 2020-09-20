@@ -7,9 +7,9 @@ from biomed.services_getter import ServiceGetter
 from numpy import array as Array
 from pandas import Series, DataFrame
 import os as OS
+from typing import Union
 from os import mkdir
 from datetime import datetime as Time
-from sys import getsizeof as memSize
 from sklearn.metrics import f1_score as F1
 from sklearn.metrics import classification_report as Reporter
 import asyncio
@@ -122,6 +122,13 @@ class StdEvaluator( Evaluator ):
 
     def captureData( self, Train: Series, Test: Series ):
         self.__enqueueStep( self.__captureData( Train, Test ) )
+
+    async def __captureClassWeights( self, Weights: Union[ None, Series ] ):
+        if isinstance( Weights, Series ):
+            self.__writeCSV( 'weights.csv', { 'weights': list( Weights ) } )
+
+    def captureClassWeights( self, Weights: Union[ None, Series ] ):
+        self.__enqueueStep( self.__captureClassWeights( Weights ) )
 
     async def __capturePreprocessedData( self, Processed: Series, Original: Series ):
         Sizes = {

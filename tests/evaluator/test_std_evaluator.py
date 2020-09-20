@@ -164,16 +164,57 @@ class StdEvaluatorSpec( unittest.TestCase ):
             { 'pmid': list( Test ) }
         )
 
+    def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_class_weights( self ):
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
+        with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
+            MyEval.captureClassWeights( MagicMock() )
+            MyEval.finalize()
+
+
+    def test_it_captures_the_class_weights_if_there_are_present( self ):
+        ShortName = "test"
+        Weights = Series( [ 0.23, 0.1, 0.42 ] )
+        Path = OS.path.join(
+            self.__PM.result_dir,
+            '{}-{}'.format( ShortName, self.__TimeValue )
+        )
+
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
+        MyEval.start( ShortName, MagicMock() )
+        MyEval.captureClassWeights( Weights )
+        MyEval.finalize()
+
+        self.__CSV.write.assert_any_call(
+            OS.path.join( Path, 'weights.csv' ),
+            { 'weights': list( Weights ) }
+        )
+
+        self.assertEqual(
+            2,
+            self.__CSV.write.call_count
+        )
+
+    def test_it_writes_no_class_weights_if_there_are_not_present( self ):
+        Weights = None
+
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
+        MyEval.start( MagicMock(), MagicMock() )
+        MyEval.captureClassWeights( Weights )
+        MyEval.finalize()
+
+        self.assertEqual(
+            1,
+            self.__CSV.write.call_count
+        )
+
     def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_processed_data( self ):
         MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         with self.assertRaises( RuntimeError, msg = "You have to start the Evaluator before caputuring stuff" ):
             MyEval.capturePreprocessedData( MagicMock(), MagicMock() )
             MyEval.finalize()
 
-    @patch( 'biomed.evaluator.std_evaluator.memSize' )
     def test_it_caputures_the_size_of_the_documents_before_and_after_preprocessing(
         self,
-        memSize: MagicMock
     ):
         ShortName = "Test"
         Org = MagicMock( spec = Series )
@@ -614,6 +655,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
         MyEval.captureData( MagicMock(), MagicMock() )
+        MyEval.captureClassWeights( MagicMock( spec = Series ) )
         MyEval.capturePreprocessedData( MagicMock(), MagicMock() )
         MyEval.captureFeatures( MagicMock(), MagicMock(), MagicMock() )
         MyEval.captureTrainingHistory( MagicMock() )
@@ -628,6 +670,10 @@ class StdEvaluatorSpec( unittest.TestCase ):
         )
         self.__CSV.write.assert_any_call(
             OS.path.join( Path, 'test.csv' ),
+            ANY
+        )
+        self.__CSV.write.assert_any_call(
+            OS.path.join( Path, 'weights.csv' ),
             ANY
         )
         self.__CSV.write.assert_any_call(

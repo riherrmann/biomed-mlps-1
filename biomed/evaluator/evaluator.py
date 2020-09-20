@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Union
 from numpy import array as Array
 from pandas import Series
 from biomed.services_getter import ServiceGetter
@@ -47,6 +48,10 @@ class Evaluator( ABC ):
 
     @abstractmethod
     def captureData( self, Train: Series, Test: Series ):
+        pass
+
+    @abstractmethod
+    def captureClassWeights( self, Weights: Union[ None, Series ] ):
         pass
 
     @abstractmethod
