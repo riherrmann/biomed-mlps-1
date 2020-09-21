@@ -5,6 +5,9 @@ from keras.callbacks import EarlyStopping as Stopper
 from keras.callbacks import ModelCheckpoint as Checkpoint
 from keras.models import load_model as loadModel
 from typing import Union
+from uuid import uuid4 as uuid
+from os import path as Path
+from os import remove as removeFile
 import numpy as NP
 
 class ModelBase( MLP ):
@@ -12,6 +15,19 @@ class ModelBase( MLP ):
         self._Properties = Properties
         self._Model = None
         self.__Trained = False
+        self.__FileName = self.__createFileName()
+
+    def __alignFileName( self, FileName: str ) -> str:
+        return FileName.replace( '-', '_' )
+
+    def __createFileName( self ):
+        return Path.join(
+            Path.dirname( __file__ ),
+            '..',
+            '..',
+            '.cache',
+            self.__alignFileName( '{}.h5'.format( uuid() ) ),
+        )
 
     def _summarize( self ):
         Summery = []
@@ -28,12 +44,16 @@ class ModelBase( MLP ):
 
     def __initCheckpoint( self ) -> Checkpoint:
         return Checkpoint(
-            'model.h5',
+            self.__FileName,
             monitor = 'val_accuracy',
             mode = 'max',
             verbose = 1,
             save_best_only = True
         )
+
+    def __cleanSavedModel( self ):
+        if Path.exists( self.__FileName ):
+            removeFile( self.__FileName )
 
     def train( self, X: InputData, Y: InputData, Weights: Union[ None, dict ] = None ) -> dict:
         print("Training...")
@@ -53,7 +73,8 @@ class ModelBase( MLP ):
             ]
         )
 
-        self._Model = loadModel( 'model.h5' )
+        self._Model = loadModel( self.__FileName )
+        self.__cleanSavedModel()
         self.__Trained = True
 
         return Hist.history
