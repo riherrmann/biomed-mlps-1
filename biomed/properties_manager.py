@@ -52,6 +52,10 @@ class PropertiesManager:
             verbose = 1,
         )
 
+        self.evaluator = dict(
+            captureFeatures = False
+        )
+
         self.cache_dir = OS.path.abspath(
             OS.path.join(
                 OS.path.dirname( __file__ ), "..", ".cache"
