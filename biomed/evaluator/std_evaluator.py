@@ -167,9 +167,14 @@ class StdEvaluator( Evaluator ):
         TestFeatures: tuple,
         BagOfWords: list
     ):
-        self.__enqueueStep(
-            self.__captureFeatures( TrainFeatures, TestFeatures, BagOfWords )
-        )
+        if self.__Properties.evaluator[ 'captureFeatures' ]:
+            self.__enqueueStep(
+                self.__captureFeatures(
+                    TrainFeatures,
+                    TestFeatures,
+                    BagOfWords
+                )
+            )
 
     async def __captureModel( self, Model: str ):
         self.__writeFile(

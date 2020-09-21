@@ -256,7 +256,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
             MyEval.finalize()
 
     @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
-    def test_it_captures_the_trainings_and_test_features(
+    def test_it_captures_the_trainings_and_test_features_if_enabled(
         self,
         DF: MagicMock
     ):
@@ -268,6 +268,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
         BagOfWords = [ 'a', 'b' ]
 
         ShortName = "Test"
+        self.__PM.evaluator[ 'captureFeatures' ] = True
 
         Frame = MagicMock( spec = DataFrame )
         DF.return_value = Frame
@@ -301,6 +302,36 @@ class StdEvaluatorSpec( unittest.TestCase ):
         )
 
         Frame.to_csv.assert_any_call( OS.path.join( Path, 'testFeatures.csv' ) )
+
+    @patch( 'biomed.evaluator.std_evaluator.DataFrame' )
+    def test_it_does_not_captures_the_trainings_and_test_features_if_disabled(
+        self,
+        DF: MagicMock
+    ):
+        TrainIds = [ 123, 3, 53343 ]
+        TrainingsFeatures = [ [1, 2,], [5, 6,], [9, 10,] ] # this should be a array
+        TestIds = [ 23, 42 ]
+        TestFeatures = [ [3,4,], [7,8], [11, 0] ] # this should be a array
+
+        BagOfWords = [ 'a', 'b' ]
+
+        ShortName = "Test"
+        self.__PM.evaluator[ 'captureFeatures' ] = False
+
+        Frame = MagicMock( spec = DataFrame )
+        DF.return_value = Frame
+
+        MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
+        MyEval.start( ShortName, "test run" )
+        MyEval.captureFeatures(
+            ( Series( TrainIds ), TrainingsFeatures ),
+            ( Series( TestIds ), TestFeatures ),
+            BagOfWords
+        )
+        MyEval.finalize()
+
+        DF.assert_not_called()
+        Frame.assert_not_called()
 
     def test_it_fails_if_the_evaluator_is_not_started_while_caputure_the_training_history( self ):
         MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
@@ -651,6 +682,7 @@ class StdEvaluatorSpec( unittest.TestCase ):
 
         Frame = MagicMock( spec = DataFrame )
         DF.return_value = Frame
+        self.__PM.evaluator[ 'captureFeatures' ] = True
 
         MyEval = StdEvaluator.Factory.getInstance( self.__fakeLocator )
         MyEval.start( ShortName, "test run" )
