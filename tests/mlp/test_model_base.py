@@ -20,6 +20,9 @@ class ModelBaseSpec( unittest.TestCase ):
         self.__StopperP = patch( 'biomed.mlp.model_base.Stopper' )
         self.__CheckpointP = patch( 'biomed.mlp.model_base.Checkpoint' )
         self.__LoaderP = patch( 'biomed.mlp.model_base.loadModel' )
+        self.__uuidP = patch( 'biomed.mlp.model_base.uuid' )
+        self.__PathP = patch( 'biomed.mlp.model_base.Path' )
+        self.__RemoverP = patch( 'biomed.mlp.model_base.removeFile' )
 
         self.__Stopper = self.__StopperP.start()
         self.__Stopper.return_value = self.__Stopper
@@ -27,12 +30,36 @@ class ModelBaseSpec( unittest.TestCase ):
         self.__Checkpoint.return_value = self.__Checkpoint
         self.__Loader = self.__LoaderP.start()
         self.__Loader.return_value = MagicMock()
+        self.__uuid = self.__uuidP.start()
+        self.__uuid.return_value = '123'
+        self.__Path = self.__PathP.start()
+        self.__Path.join.return_value = 'abc'
+        self.__Remover = self.__RemoverP.start()
 
     def tearDown( self ):
         self.__StopperP.stop()
         self.__CheckpointP.stop()
         self.__LoaderP.stop()
+        self.__uuidP.stop()
+        self.__PathP.stop()
+        self.__RemoverP.stop()
 
+    def test_it_builds_a_path_for_the_saved_model( self ):
+        DirName = 'mydir'
+        self.__Path.dirname.return_value = DirName
+
+        UUID = '12-af-23-42'
+        self.__uuid.return_value = UUID
+
+        ModelBaseSpec.StubbedFFN( MagicMock(), MagicMock() )
+
+        self.__Path.join.assert_called_once_with(
+            DirName,
+            '..',
+            '..',
+            '.cache',
+            '12_af_23_42.h5',
+        )
 
     def test_it_initlializes_early_stopping_callback( self ):
         PM = PropertiesManager()
@@ -49,11 +76,14 @@ class ModelBaseSpec( unittest.TestCase ):
         )
 
     def test_it_initlializes_the_checkpoint_callback( self ):
+        FileName = 'mbc'
+        self.__Path.join.return_value = FileName
+
         FFN = ModelBaseSpec.StubbedFFN( PropertiesManager(), MagicMock( spec = Sequential ) )
         FFN.train( MagicMock(), MagicMock() )
 
         self.__Checkpoint.assert_called_once_with(
-            'model.h5',
+            FileName,
             monitor = 'val_accuracy',
             mode = 'max',
             verbose = 1,
@@ -160,18 +190,39 @@ class ModelBaseSpec( unittest.TestCase ):
         PM = PropertiesManager()
         PM.training[ 'patience' ] = 50
 
+        FileName = 'kjf'
+        self.__Path.join.return_value = FileName
+
         Best = MagicMock()
         self.__Loader.return_value = Best
 
         FFN = ModelBaseSpec.StubbedFFN( PM, MagicMock( spec = Sequential ) )
         FFN.train( MagicMock(), MagicMock() )
 
-        self.__Loader.assert_called_once_with( 'model.h5' )
+        self.__Loader.assert_called_once_with( FileName )
 
         self.assertEqual(
             Best,
             FFN._Model
         )
+
+    def test_it_removes_the_saved_model_if_it_is_there( self ):
+        FileName = 'op'
+        self.__Path.exists.return_value = True
+        self.__Path.join.return_value = FileName
+
+        FFN = ModelBaseSpec.StubbedFFN( PropertiesManager(), MagicMock( spec = Sequential ) )
+        FFN.train( MagicMock(), MagicMock() )
+
+        self.__Remover.assert_called_once_with( FileName )
+
+    def test_it_does_nothing_the_saved_model_if_it_is_not_there( self ):
+        self.__Path.exists.return_value = False
+
+        FFN = ModelBaseSpec.StubbedFFN( PropertiesManager(), MagicMock( spec = Sequential ) )
+        FFN.train( MagicMock(), MagicMock() )
+
+        self.__Remover.assert_not_called()
 
     def test_it_fails_if_the_model_was_not_trained_while_evaluating( self ):
         Model = MagicMock( spec = Sequential )
