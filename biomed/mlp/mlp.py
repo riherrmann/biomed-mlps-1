@@ -14,11 +14,11 @@ class abstractstatic(staticmethod):
 
 class MLP( ABC ):
     @abstractmethod
-    def buildModel( self, Shape: tuple ) -> str:
+    def buildModel( self, Shape: tuple, Weights: Union[ None, dict ] ) -> str:
         pass
 
     @abstractmethod
-    def train( self, X: InputData, Y: InputData, Weights: Union[ None, dict ] ) -> dict:
+    def train( self, X: InputData, Y: InputData ) -> dict:
         pass
 
     @abstractmethod
