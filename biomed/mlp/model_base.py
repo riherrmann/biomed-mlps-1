@@ -15,6 +15,8 @@ class ModelBase( MLP ):
         self._Properties = Properties
         self._Model = None
         self.__Trained = False
+        self._Weights = None
+        self._CustomObjects = None
         self.__FileName = self.__createFileName()
 
     def __alignFileName( self, FileName: str ) -> str:
@@ -55,12 +57,12 @@ class ModelBase( MLP ):
         if Path.exists( self.__FileName ):
             removeFile( self.__FileName )
 
-    def train( self, X: InputData, Y: InputData, Weights: Union[ None, dict ] = None ) -> dict:
+    def train( self, X: InputData, Y: InputData ) -> dict:
         print("Training...")
         Hist = self._Model.fit(
             x = X.Training,
             y = Y.Training,
-            class_weight = Weights,
+            class_weight = self._Weights,
             shuffle = True,
             epochs = self._Properties.training[ 'epochs' ],
             batch_size = self._Properties.training['batch_size'],
@@ -73,7 +75,7 @@ class ModelBase( MLP ):
             ]
         )
 
-        self._Model = loadModel( self.__FileName )
+        self._Model = loadModel( self.__FileName, custom_objects = self._CustomObjects )
         self.__cleanSavedModel()
         self.__Trained = True
 

@@ -154,8 +154,8 @@ class TextminingController( Controller ):
             Features.Test.shape
         ) )
 
-        Structure = self.__Model.buildModel( Features.Training.shape )
-        History = self.__Model.train( Features, Labels, Weights )
+        Structure = self.__Model.buildModel( Features.Training.shape, Weights )
+        History = self.__Model.train( Features, Labels )
         Score = self.__Model.getTrainingScore( Features, Labels )
 
         self.__Evaluator.captureModel( Structure )

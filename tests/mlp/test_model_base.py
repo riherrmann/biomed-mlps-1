@@ -9,11 +9,19 @@ from numpy.testing import assert_array_equal as arrayEqual
 
 class ModelBaseSpec( unittest.TestCase ):
     class StubbedFFN( ModelBase ):
-        def __init__( self, Properties: PropertiesManager, Model ):
+        def __init__(
+                self,
+                Properties: PropertiesManager,
+                Model,
+                Weights = None,
+                CustomObj = None,
+        ):
             super( ModelBaseSpec.StubbedFFN, self ).__init__( Properties )
             self._Model = Model
+            self._Weights = Weights
+            self._CustomObjects = CustomObj
 
-        def buildModel( self ):
+        def buildModel( self, Weights ):
             pass
 
     def setUp( self ):
@@ -153,8 +161,8 @@ class ModelBaseSpec( unittest.TestCase ):
         PM[ "training" ][ "batch_size" ] = 2
         PM[ "training" ][ "workers" ] = 2
 
-        FFN = ModelBaseSpec.StubbedFFN( PM, Model )
-        FFN.train( X, Y, Weights )
+        FFN = ModelBaseSpec.StubbedFFN( PM, Model, Weights )
+        FFN.train( X, Y )
 
         Model.fit.assert_called_once_with(
             x = X.Training,
@@ -199,7 +207,28 @@ class ModelBaseSpec( unittest.TestCase ):
         FFN = ModelBaseSpec.StubbedFFN( PM, MagicMock( spec = Sequential ) )
         FFN.train( MagicMock(), MagicMock() )
 
-        self.__Loader.assert_called_once_with( FileName )
+        self.__Loader.assert_called_once_with( FileName, custom_objects = None )
+
+        self.assertEqual(
+            Best,
+            FFN._Model
+        )
+
+    def test_it_loads_the_best_model_with_custom_objects( self ):
+        PM = PropertiesManager()
+        Objs = MagicMock()
+        PM.training[ 'patience' ] = 50
+
+        FileName = 'kjf'
+        self.__Path.join.return_value = FileName
+
+        Best = MagicMock()
+        self.__Loader.return_value = Best
+
+        FFN = ModelBaseSpec.StubbedFFN( PM, MagicMock( spec = Sequential ), CustomObj = Objs )
+        FFN.train( MagicMock(), MagicMock() )
+
+        self.__Loader.assert_called_once_with( FileName, custom_objects = Objs )
 
         self.assertEqual(
             Best,

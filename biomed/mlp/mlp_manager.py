@@ -3,6 +3,7 @@ from biomed.mlp.mlp import MLPFactory
 from biomed.mlp.input_data import InputData
 import biomed.services_getter as ServiceGetter
 from biomed.mlp.bin_tow_layered import Bin2Layered
+from biomed.mlp.bin_tow_w_layered import WeightedBin2Layered
 from biomed.properties_manager import PropertiesManager
 from typing import Union
 from numpy import array as Array
@@ -11,17 +12,18 @@ class MLPManager( MLP ):
     def __init__( self, PM: PropertiesManager ):
         self.__Models = {
             "b2": Bin2Layered,
+            "wb2": WeightedBin2Layered,
         }
 
         self.__Model = None
         self.__Properties = PM
 
-    def buildModel( self, Dimensions: int ) -> str:
+    def buildModel( self, Dimensions: int, Weights: Union[ None, dict ] = None ) -> str:
         self.__Model = self.__Models[ self.__Properties.model ]( self.__Properties )
-        return self.__Model.buildModel( Dimensions )
+        return self.__Model.buildModel( Dimensions, Weights )
 
-    def train( self, X: InputData, Y: InputData, Weights: Union[ None, dict ] = None ) -> dict:
-        return self.__Model.train( X, Y, Weights )
+    def train( self, X: InputData, Y: InputData ) -> dict:
+        return self.__Model.train( X, Y  )
 
     def getTrainingScore( self, X: InputData, Y: InputData ) -> dict:
         return self.__Model.getTrainingScore( X, Y )

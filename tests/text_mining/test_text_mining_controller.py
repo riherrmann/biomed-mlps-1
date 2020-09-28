@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, ANY
 from biomed.text_mining.controller import Controller
 from biomed.text_mining.text_mining_controller import TextminingController
 from biomed.properties_manager import PropertiesManager
@@ -832,7 +832,46 @@ class TextminingControllerSpec( unittest.TestCase ):
             Description = MagicMock()
         )
 
-        self.__MLP.buildModel.assert_called_once_with( Shape )
+        self.__MLP.buildModel.assert_called_once_with( Shape, ANY )
+
+    @patch( 'biomed.text_mining.text_mining_controller.InputData' )
+    def test_it_builds_the_model_without_weights( self, DataBinding: MagicMock ):
+        Features = MagicMock()
+        Labels = MagicMock()
+        Bindings = [ Features, Labels ]
+
+        DataBinding.side_effect = lambda _, __, ___ : Bindings.pop( 0 )
+        self.__Measurer.measureClassWeights.return_value = None
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = self.__Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        self.__MLP.buildModel.assert_called_once_with( ANY, None )
+
+    @patch( 'biomed.text_mining.text_mining_controller.InputData' )
+    def test_it_builds_the_model_with_weights( self, DataBinding: MagicMock ):
+        Features = MagicMock()
+        Labels = MagicMock()
+        Bindings = [ Features, Labels ]
+        Weights = MagicMock()
+
+        DataBinding.side_effect = lambda _, __, ___ : Bindings.pop( 0 )
+        self.__Measurer.measureClassWeights.return_value = Weights
+
+        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
+        MyController.process(
+            Data = self.__Data,
+            TestData = None,
+            ShortName = MagicMock(),
+            Description = MagicMock()
+        )
+
+        self.__MLP.buildModel.assert_called_once_with( ANY, Weights )
 
     def test_it_saves_the_model_structure( self ):
         Expected = "structure"
@@ -850,26 +889,7 @@ class TextminingControllerSpec( unittest.TestCase ):
         self.__Evaluator.captureModel.assert_called_once_with( Expected )
 
     @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    def test_it_trains_the_model_without_weights( self, DataBinding: MagicMock ):
-        Features = MagicMock()
-        Labels = MagicMock()
-        Bindings = [ Features, Labels ]
-
-        DataBinding.side_effect = lambda _, __, ___ : Bindings.pop( 0 )
-        self.__Measurer.measureClassWeights.return_value = None
-
-        MyController = TextminingController.Factory.getInstance( self.__fakeLocator )
-        MyController.process(
-            Data = self.__Data,
-            TestData = None,
-            ShortName = MagicMock(),
-            Description = MagicMock()
-        )
-
-        self.__MLP.train.assert_called_once_with( Features, Labels, None )
-
-    @patch( 'biomed.text_mining.text_mining_controller.InputData' )
-    def test_it_trains_the_model_with_weights( self, DataBinding: MagicMock ):
+    def test_it_trains_the_model( self, DataBinding: MagicMock ):
         Features = MagicMock()
         Labels = MagicMock()
         Bindings = [ Features, Labels ]
@@ -886,7 +906,7 @@ class TextminingControllerSpec( unittest.TestCase ):
             Description = MagicMock()
         )
 
-        self.__MLP.train.assert_called_once_with( Features, Labels, Weights )
+        self.__MLP.train.assert_called_once_with( Features, Labels )
 
     def test_it_captures_the_training_time( self ):
         MyController = TextminingController.Factory.getInstance( self.__fakeLocator )

@@ -7,14 +7,17 @@ from biomed.properties_manager import PropertiesManager
 class MLPManagerSpec( unittest.TestCase ):
     def setUp( self ):
         self.__B2P = patch( 'biomed.mlp.mlp_manager.Bin2Layered', spec = MLP )
+        self.__WB2P = patch( 'biomed.mlp.mlp_manager.WeightedBin2Layered', spec = MLP )
 
         self.__B2 = self.__B2P.start()
+        self.__WB2 = self.__WB2P.start()
 
         self.__ReferenceModel = MagicMock( spec = MLP )
         self.__B2.return_value = self.__ReferenceModel
 
     def tearDown( self ):
         self.__B2P.stop()
+        self.__WB2P.stop()
 
     def __fakeLocator( self, _, __ ):
         PM = PropertiesManager()
@@ -27,6 +30,7 @@ class MLPManagerSpec( unittest.TestCase ):
     def test_it_initializes_a_models( self  ):
         Models = {
             "b2": self.__B2,
+            "wb2": self.__WB2,
         }
 
         for ModelKey in Models:
@@ -51,8 +55,21 @@ class MLPManagerSpec( unittest.TestCase ):
         MyManager = MLPManager.Factory.getInstance( self.__fakeLocator )
         MyManager.buildModel( InputShape )
 
-        self.__ReferenceModel.buildModel.assert_called_once_with( InputShape )
+        self.__ReferenceModel.buildModel.assert_called_once_with( InputShape, ANY )
 
+    def test_it_deligates_the_training_arguments_without_weights_to_the_model_by_default( self ):
+        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
+        Model.buildModel( ( 2, 3 ) )
+
+        self.__ReferenceModel.buildModel.assert_called_once_with( ANY, None )
+
+    def test_it_deligates_given_weights_to_the_model( self ):
+        Weights = MagicMock()
+
+        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
+        Model.buildModel( ( 2, 3 ), Weights )
+
+        self.__ReferenceModel.buildModel.assert_called_once_with( ANY, Weights )
 
     def test_it_returns_the_summary_of_the_builded_model( self ):
         Expected = "summary"
@@ -65,25 +82,6 @@ class MLPManagerSpec( unittest.TestCase ):
             Expected,
             Model.buildModel( MagicMock() )
         )
-
-    def test_it_deligates_the_training_arguments_without_weights_to_the_model_by_default( self ):
-        X = MagicMock()
-        Y = MagicMock()
-
-        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
-        Model.buildModel( ( 2, 3 ) )
-        Model.train( X, Y )
-
-        self.__ReferenceModel.train.assert_called_once_with( X, Y, None )
-
-    def test_it_deligates_given_weights_to_the_model( self ):
-        Weights = MagicMock()
-
-        Model = MLPManager.Factory.getInstance( self.__fakeLocator )
-        Model.buildModel( ( 2, 3 ) )
-        Model.train( MagicMock(), MagicMock(), Weights )
-
-        self.__ReferenceModel.train.assert_called_once_with( ANY, ANY, Weights )
 
     def test_it_returns_the_history_of_the_training( self ):
         Expected = "this should be not a string in real"
