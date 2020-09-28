@@ -43,3 +43,18 @@ class PipelineSpec( unittest.TestCase ):
         Pipe.pipe( Data, None, Short, Description, None  )
 
         TMC.process.assert_called_once_with( Data, None, Short, Description )
+
+    @patch( 'biomed.pipeline.Services' )
+    def test_it_kicks_off_the_test_run_and_delegates_test_data( self, Services: MagicMock ):
+        TMC = MagicMock( spec = TextminingController )
+        Short = MagicMock()
+        Description = MagicMock()
+        Data = MagicMock()
+        Test = MagicMock()
+
+        Services.getService.side_effect = lambda Key, __ : TMC if Key == 'test.textminer' else MagicMock()
+
+        Pipe = Pipeline.Factory.getInstance()
+        Pipe.pipe( Data, Test, Short, Description, None  )
+
+        TMC.process.assert_called_once_with( Data, Test, Short, Description )

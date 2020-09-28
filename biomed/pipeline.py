@@ -2,6 +2,7 @@ from pandas import DataFrame
 import biomed.services as Services
 from biomed.properties_manager import PropertiesManager
 from biomed.text_mining.controller import Controller
+from typing import Union
 
 class Pipeline:
     class Factory:
@@ -19,17 +20,17 @@ class Pipeline:
     def __startMining(
         self,
         Data: DataFrame,
-        TestData,
+        TestData: Union[ None, DataFrame ],
         ShortName: str,
         Description: str,
     ):
         Miner = Services.getService( 'test.textminer', Controller )
-        Miner.process( Data, None, ShortName, Description )
+        Miner.process( Data, TestData, ShortName, Description )
 
     def pipe(
         self,
         Data: DataFrame,
-        TestData,
+        TestData: Union[ None, DataFrame ],
         ShortName: str,
         Description: str,
         Properties: dict = None
