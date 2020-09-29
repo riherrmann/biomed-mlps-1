@@ -12,8 +12,7 @@ from biomed.encoder.categorie_encoder import CategoriesEncoder
 from biomed.services_getter import ServiceGetter
 from pandas import DataFrame, Series
 from typing import Union
-from numpy import array as Array
-from numpy import unique
+from numpy import array as Array, unique
 
 class TextminingController( Controller ):
     def __init__(
@@ -38,8 +37,13 @@ class TextminingController( Controller ):
         self.__Measurer = Measurer
         self.__Model = MLP
 
+        self.__Prefix = 'bce1f597-48e3-42e8-a140-1675e60f34f3-'
         self.__Data = None
+        self.__TestData = None
         self.__Categories = None
+
+    def __isInProduction( self ):
+        return isinstance( self.__TestData, DataFrame )
 
     def __mapIdsToKey( self, Ids: Series, Key: str ) -> Series:
         Set = self.__Data[ Key ]
@@ -52,18 +56,55 @@ class TextminingController( Controller ):
             self.__mapIdsToKey( TrainingIds, self.__Properties.classifier )
         )
 
-    def __preprocess( self ) -> Series:
-        print( "preprocessing....." )
+    def __mergeSeries( self, S1: Series, I1: Series, S2: Series, I2: Series ) -> Series:
+         return Series(
+             list( S1 ) + list( S2 ),
+             index = list( I1 ) + list( I2 ),
+         )
 
-        Corpus = self.__Preprocessor.preprocessCorpus(
+    def __preprocessTrainingsData( self ) -> Series:
+         return self.__Preprocessor.preprocessCorpus(
             self.__Data[ 'pmid' ],
             self.__Data[ 'text' ]
         )
 
+    def __preprocessTesTData( self ) -> Series:
+        return self.__Preprocessor.preprocessCorpus(
+            self.__TestData[ 'pmid' ],
+            self.__TestData[ 'text' ]
+        )
+
+    def __preprocessThemAll( self ) -> Series:
+        if self.__isInProduction():
+            return self.__mergeSeries(
+                self.__preprocessTrainingsData(),
+                self.__Data[ 'pmid' ],
+                self.__preprocessTesTData(),
+                self.__TestData[ 'pmid' ],
+            )
+        else:
+            return self.__preprocessTrainingsData()
+
+    def __getOrgText( self ):
+        if self.__isInProduction():
+            return self.__mergeSeries(
+                self.__Data[ 'text' ],
+                self.__Data[ 'pmid' ],
+                self.__TestData[ 'text' ],
+                self.__TestData[ 'pmid' ],
+            )
+        else:
+            return self.__Data[ 'text' ]
+
+    def __preprocess( self ) -> Series:
+        print( "preprocessing....." )
+
+        Corpus = self.__preprocessThemAll()
+
         self.__Evaluator.capturePreprocessingTime()
         self.__Evaluator.capturePreprocessedData(
             Corpus,
-            self.__Data[ 'text' ]
+            self.__getOrgText()
         )
 
         return Corpus
@@ -124,12 +165,18 @@ class TextminingController( Controller ):
             ( Validation, self.__convertToArray( ValidationFeatures ) )
         )
 
-    def __hotEncodeLabel( self, Ids: Series ) -> tuple:
+    def __hotEncodeLabels( self, Ids: Series ) -> tuple:
         return self.__Encoder.hotEncode(
             self.__convertToArray(
                 list( self.__Data[ self.__Properties.classifier ].filter( list( Ids ) ) )
             )
         )
+
+    def __hotEncodeTestLabels( self, TestIds: Series ) -> Union[ tuple, None ]:
+        if not self.__isInProduction():
+            return self.__hotEncodeLabels( TestIds )
+        else:
+            return None
 
     def __makeInputData( self, Training: tuple, Validation: tuple, Test: tuple ) -> tuple:
         Features = InputData(
@@ -139,12 +186,18 @@ class TextminingController( Controller ):
         )
 
         Labels = InputData(
-            self.__hotEncodeLabel( Training[ 0 ] ),
-            self.__hotEncodeLabel( Validation[ 0 ] ),
-            self.__hotEncodeLabel( Test[ 0 ] ),
+            self.__hotEncodeLabels( Training[ 0 ] ),
+            self.__hotEncodeLabels( Validation[ 0 ] ),
+            self.__hotEncodeTestLabels( Test[ 0 ] ),
         )
 
         return ( Features, Labels )
+
+    def __evaluateModel( self, Features: InputData, Labels: InputData ) -> None:
+        if not self.__isInProduction():
+            self.__Evaluator.captureEvaluationScore(
+                self.__Model.getTrainingScore( Features, Labels )
+            )
 
     def __train( self, Features: InputData, Labels: InputData, Weights: Union[ None, dict ] ):
         print( "training...." )
@@ -156,46 +209,71 @@ class TextminingController( Controller ):
 
         Structure = self.__Model.buildModel( Features.Training.shape, Weights )
         History = self.__Model.train( Features, Labels )
-        Score = self.__Model.getTrainingScore( Features, Labels )
 
         self.__Evaluator.captureModel( Structure )
         self.__Evaluator.captureTrainingTime()
         self.__Evaluator.captureTrainingHistory( History )
-        self.__Evaluator.captureEvaluationScore( Score )
+
+        self.__evaluateModel( Features, Labels )
+
+    def __getExpectedTestLabels( self, TestIds ) -> list:
+        if self.__isInProduction():
+            return None
+        else:
+            return list( self.__Data[ self.__Properties.classifier ].filter( TestIds ) )
+
+    def __score( self, Predictions: Array, Expected: Union[ None, Array ] ) -> None:
+        if not self.__isInProduction():
+            self.__Evaluator.score(
+                Predictions,
+                Expected,
+                self.__Encoder.getCategories()
+            )
+
+    #TODO make this better
+    def __cleanTestIds( self, TestIds: Series ) -> Series:
+        if self.__isInProduction():
+            TestIds = list( TestIds )
+            for Index in range( 0, len( TestIds ) ):
+                TestIds[ Index ] = TestIds[ Index ].lstrip( self.__Prefix )
+
+            TestIds = Series( TestIds )
+
+        return TestIds
 
     def __predict( self, TestIds: Series, Features: InputData, Labels: InputData ):
         print( "prediciting..." )
 
         Predictions = self.__Model.predict( Features.Test )
         Predictions = self.__Encoder.decode( Predictions )
-        Expected = list( self.__Data[ self.__Properties.classifier ].filter( TestIds ) )
+        Expected = self.__getExpectedTestLabels( TestIds )
 
         self.__Evaluator.caputrePredictingTime()
         self.__Evaluator.capturePredictions(
             Predictions,
-            TestIds,
+            self.__cleanTestIds( TestIds ),
             Expected
         )
 
-        self.__Evaluator.score(
-            Predictions,
-            Expected,
-            self.__Encoder.getCategories()
-    )
+        self.__score( Predictions, Expected )
 
     def __trainAndPredict( self, Training: tuple, Test: tuple, Weights: Union[ None, dict ] ):
         TestIds = Test[ 0 ]
+
         Training, Validation = self.__validationSplit( Training )
         Features, Labels = self.__makeInputData( Training, Validation, Test )
+
         self.__train( Features, Labels, Weights )
         self.__predict( TestIds, Features, Labels )
 
     def __printResults( self, Results: dict ):
         print( 'f1 score:' )
-        print( Results[ 'score' ] )
+        if 'score' in Results:
+            print( Results[ 'score' ] )
 
         print( 'details:' )
-        print( Results[ 'report' ] )
+        if 'report' in Results:
+            print( Results[ 'report' ] )
 
     def __runFold(
         self,
@@ -215,7 +293,6 @@ class TextminingController( Controller ):
         )
 
         self.__Evaluator.captureClassWeights( Weights )
-
         TrainingFeatures, TestFeatures = self.__vectorize(
             self.__preprocess(),
             TrainingIds,
@@ -237,8 +314,15 @@ class TextminingController( Controller ):
             self.__Data[ self.__Properties.classifier ]
         )
 
+    def __splitOrReflect( self ) -> list:
+        if self.__isInProduction():
+            return [ ( self.__Data[ 'pmid' ], self.__TestData[ 'pmid' ] ) ]
+        else:
+            return self.__splitIntoTestAndTrainingData()
+
+
     def __runFolds( self ):
-        Folds = self.__splitIntoTestAndTrainingData()
+        Folds = self.__splitOrReflect()
         Index = 1
         for Fold in Folds:
             print( "run fold #{}".format( str( Index ) ) )
@@ -249,15 +333,27 @@ class TextminingController( Controller ):
 
             Index += 1
 
+    def __prefixTestIds( self, TestData: Union[ None, DataFrame ] ) -> Union[ None, DataFrame ]:
+        if isinstance( TestData, DataFrame ):
+            Ids = [ '{}{}'.format( self.__Prefix, Id ) for Id in list( TestData[ 'pmid' ] ) ]
+            TestData.pmid = Ids
+
+            return TestData
+        else:
+            return None
+
     def process(
         self,
         Data: DataFrame,
-        TestData: None,
+        TestData: Union[ None, DataFrame ],
         ShortName: str,
         Description: str
     ):
         self.__Evaluator.start( ShortName, Description )
+
         self.__Data = self.__FacilityManager.clean( Data )
+        self.__TestData = self.__prefixTestIds( TestData )
+
         self.__Encoder.setCategories( self.__Data[ self.__Properties.classifier ] )
         self.__runFolds()
 
