@@ -13,15 +13,15 @@ class PropertiesManager:
         )
 
         self.preprocessing = dict(
-            workers = 90,
+            workers = 1,
             variant = "lanv",
         )
 
         self.vectorizing = dict(
-            min_df = 2,
-            max_df = 0.95,
-            max_features = 200000,
-            ngram_range = ( 1, 4 ),
+            min_df = 1,
+            max_df = 0.5,
+            max_features = 100000,
+            ngram_range = ( 1, 2 ),
             sublinear_tf = True,
             binary = False,
             norm =  'l2',
@@ -31,7 +31,7 @@ class PropertiesManager:
         )
 
         self.selection = dict(
-            type = False,
+            type = None,
             amountOfFeatures = 500,
             treeEstimators = 250,
             treeMaxFeatures = 500,
@@ -40,7 +40,7 @@ class PropertiesManager:
         self.training = dict(
             epochs = 150,
             batch_size = 10,
-            workers = 90,
+            workers = 1,
             patience = 100,
         )
 
