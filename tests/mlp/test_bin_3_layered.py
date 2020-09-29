@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from keras.models import Sequential
 from biomed.mlp.bin_3_layered import Bin3Layered
 
-class Bin2LayerSpec( unittest.TestCase ):
+class Bin3LayerSpec( unittest.TestCase ):
     @patch( 'biomed.mlp.bin_3_layered.Sequential' )
     def test_it_compiles_the_model( self, MC: MagicMock ):
         Model = MagicMock( spec = Sequential )
