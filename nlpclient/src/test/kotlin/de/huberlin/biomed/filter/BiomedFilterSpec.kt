@@ -248,6 +248,115 @@ class BiomedFilterSpec
 	}
 
 	@Test
+	fun `it filters numerals`()
+	{
+		val Lemmas = listOf(
+			"pancreatic",
+			"cancer",
+			"be",
+			"the",
+			"1st",
+			"lethal",
+			"of",
+			"all",
+			"solid",
+			"tumor",
+			"2",
+			"because",
+			"of",
+			"its",
+			"chemoresistance",
+			"."
+		)
+
+		val Forms = listOf(
+			"NNS",
+			"NNS",
+			"VBZ",
+			"DT",
+			"CD",
+			"JJ",
+			"IN",
+			"DT",
+			"JJ",
+			"NNP",
+			"CC",
+			"IN",
+			"IN",
+			"PRP$",
+			"NN",
+			"."
+		)
+
+		`when`( this.Sentence.lemmas() ).thenReturn( Lemmas )
+		`when`( this.Sentence.posTags() ).thenReturn( Forms )
+
+		val MyFilter = BiomedFilter.getInstance( "i" )
+
+		assertEquals(
+			expected = listOf(
+				"1s",
+				"2"
+			),
+			actual = MyFilter.filter( this.Sentence )
+		)
+	}
+
+	@Test
+	fun `it filters symbols`()
+	{
+		val Lemmas = listOf(
+			"pancreatic",
+			"cancer",
+			"be",
+			"the",
+			"1st",
+			"lethal",
+			"of",
+			"all",
+			"solid",
+			"tumor",
+			"2",
+			"because",
+			"of",
+			"its",
+			"chemoresistance",
+			"."
+		)
+
+		val Forms = listOf(
+			"SYM",
+			"NNS",
+			"VBZ",
+			"DT",
+			"CD",
+			"JJ",
+			"IN",
+			"DT",
+			"JJ",
+			"NNP",
+			"CC",
+			"IN",
+			"IN",
+			"PRP$",
+			"NN",
+			"."
+		)
+
+		`when`( this.Sentence.lemmas() ).thenReturn( Lemmas )
+		`when`( this.Sentence.posTags() ).thenReturn( Forms )
+
+		val MyFilter = BiomedFilter.getInstance( "y" )
+
+		assertEquals(
+			expected = listOf(
+				"pancreatic"
+			),
+			actual = MyFilter.filter( this.Sentence )
+		)
+	}
+
+	@Test
 	fun `it always adds foreign words`()
 	{
 		val Lemmas = listOf(
