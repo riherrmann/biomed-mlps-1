@@ -7,7 +7,9 @@ internal class BiomedFilter private constructor(
 	private val UseNouns: Boolean,
 	private val UseVerbs: Boolean,
 	private val UseAdjectives: Boolean,
-	private val UseAdverbs: Boolean
+	private val UseAdverbs: Boolean,
+	private val UseNumerals: Boolean,
+	private val UseSymbols: Boolean
 ): Filter
 {
 	override fun filter( Sentence: CoreSentence ): List<String>
@@ -40,6 +42,20 @@ internal class BiomedFilter private constructor(
 			)
 
 			this.filterAdverbs(
+				Index,
+				Filtered,
+				Lemmas,
+				Forms
+			)
+
+			this.filterNumerals(
+				Index,
+				Filtered,
+				Lemmas,
+				Forms
+			)
+
+			this.filterSymbols(
 				Index,
 				Filtered,
 				Lemmas,
@@ -144,12 +160,44 @@ internal class BiomedFilter private constructor(
 		)
 	}
 
+	private fun filterNumerals(
+		Position: Int,
+		BagOfWords: MutableList<String>,
+		Lemmas: List<String>,
+		Forms: List<String>
+	)
+	{
+		this.filterAndAppend(
+			Position,
+			BagOfWords,
+			Lemmas,
+			this.UseNumerals && Forms[ Position ].startsWith( "C" )
+		)
+	}
+
+	private fun filterSymbols(
+		Position: Int,
+		BagOfWords: MutableList<String>,
+		Lemmas: List<String>,
+		Forms: List<String>
+	)
+	{
+		this.filterAndAppend(
+			Position,
+			BagOfWords,
+			Lemmas,
+			this.UseSymbols && Forms[ Position ] ==  "SYM"
+		)
+	}
+
 	companion object Factory: FilterFactory
 	{
 		private fun useNouns( Flags: String ) = 'n' in Flags
 		private fun useVerbs( Flags: String ) = 'v' in Flags
 		private fun useAdjectives( Flags: String ) = 'a' in Flags
 		private fun useAdverbs( Flags: String ) = 'd' in Flags
+		private fun useNumerals( Flags: String ) = 'i' in Flags
+		private fun useSymbols( Flags: String ) = 'y' in Flags
 
 		override fun getInstance( Flags: String ): Filter
 		{
@@ -159,7 +207,9 @@ internal class BiomedFilter private constructor(
 				UseNouns = this.useNouns( NormFlags ),
 				UseVerbs = this.useVerbs( NormFlags ),
 				UseAdjectives = this.useAdjectives( NormFlags ),
-				UseAdverbs = this.useAdverbs( NormFlags )
+				UseAdverbs = this.useAdverbs( NormFlags ),
+				UseNumerals = this.useNumerals( NormFlags ),
+				UseSymbols = this.useSymbols( NormFlags )
 			)
 		}
 	}
