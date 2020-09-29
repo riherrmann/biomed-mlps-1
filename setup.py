@@ -8,6 +8,6 @@ if not OS.path.isdir( "./.cache" ):
 
 if not OS.path.isfile( "./nlpclient/client.jar" ):
     OS.chdir( "./nlpclient" )
-    subprocess.run( [ "./nlpclient/gradlew", "build" ] )
+    subprocess.run( [ "./gradlew", "build" ] )
     OS.chdir( ".." )
     subprocess.run ( [ "mv", "./nlpclient/build/libs/nlpclient-1.0.0.jar", "./nlpclient/client.jar" ] )
