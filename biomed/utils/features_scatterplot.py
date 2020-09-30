@@ -7,6 +7,20 @@ import matplotlib.pyplot as plt
 import yaml
 
 
+def get_best_val_loss_point(test_name):
+    file_path = f"{results_directory}/{test_name}/trainingHistory.csv"
+    if not os.path.isfile(file_path):
+        return
+    _, data = get_history_matrices_from_csv(file_path)
+    max_val_accuracy = max(data[3])
+    best_point = [0, 0, 0]  # (x, val_accuracy, val_acc - val_loss)
+    for epoch in range(len(data[3])):
+        val_loss = data[3][epoch] - data[2][epoch]
+        if data[3][epoch] >= 0.9 * max_val_accuracy and val_loss > best_point[2]:
+            best_point = [epoch, data[3][epoch], val_loss]
+    return best_point
+
+
 def get_feature_matrices_from_csv(file):
     x_list, y_list = list(), list()
     with open(file) as csvfile:
@@ -91,21 +105,19 @@ def create_history_plot(test_name):
 
 def get_test_info_table_header():
     return [['test_name',
-            'classifier',
-            'preprocessing_variant',
-            'model',
-            'vectorizing_max_features',
-            'vectorizing_ngram_range',
-            'batch_size',
-            'selection_type',
-            'selection_features',
-            '0_precision',
-            '0_recall',
-            '1_precision',
-            '1_recall',
-            'f1_micro_avg',
-            'f1_macro_avg',
-            'f1_weighted_avg']]
+             'classifier',
+             'preprocessing_variant',
+             'model',
+             'vectorizing_max_features',
+             'vectorizing_ngram_range',
+             'batch_size',
+             'selection_type',
+             'selection_features',
+             'f1_micro_avg',
+             'f1_macro_avg',
+             'f1_weighted_avg',
+             'precision',
+             'recall']]
 
 
 def get_test_info_table_row(test_name):
@@ -127,13 +139,11 @@ def get_test_info_table_row(test_name):
     if os.path.isfile(class_report_path):
         with open(class_report_path) as file:
             for csv_row in csv.reader(file):
-                if not csv_row[0]:
-                    continue
-                if csv_row[0] in ('0', '1'):
-                    row.append(csv_row[1])
-                    row.append(csv_row[2])
-                else:
+                if 'avg' in csv_row[0]:
                     row.append(csv_row[3])
+                    if csv_row[0] == 'weighted avg':
+                        row.append(csv_row[1])
+                        row.append(csv_row[2])
     return row
 
 
@@ -141,14 +151,18 @@ if __name__ == '__main__':
     results_directory = '/Users/riherrmann/Downloads/results'
     Path(results_directory + '/plots/').mkdir(parents=True, exist_ok=True)
     test_info_table = get_test_info_table_header()
+    acc_loss = [['name', 'x', 'val_accuracy', 'acc_minus_loss']]
     for test_name in os.listdir(results_directory):
         if '2020' not in test_name:
             continue
         print(test_name)
-        # test_name = 'laniyd2-2020-09-30_03-00-15'
         test_info_row = get_test_info_table_row(test_name)
         test_info_table.append(test_info_row) if test_info_row else None
+        acc_loss_test = get_best_val_loss_point(test_name)
+        acc_loss.append([test_name] + acc_loss_test) if acc_loss_test else None
         create_features_scatterplot(test_name)
         create_history_plot(test_name)
     with open(f"{results_directory}/test_info_table.csv", 'w+') as file:
         csv.writer(file).writerows(test_info_table)
+    with open(f"{results_directory}/acc_loss_table.csv", 'w+') as file:
+        csv.writer(file).writerows(acc_loss)
