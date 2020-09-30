@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import yaml
 
 
-def get_best_val_loss_point(test_name):
+def get_best_accuracy_loss_point(test_name):
     file_path = f"{results_directory}/{test_name}/trainingHistory.csv"
     if not os.path.isfile(file_path):
         return
@@ -15,9 +15,9 @@ def get_best_val_loss_point(test_name):
     max_val_accuracy = max(data[3])
     best_point = [0, 0, 0]  # (x, val_accuracy, val_acc - val_loss)
     for epoch in range(len(data[3])):
-        val_loss = data[3][epoch] - data[2][epoch]
-        if data[3][epoch] >= 0.9 * max_val_accuracy and val_loss > best_point[2]:
-            best_point = [epoch, data[3][epoch], val_loss]
+        acc_loss = data[3][epoch] - data[2][epoch]
+        if data[3][epoch] >= 0.9 * max_val_accuracy and acc_loss > best_point[2]:
+            best_point = [epoch, data[3][epoch], acc_loss]
     return best_point
 
 
@@ -158,7 +158,7 @@ if __name__ == '__main__':
         print(test_name)
         test_info_row = get_test_info_table_row(test_name)
         test_info_table.append(test_info_row) if test_info_row else None
-        acc_loss_test = get_best_val_loss_point(test_name)
+        acc_loss_test = get_best_accuracy_loss_point(test_name)
         acc_loss.append([test_name] + acc_loss_test) if acc_loss_test else None
         create_features_scatterplot(test_name)
         create_history_plot(test_name)
