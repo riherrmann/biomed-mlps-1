@@ -4,7 +4,9 @@ from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas
 import yaml
+from sklearn.metrics import confusion_matrix
 
 
 def get_best_accuracy_loss_point(test_name):
@@ -147,8 +149,28 @@ def get_test_info_table_row(test_name):
     return row
 
 
+def generate_k_fold_heatmaps(test_name):
+    test_dir = f"{results_directory}/{test_name}"
+    predictions_path = f"{test_dir}/predictions.csv"
+    if '.' in test_dir or not os.path.isfile(predictions_path):
+        return
+    csv_data = pandas.read_csv(predictions_path)
+    cm = confusion_matrix(csv_data['predicted'], csv_data['actual'])
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    vmax = 3000 if results_directory.endswith('bin') else 20
+    cax = ax.matshow(cm, vmin=0, vmax=vmax)
+    fig.colorbar(cax)
+    plt.title(test_name)
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.savefig(f"{results_directory}/plots/heatmap_{test_name.replace('/', '_')}.png")
+    # plt.show()
+    plt.close()
+
+
 if __name__ == '__main__':
-    results_directory = '/Users/riherrmann/Downloads/results'
+    results_directory = '/Users/riherrmann/Downloads/results/doid'
     Path(results_directory + '/plots/').mkdir(parents=True, exist_ok=True)
     test_info_table = get_test_info_table_header()
     acc_loss = [['name', 'x', 'val_accuracy', 'acc_minus_loss']]
@@ -156,12 +178,20 @@ if __name__ == '__main__':
         if '2020' not in test_name:
             continue
         print(test_name)
-        test_info_row = get_test_info_table_row(test_name)
-        test_info_table.append(test_info_row) if test_info_row else None
-        acc_loss_test = get_best_accuracy_loss_point(test_name)
-        acc_loss.append([test_name] + acc_loss_test) if acc_loss_test else None
-        create_features_scatterplot(test_name)
-        create_history_plot(test_name)
+
+        if test_name.startswith('fold_'):
+            for i in os.listdir(f"{results_directory}/{test_name}"):
+                generate_k_fold_heatmaps(f"{test_name}/{i}")
+        else:
+            create_features_scatterplot(test_name)
+            create_history_plot(test_name)
+            generate_k_fold_heatmaps(test_name)
+
+            test_info_row = get_test_info_table_row(test_name)
+            test_info_table.append(test_info_row) if test_info_row else None
+            acc_loss_test = get_best_accuracy_loss_point(test_name)
+            acc_loss.append([test_name] + acc_loss_test) if acc_loss_test else None
+
     with open(f"{results_directory}/test_info_table.csv", 'w+') as file:
         csv.writer(file).writerows(test_info_table)
     with open(f"{results_directory}/acc_loss_table.csv", 'w+') as file:
